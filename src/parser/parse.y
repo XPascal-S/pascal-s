@@ -1,6 +1,8 @@
 %{
   #include <cstring>
-  #include <>
+  #include <string>
+  #include <iostream>
+  #include <pascal-s/AST.h>
   #define YYDEBUG 1
   extern "C" {
     void yyerror(const char *){};
@@ -9,160 +11,292 @@
     extern int yydebug;
   }
 
-  using namespace std;
-}%
+  string string_const(string temp) {
+	string ans;
+	ans += "const ";
+	string name;
+	string value;
+	int flag = 0;
+	int flag2 = 0;
+	for (int i = 0; i < temp.length(); i++) {
+		if (temp[i] == '=') {
+			flag = 1;
+		}
+		else if (temp[i] == '\'') {
+			if (!flag2)
+				ans += "char ";
+			flag2 = 1;
+			value += '\'';
+		}
+		else if (temp[i] == '.') {
+			ans += "double ";
+			flag2 = 1;
+			value += '.';
+		}
+		else if (temp[i] == ';') {
+			if (!flag2)
+				ans += "int";
+			flag2 = 0;
+			ans += name;
+			name.clear();
+			ans += " = ";
+			ans += value;
+			value.clear();
+			ans += ";\nconst ";
+			flag = 0;
+		}
+		else {
+			if (!flag)
+				name += temp[i];
+			else
+				value += temp[i];
+		}
+	}
+	if (!flag2)
+		ans += "int";
+	ans += name;
+	ans += " = ";
+	ans += value;
+	ans += ";\n";
+	return ans;
+  }
 
-%union {
-  char char_value;
-  double double_value;
-  int int_value;
-  const char* char_ptr_value
-}
+  string string_var(string temp) {
+	string ans;;
+	string name;
+	string type;
+	int flag = 0;
+	int flag2 = 0;
+	for (int i = 0; i < temp.length(); i++) {
+		if (temp[i] == ':') {
+			flag = 1;
+		}
+		else if (temp[i] == ';') {
+			ans += type;
+			ans += " ";
+			ans += name;
+			ans += ";\n";
+			type.clear();
+			name.clear();
+			flag = 0;
+		}
+		else {
+			if (!flag)
+				name += temp[i];
+			else
+				type += temp[i];
+		}
+	}
+	ans += type;
+	ans += " ";
+	ans += name;
+	ans += ";\n";
+	return ans;
+  }
+
+  string string_canshu(string temp) {
+	string ans;
+	string name;
+	string type;
+	int flag = 0;
+	int flag2 = 0;
+	for (int i = 0; i < temp.length(); i++) {
+		if (temp[i] == ':') {
+			flag = 1;
+		}
+		else {
+			if (!flag)
+				name += temp[i];
+			else
+				type += temp[i];
+		}
+	}
+	ans += type;
+	ans += " ";
+	for (int j = 0; j < name.length(); j++) {
+		if (name[j] != ',')
+			ans += name[j];
+		else {
+			ans += ", " + type + " ";
+		}
+	}
+	return ans;
+  }
+  
+  string string_shuzu(string temp) {
+	string ans;
+	for (int i = 0; i < temp.length(); i++) {
+		if (temp[i] != ',') {
+			ans += temp[i];
+		}
+		else {
+			ans += "][";
+		}
+	}
+	return ans;
+  }
+
+  using namespace std;
+
+%}
 
 %start programstruct
 
-%token program id const num letter integer real boolean char num id not umnius
-%token var array of procedure function begin end if then for to do else
-%token
+%token <string> program const letter integer real boolean char num id not umnius
+%token <string> var array of procedure function begin end if then for to do else
+//%token <string> num id
 
-%type <char_ptr_value> programstruct program_head program_body idlist const_declarations const_declaration const_value var_declarations
-%type <char_ptr_value> var_declaration type basic_type subprogram_declarations subprogram subprogram_head subprogram_body formal_parameter
-%type <char_ptr_value> parameter_list parameter var_parameter value_parameter compound_statement statement_list statement variable_list
-%type <char_ptr_value> variable expression_list procedure_call else_part expression simple_expression term factor
-%type <int_value>
-%type <double_value>
-%type <char_value>
+%type <string> programstruct program_head program_body idlist const_declarations const_declaration const_value var_declarations
+%type <string> var_declaration type basic_type subprogram_declarations subprogram subprogram_head subprogram_body formal_parameter
+%type <string> parameter_list parameter var_parameter value_parameter compound_statement statement_list statement variable_list
+%type <string> variable expression_list procedure_call else_part expression simple_expression term factor period id_varpart
+%type <string> 
 
 %%
-programstruct:program_head';'program_body'.';
-
-program_head:program id'('idlist')'
-    |program id;
-
-program_body:const_declarations
-    |var_declarations
-    |subprogram_declarations
-    |compound_statement
+programstruct:program_head ';' program_body '.' {printf("%s{\n%s}\n",$1,$3);}
     ;
 
-idlist:idlist','id
-    |id
+program_head:program id '(' idlist ')'  {$$ = "int main("+$4+")";}
+    |program id                      {$$ = "int main()";}
     ;
 
-const_declarations:const const_declaration';'
-    |
+program_body:const_declarations var_declarations subprogram_declarations compound_statement  {$$ = $1+$2+$3+$4;}
     ;
 
-const_declaration:const_declaration';'id'='const_value
-    |id'='const_value
+idlist:idlist ',' id  {$$ = $1+","+$3;}
+    |id             {$$ = $1;}
     ;
 
-const_value:'+'num
-    |'-'num
-    |num
-    |\'letter\'
+const_declarations:const const_declaration ';'{$$ = $2 + ";\n";}
+    |                                       {$$ = "";} 
     ;
 
-var_declarations:
-    |var var_declaration';'
+const_declaration:const_declaration ';' id '=' const_value  {string temp = $1 + ";" + $3 + "=" + $5;
+                                                             $$ = string_const(temp);}
+    |id'='const_value           {$$ = $1+"="+$3;}
     ;
 
-var_declaration:var_declaration';'idlist':'type
-    |idlist':'type
+const_value:'+'num          {$$ = $2;}
+    |'-'num             {$$ = "-"+$2;}
+    |num                {$$ = $1;}
+    |'\''letter'\''        {$$ = $2;}
     ;
 
-type:basic_type
-    |array'['period']'of basic_type
+var_declarations:              {$$ = "";} 
+    |var var_declaration';'{$$ = $2+";\n";}
     ;
 
-basic_type:integer | real | boolean | char;
-
-period:period','digits'..'digits
-    | digits'..'digits
+var_declaration:var_declaration ';' idlist ':' type   {string temp = $1+$5+" "+$3+";";
+                                                        $$ = string_var(temp);}
+    |idlist':'type                      {$$ = $3 + " " + $1 + ";";}
     ;
 
-subprogram_declarations:
-    |subprogram_declarations subprogram';'
+type:basic_type                             {$$ = $1;}
+    |array '[' period ']' of basic_type         {$$ = $6+$3;}
     ;
 
-subprogram:subprogram_head';'subprogram_body;
+basic_type:integer  {$$ = "int";}
+    | real          {$$ = "double";}
+    | boolean       {$$ = "bool";}
+    | char          {$$ = "char";}
+    ; 
 
-subprogram_head:procedure id formal_parameter
-    |function id formal_parameter : basic_type
+period:period ',' num '..' num        {$$ = $1+","+$3+".."+$5;}
+    | num '..' num                    {$$ = $1+".."+$3;}
     ;
 
-formal_parameter:
-    |'('parameter_list')'
+subprogram_declarations:                    {$$ = "";} 
+    |subprogram_declarations subprogram';'  {$$ = $1 + $2 + ";\n";} 
     ;
 
-parameter_list:parameter_list';'parameter
-    | parameter
+subprogram:subprogram_head ';' subprogram_body {$$ = $1+";"+$3+"\n";}
     ;
 
-parameter:var_parameter | value_parameter;
+subprogram_head:procedure id formal_parameter   {$$ = "void "+$2+$3;}
+    |function id formal_parameter ':' basic_type  {$$ = $5 + $2 + $3;}
+    ;
 
-var_parameter: var value_parameter;
+formal_parameter:               {$$ = "";} 
+    |'('parameter_list')'       {$$ = "("+$2+")";} 
+    ;
 
-value_parameter: idlist':'basic_type;
+parameter_list:parameter_list';'parameter   {$$ = $1 + "," +$3;}
+    | parameter                     {$$ = $1;}
+    ;
 
-subprogram_body:const_declarations var_declarations compound_statement;
+parameter:var_parameter         {$$ = $1;}
+    | value_parameter           {$$ = $1;}
+    ;
 
-compound_statement:begin statement_list end;
+var_parameter: var value_parameter      {$$ = $2;}
+    ;     
 
-statement_list:statement_list';'statement
-    | statement
+value_parameter: idlist':'basic_type            {string temp = $3+" "+$1;
+                                                  $$ = string_canshu(temp);}
+    ;   
+
+subprogram_body:const_declarations var_declarations compound_statement  {$$ = $1+$2+$3;}
+    ;
+
+compound_statement:begin statement_list end         {$$ = "{\n"+$2+"}\n";}
+    ;
+
+statement_list:statement_list ';' statement           {$$ = $1+$3+";\n"}
+    | statement                                       {$$ = $1+";\n"}
     ;
 
 statement:
-| variable':='expression
-| procedure_call
-| compound_statement
-| if expression then statement else_part
-| for id assignop expression to expression do statement
-| read ( variable_list )
-| write ( expression_list )
+| variable ":=" expression                          {$$ = $1+" = "+$3;}
+| procedure_call                                    {$$ = $1;}
+| compound_statement                                {$$ = $1;}
+| if expression then statement else_part            {$$ = "if("+$2+"){"+$4+"}\n"+$5;}
+| for id ":=" expression to expression do statement {$$ = "for("+$2+"="+$4+";"+$2+"<="+$6+";"+$2+"++){\n"+$8+"}\n";}
+| read '(' variable_list ')'
+| write '(' expression_list ')'
 ;
 
-variable_list:variable_list','variable
-| variable
+variable_list:variable_list','variable         {$$ = $1+","+$3;}
+| variable                                  {$$ = $1;}
 ;
 
-variable:id id_varpart;
-
-id_varpart:
-|'['expression_list']'
+variable:id id_varpart  {$$ = $1+$2;}
 ;
 
-procedure_call:id 
-| id'('expression_list')'
+id_varpart:                 {$$ = "";} 
+|'['expression_list']'      {string temp = "["+$2+"]";
+                             $$ = string_shuzu(temp);}
 ;
 
-else_part:
-|else statement
+procedure_call:id           {$$ = $1+"()"}
+| id'('expression_list')'    {$$ = $1+"("+$3+")";}
 ;
 
-expression_list:expression_list','expression
-| expression
+else_part:                      {$$ = "";} 
+|else statement                 {$$ = "else{"+$2+"}\n";} 
 ;
 
-expression:simple_expression relop simple_expression  //relop 关系运算符
-| simple_expression
+expression_list:expression_list','expression    {$$ = $1+","+$3;}
+| expression                                {$$ = $1;}
 ;
 
-simple_expression:simple_expression addop term  //addop + - or
-| term 
+expression:simple_expression relop simple_expression  //relop 关系运算符 {$$ = $1+$2+$3;}
+| simple_expression                                     {$$ = $1;}
 ;
 
-term:term mulop factor  //mulop *、 /、 div、 mod 和 and
-| factor
+simple_expression:simple_expression addop term  //addop + - or          {$$ = $1+$2+$3;}
+| term                                                              {$$ = $1;}
 ;
 
-factor:num
-| variable
-| id ( expression_list )
-| ( expression )
-| not factor
-| uminus factor
+term:term mulop factor  //mulop *、 /、 div、 mod 和 and   {$$ = $1+$2+$3;}
+| factor                                                   {$$ = $1;}
+;
+
+factor:num                                      {$$ = $1;}
+| variable                                      {$$ = $1;}
+| id '(' expression_list ')'                        {$$ = $1+"("+$3+")";}
+| '(' expression ')'                               {$$ = "("+$2+")";}
+| "not" factor                                    {$$ = "!"+$2;}
+| '-' factor                                 {$$ = "-"+$2;}
 ;
 
 %%
