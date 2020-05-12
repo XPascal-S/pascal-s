@@ -150,7 +150,7 @@
 %type <string> var_declaration type basic_type subprogram_declarations subprogram subprogram_head subprogram_body formal_parameter
 %type <string> parameter_list parameter var_parameter value_parameter compound_statement statement_list statement variable_list
 %type <string> variable expression_list procedure_call else_part expression simple_expression term factor period id_varpart
-%type <string> 
+// %type <string>
 
 %%
 programstruct:program_head ';' program_body '.' {printf("%s{\n%s}\n",$1,$3);}
@@ -279,7 +279,7 @@ expression_list:expression_list','expression    {$$ = $1+","+$3;}
 | expression                                {$$ = $1;}
 ;
 
-expression:simple_expression relop simple_expression  //relop ¹ØÏµÔËËã·û {$$ = $1+$2+$3;}
+expression:simple_expression relop simple_expression  //relop ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ {$$ = $1+$2+$3;}
 | simple_expression                                     {$$ = $1;}
 ;
 
@@ -287,7 +287,7 @@ simple_expression:simple_expression addop term  //addop + - or          {$$ = $1
 | term                                                              {$$ = $1;}
 ;
 
-term:term mulop factor  //mulop *¡¢ /¡¢ div¡¢ mod ºÍ and   {$$ = $1+$2+$3;}
+term:term mulop factor  //mulop *ï¿½ï¿½ /ï¿½ï¿½ divï¿½ï¿½ mod ï¿½ï¿½ and   {$$ = $1+$2+$3;}
 | factor                                                   {$$ = $1;}
 ;
 

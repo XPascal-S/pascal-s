@@ -2,6 +2,7 @@
 #define PASCAL_S_AST_H
 
 #include "token.h"
+#include <vector>
 
 enum class Type : uint16_t {
     Unknown,
@@ -32,40 +33,43 @@ enum class Type : uint16_t {
     BiExp,
     BasicTypeSpec,
     ArrayTypeSpec,
+
 };
 
+struct Node;
 void deleteAST(Node* node);
+void printAST(Node *node, int dep=0);
 
-struct Node {//½Úµã»ùÀà
+struct Node {//ï¿½Úµï¿½ï¿½ï¿½ï¿½
     Type type;
 
     explicit Node(Type type) : type(type) {}
 };
 
-struct Exp : public Node {//±í´ïÊ½»ùÀà
+struct Exp : public Node {//ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½
     explicit Exp(Type type) : Node(type) {}
 };
 
-struct Function : public Node {//º¯ÊýºÍ¹ý³Ì»ùÀà
+struct Function : public Node {//ï¿½ï¿½ï¿½ï¿½ï¿½Í¹ï¿½ï¿½Ì»ï¿½ï¿½ï¿½
     Function() : Node(Type::Function) {}
 };
 
-struct TypeSpec : public Node {//ÀàÐÍÉùÃ÷»ùÀà
+struct TypeSpec : public Node {//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     explicit TypeSpec(Type type) : Node(type) {}
 };
 
-struct BasicTypeSpec : public TypeSpec {//»ù´¡ÀàÐÍÉùÃ÷ e.g.integer
+struct BasicTypeSpec : public TypeSpec {//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ e.g.integer
     const Keyword* keyword;
     explicit BasicTypeSpec(const Keyword* keyword) : TypeSpec(Type::BasicTypeSpec), keyword(keyword) {}
 };
 
-struct ArrayTypeSpec : public TypeSpec {//Êý×éÀàÐÍÉùÃ÷  e.g.Array
+struct ArrayTypeSpec : public TypeSpec {//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  e.g.Array
     const Keyword* keyword;
     std::vector<std::pair<int64_t, int64_t>> periods;
     explicit ArrayTypeSpec(const Keyword* keyword) : TypeSpec(Type::ArrayTypeSpec), keyword(keyword) {}
 };
 
-struct ParamList : public Node {//ÐÎ²Î±í
+struct ParamList : public Node {//ï¿½Î²Î±ï¿½
     std::vector<Exp*> params;
 
     ParamList() : Node(Type::ParamList) {}
@@ -77,7 +81,7 @@ struct ParamList : public Node {//ÐÎ²Î±í
     }
 };
 
-struct VariableList : public Node {//º¯ÊýµÄ²ÎÊý±í
+struct VariableList : public Node {//ï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½
     std::vector<Exp*> params;
 
     VariableList() : Node(Type::VariableList) {}
@@ -89,13 +93,13 @@ struct VariableList : public Node {//º¯ÊýµÄ²ÎÊý±í
     }
 };
 
-struct IdentList : public Node {//id list  programºóµÄid
+struct IdentList : public Node {//id list  programï¿½ï¿½ï¿½id
     std::vector<const Identifier*> idents;
 
     IdentList() : Node(Type::IdentList) {}
 };
 
-struct ConstDecl : public Node {//³£Á¿ÃûºÍÖµ
+struct ConstDecl : public Node {//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
     const Identifier* ident;
     const Exp* rhs;
 
@@ -113,7 +117,7 @@ struct ConstDecls : public Node {
     }
 };
 
-struct VarDecl : public Node {//±äÁ¿ÀàÐÍºÍÖµ
+struct VarDecl : public Node {//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íºï¿½Öµ
     TypeSpec* type_spec;
     IdentList* idents;
     VarDecl(IdentList* idents, TypeSpec* type_spec) : Node(Type::VarDecl),
@@ -185,7 +189,7 @@ struct ExpAssign : public Exp {   //:=
     ExpAssign() : Exp(Type::ExpAssign) {}
 };
 
-struct UnExp : public Exp {    //Ò»ÔªÔËËã lhsÊÇ²ÎÊý markerÊÇ·ûºÅ
+struct UnExp : public Exp {    //Ò»Ôªï¿½ï¿½ï¿½ï¿½ lhsï¿½Ç²ï¿½ï¿½ï¿½ markerï¿½Ç·ï¿½ï¿½ï¿½
     Exp* lhs;
     const Marker* marker;
 
@@ -195,8 +199,8 @@ struct UnExp : public Exp {    //Ò»ÔªÔËËã lhsÊÇ²ÎÊý markerÊÇ·ûºÅ
     };
 };
 
-struct BiExp : public Exp { //¶þÔªÔËËã
-    Exp* lhs, * rhs;//×óÓÒ²ÎÊý
+struct BiExp : public Exp { //ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½
+    Exp* lhs, * rhs;//ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½
     const Marker* marker;
 
     explicit BiExp(Exp* lhs, const Marker* marker, Exp* rhs) : Exp(Type::BiExp), lhs(lhs), rhs(rhs), marker(marker) {}

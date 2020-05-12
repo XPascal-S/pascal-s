@@ -13,15 +13,17 @@ struct LexerInfo {
 };
 
 enum class TokenType {
-    Keyword,
-    ConstantString,
-    ConstantChar,
-    ConstantReal,
-    ConstantInteger,
-    ConstantBoolean,
-    Identifier,
-    Marker,
-    Length
+    Unknown = 0,
+    Keyword = 1,
+    ConstantString = 2,
+    ConstantChar = 3,
+    ConstantReal = 4,
+    ConstantInteger = 5,
+    ConstantBoolean = 6,
+    Identifier = 7,
+    Marker = 8,
+    Nullptr= 9,
+    Length = 10,
 };
 
 using line_t = uint64_t;
