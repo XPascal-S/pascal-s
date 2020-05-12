@@ -43,12 +43,15 @@ function(link_pascal_s_lexer target)
 endfunction()
 add_subdirectory(lexer/test)
 
+file(GLOB PASCAL_S_PARSER_SOURCE_FILES target-c/*.cpp target-c/*.cc)
+
 file(GLOB PASCAL_S_COMPILER_FEATURES_SOURCE_FILES compiler-features/*.cpp compiler-features/*.cc)
 
 list(APPEND PASCAL_S_COMPILER_SOURCE_FILES
         ${PASCAL_S_LOCAL_LIBRARY_SOURCE_FILES}
         ${PASCAL_S_LEXER_SOURCE_FILES}
         ${PASCAL_S_COMPILER_FEATURES_SOURCE_FILES}
+        ${PASCAL_S_PARSER_SOURCE_FILES}
         )
 
 # other pascal-s compiler layers
