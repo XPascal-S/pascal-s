@@ -186,8 +186,17 @@ struct Ident : public Exp {
     explicit Ident(const Identifier* ident) : Exp(Type::Ident), ident(ident) {}
 };
 
-struct ExpAssign : public Exp {   //:=
-    ExpAssign() : Exp(Type::ExpAssign) {}
+
+
+struct ExpAssign : public Exp {
+    Exp *lhs, *rhs;
+
+    ExpAssign(Exp *lhs, Exp *rhs) : Exp(Type::ExpAssign), lhs(lhs), rhs(rhs) {}
+
+    ~ExpAssign() {
+        deleteAST(lhs);
+        deleteAST(rhs);
+    }
 };
 
 struct UnExp : public Exp {    //һԪ���� lhs�ǲ��� marker�Ƿ���
