@@ -14,7 +14,7 @@
 %%
 \{[^}]*\} {} /* do nothing */
 to|do|of|for|else|if|then|char|boolean|real|integer|array|end|begin|function|procedure|var|const|program { return addKeyword(); }
-
+mod { return addMarker(); }
 true|false { return addBoolean(); }
 [\_a-zA-Z][\_a-zA-Z0-9]* { return addIdentifier(); }
 [0-9]*\.[0-9]+ { return addReal(); }
