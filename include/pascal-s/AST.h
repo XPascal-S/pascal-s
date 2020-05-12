@@ -51,7 +51,8 @@ struct Exp : public Node {//���ʽ����
 };
 
 struct Function : public Node {//�����͹��̻���
-    Function() : Node(Type::Function) {}
+
+    explicit Function(Type type) : Node(type) {}
 };
 
 struct TypeSpec : public Node {//������������
@@ -165,8 +166,8 @@ struct Program : public Function {
     const Identifier* name;
     ConstDecls* decls;
 
-    explicit Program(const Keyword* program, const Identifier* name, ConstDecls* decls)
-        : Function(), fn_type(Type::Program), program(program), name(name), decls(decls) {}
+    explicit Program(const Keyword *program, const Identifier *name, ConstDecls *decls)
+            : Function(Type::Program), fn_type(Type::Program), program(program), name(name), decls(decls) {}
 
     ~Program() {
         deleteAST(decls);
@@ -176,7 +177,7 @@ struct Program : public Function {
 struct Procedure : public Function {
     Node fn_type;
 
-    Procedure() : Function(), fn_type(Type::Procedure) {}
+    Procedure() : Function(Type::Procedure), fn_type(Type::Procedure) {}
 };
 
 struct Ident : public Exp {
