@@ -29,6 +29,12 @@ namespace target_c {
         }
     };
 
+    struct LinkedContext {
+        LinkedContext *last;
+        std::map<std::string, std::string> *content;
+    };
+
+
     struct CBuilder {
 
         enum TranslateCode {
@@ -50,6 +56,10 @@ namespace target_c {
         int code_gen_node(const Node *node);
 
         int code_gen_program(const Program *node);
+
+        int code_gen_ArrayTypeSpec(const ArrayTypeSpec *node);
+
+        int code_gen_exp_assign(const ExpAssign *node);
     };
 }
 
