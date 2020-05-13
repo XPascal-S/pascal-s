@@ -4,7 +4,7 @@
 
 #include <pascal-s/AST.h>
 #include <pascal-s/exception.h>
-//#include <cassert>
+#include <cstdio>
 
 void deleteAST(Node *node) {
     if (node == nullptr) {
@@ -116,13 +116,16 @@ void printAST(Node *node, int dep) {
     switch (node->type) {
         default:
         case Type::Unknown:
-            throw RuntimeReinterpretASTException(node);
+          throw RuntimeReinterpretASTException(node);
         case Type::Program:
+#define cur_node (reinterpret_cast<Procedure*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
             printf("type = Program\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 //        case Type::ParamSpec:
@@ -133,13 +136,17 @@ void printAST(Node *node, int dep) {
 //
 //            put_tab(dep);
 //            printf("}\n");
-        case Type::Procedure:
+#undef cur_node
+            break;
+  case Type::Procedure:
 #define cur_node (reinterpret_cast<Procedure*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
             printf("type = Procedure\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -184,7 +191,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ExpCall\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -202,7 +211,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = IfElseStatement\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -213,7 +224,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ForStatement\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -224,7 +237,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = Ident\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -235,7 +250,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ParamList\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -246,7 +263,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = VariableList\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -257,7 +276,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = IdentList\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -268,7 +289,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ConstDecl\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -279,7 +302,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ConstDecls\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -290,7 +315,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = VarDecl\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -301,7 +328,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = VarDecls\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -312,7 +341,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = FunctionDecls\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -323,7 +354,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ExpAssign\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep+1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -334,7 +367,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = UnExp\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -345,7 +380,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = BiExp\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -356,7 +393,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ExpConstantBoolean\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -367,7 +406,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ExpConstantChar\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -378,7 +419,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ExpConstantInteger\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -389,7 +432,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ExpConstantString\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -400,7 +445,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ExpConstantReal\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -411,7 +458,9 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = BasicTypeSpec\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
@@ -422,10 +471,21 @@ void printAST(Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ArrayTypeSpec\n");
-
+            for (Node *c : cur_node->children) {
+              printAST(c, dep + 1);
+            }
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
+            break;
+        case Type::ExpMarker : put_tab(dep);
+#define cur_node (reinterpret_cast<ExpMarker *>(node))
+            printf("{\n");
+            put_tab(dep + 1);
+            printf("type = marker %s\n", cur_node->value->content);
+            put_tab(dep);
+            printf("}\n");
+#undef cur_node
             break;
     }
 }

@@ -171,3 +171,7 @@ const char *get_keyword_type_reversed(KeywordType kt) {
     }
     return reverse_key_map.at(kt);
 }
+
+marker_type_underlying_type get_marker_pri(MarkerType marker_type) {
+  return static_cast<marker_type_underlying_type>(marker_type) >> 0x4U;
+}

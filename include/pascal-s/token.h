@@ -69,6 +69,31 @@ enum class KeywordType {
     Length
 };
 
+using marker_type_underlying_type = uint8_t ;
+enum class MarkerType :marker_type_underlying_type {
+                                                    Range = 0x00, // ..
+                                                    NEQ = 0x01, // <>
+                                                    LE = 0x02, // <=
+                                                    GE = 0x03, // >=
+                                                    LT = 0x04, // <
+                                                    EQ = 0x05, // =
+                                                    GT = 0x06, // >
+                                                    Add = 0x10, // +
+                                                    Sub = 0x11, // -
+                                                    Mul = 0x20, // *
+                                                    Div = 0x21, // /
+
+                                                    LParen = 0x30, // (
+                                                    RParen = 0x31, // )
+                                                    LBracket = 0x40, // [
+                                                    RBracket = 0x41, // ]
+
+                                                    Assign = 0x50, // :=
+                                                    Comma = 0x51, // ,
+                                                    Dot = 0x52, // .
+                                                    Semicolon = 0x53, // ;
+                                                    Colon = 0x54, // :
+};
 
 struct Keyword : public Token {
     KeywordType key_type;
@@ -132,8 +157,13 @@ struct ConstantBoolean : public Token {
 struct Marker : public Token {
     const char *content;
     const char *attr;
+    MarkerType marker_type;
 
     Marker(const char *content);
+
+    explicit Marker(MarkerType marker_type) : Token(), marker_type(marker_type) {
+      this->type = TokenType::Marker;
+    }
 
     ~Marker();
 };
@@ -150,6 +180,6 @@ extern keyword_mapping key_map;
 extern reverse_keyword_mapping reverse_key_map;
 
 const char *get_keyword_type_reversed(KeywordType kt);
+marker_type_underlying_type get_marker_pri(MarkerType);
 
 #endif
-

@@ -32,9 +32,9 @@
 
 
 // First part of user declarations.
-#line 5 "parser.example.y" // lalr1.cc:404
+#line 4 "parser.example.y" // lalr1.cc:404
 
-#define YYSTYPE void*
+#define YYSTYPE void *
 
 
 #line 41 "parser.example.h" // lalr1.cc:404
@@ -249,12 +249,22 @@ namespace yy {
     ///yylex interface
     virtual int yylex(void**) = 0;
     virtual void access_ast(void*) = 0;
+    virtual void ast_reduce_nodes(int, Type)=0;
     /// Tokens.
     struct token
     {
       enum yytokentype
       {
-        NUM = 5
+        KWORD = 1,
+        STR = 2,
+        CHAR = 3,
+        REAL = 4,
+        INT = 5,
+        BOOL = 6,
+        IDENT = 7,
+        MARKER = 8,
+        NULLP = 9,
+        LEN = 10
       };
     };
 
@@ -436,7 +446,7 @@ namespace yy {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -553,12 +563,12 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 1,     ///< Last index in yytable_.
-      yynnts_ = 2,  ///< Number of nonterminal symbols.
-      yyfinal_ = 3, ///< Termination state number.
+      yylast_ = 11,     ///< Last index in yytable_.
+      yynnts_ = 7,  ///< Number of nonterminal symbols.
+      yyfinal_ = 7, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 4  ///< Number of tokens.
+      yyntokens_ = 15  ///< Number of tokens.
     };
 
 
@@ -567,7 +577,7 @@ namespace yy {
 
 
 } // yy
-#line 568 "parser.example.h" // lalr1.cc:408
+#line 577 "parser.example.h" // lalr1.cc:408
 
 
 
@@ -575,7 +585,7 @@ namespace yy {
 
 // User implementation prologue.
 
-#line 576 "parser.example.h" // lalr1.cc:412
+#line 585 "parser.example.h" // lalr1.cc:412
 
 
 #ifndef YY_
@@ -642,7 +652,7 @@ namespace yy {
 
 
 namespace yy {
-#line 643 "parser.example.h" // lalr1.cc:479
+#line 652 "parser.example.h" // lalr1.cc:479
 
   /// Build a parser object.
   parser::parser ()
@@ -1065,17 +1075,97 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 15 "parser.example.y" // lalr1.cc:859
+#line 96 "parser.example.y" // lalr1.cc:859
     {
-    printf("access integer attribute %lld\n", ((const ConstantInteger*)((yystack_[0].value)))->attr);
-    (yylhs.value) = new ExpConstantInteger(((const ConstantInteger*)((yystack_[0].value))));
-    access_ast((yylhs.value));
-  }
-#line 1072 "parser.example.h" // lalr1.cc:859
+  printf("expression relop=\n");
+  (yylhs.value) = (yystack_[2].value);
+  ast_reduce_nodes(3, Type::ExpAssign);
+}
+#line 1081 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 3:
+#line 108 "parser.example.y" // lalr1.cc:859
+    {(yylhs.value) = (yystack_[0].value);}
+#line 1087 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 4:
+#line 112 "parser.example.y" // lalr1.cc:859
+    {printf("simple_expression addop +\n"); ast_reduce_nodes(3, Type::BiExp); }
+#line 1093 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 5:
+#line 115 "parser.example.y" // lalr1.cc:859
+    {(yylhs.value) = (yystack_[0].value);}
+#line 1099 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 6:
+#line 120 "parser.example.y" // lalr1.cc:859
+    {printf("tern mulop *"); (yylhs.value) = (yystack_[2].value);}
+#line 1105 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 7:
+#line 121 "parser.example.y" // lalr1.cc:859
+    {printf("tern mulop /"); (yylhs.value) = (yystack_[2].value);}
+#line 1111 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 8:
+#line 122 "parser.example.y" // lalr1.cc:859
+    {(yylhs.value) = (yystack_[0].value);}
+#line 1117 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 9:
+#line 127 "parser.example.y" // lalr1.cc:859
+    {
+  printf("access integer attribute value: %lld\n", ((const ConstantInteger*)((yystack_[0].value)))->attr);
+  (yylhs.value) = new ExpConstantInteger(((const ConstantInteger*)((yystack_[0].value))));
+  access_ast((yylhs.value));
+  // ast_insert_leaf_node($$);
+}
+#line 1128 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 10:
+#line 133 "parser.example.y" // lalr1.cc:859
+    {
+  printf("access identifier attribute attr: %s name: %s\n", ((const Identifier*)((yystack_[0].value)))->attr, ((const Identifier*)((yystack_[0].value)))->content);
+  (yylhs.value) = new Ident(((const Identifier*)((yystack_[0].value))));
+  access_ast((yylhs.value));
+  // ast_insert_leaf_node($$);
+}
+#line 1139 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 11:
+#line 140 "parser.example.y" // lalr1.cc:859
+    {
+  printf("access marker attribute %s %s\n", ((const Marker*)((yystack_[0].value)))->attr, ((const Marker*)((yystack_[0].value)))->content);
+  (yylhs.value) = new ExpMarker(((const Marker *)((yystack_[0].value))));
+  access_ast((yylhs.value));
+  // ast_insert_leaf_node($$);
+}
+#line 1150 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 12:
+#line 148 "parser.example.y" // lalr1.cc:859
+    {
+  printf("access marker attribute %s %s\n", ((const Marker*)((yystack_[0].value)))->attr, ((const Marker*)((yystack_[0].value)))->content);
+  (yylhs.value) = new ExpMarker((const Marker *)((yystack_[0].value)));
+  access_ast((yylhs.value));
+// ast_insert_leaf_node($$);
+}
+#line 1161 "parser.example.h" // lalr1.cc:859
     break;
 
 
-#line 1076 "parser.example.h" // lalr1.cc:859
+#line 1165 "parser.example.h" // lalr1.cc:859
             default:
               break;
             }
@@ -1236,62 +1326,69 @@ namespace yy {
   }
 
 
-  const signed char parser::yypact_ninf_ = -4;
+  const signed char parser::yypact_ninf_ = -11;
 
   const signed char parser::yytable_ninf_ = -1;
 
   const signed char
   parser::yypact_[] =
   {
-      -3,    -4,     1,    -4
+      -7,   -11,   -11,     1,    -3,   -10,   -11,   -11,   -11,    -7,
+      -7,    -7,    -7,   -10,    -2,   -11,   -11,   -11
   };
 
   const unsigned char
   parser::yydefact_[] =
   {
-       0,     2,     0,     1
+       0,     9,    10,     0,     3,     5,     8,     1,    11,     0,
+       0,     0,     0,     4,     2,     6,     7,    11
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-      -4,    -4
+     -11,   -11,    -1,     2,    -6,   -11,   -11
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-      -1,     2
+      -1,     3,     4,     5,     6,     9,    10
   };
 
   const unsigned char
   parser::yytable_[] =
   {
-       1,     3
+       1,     7,     2,    11,    12,    15,    16,     8,    17,    14,
+       0,    13
   };
 
-  const unsigned char
+  const signed char
   parser::yycheck_[] =
   {
-       3,     0
+       7,     0,     9,    13,    14,    11,    12,    10,    10,    10,
+      -1,     9
   };
 
   const unsigned char
   parser::yystos_[] =
   {
-       0,     3,     5,     0
+       0,     7,     9,    16,    17,    18,    19,     0,    10,    20,
+      21,    13,    14,    18,    17,    19,    19,    10
   };
 
   const unsigned char
   parser::yyr1_[] =
   {
-       0,     4,     5
+       0,    15,    16,    16,    17,    17,    18,    18,    18,    19,
+      19,    20,    21
   };
 
   const unsigned char
   parser::yyr2_[] =
   {
-       0,     2,     1
+       0,     2,     3,     1,     3,     1,     3,     3,     1,     1,
+       1,     1,     1
   };
 
 
@@ -1301,14 +1398,17 @@ namespace yy {
   const char*
   const parser::yytname_[] =
   {
-  "$end", "error", "$undefined", "NUM", "$accept", "exp", YY_NULLPTR
+  "$end", "error", "$undefined", "KWORD", "STR", "CHAR", "REAL", "INT",
+  "BOOL", "IDENT", "MARKER", "NULLP", "LEN", "'*'", "'/'", "$accept",
+  "expression", "simple_expression", "term", "factor", "addop", "relop", YY_NULLPTR
   };
 
 
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    15,    15
+       0,    96,    96,   108,   112,   115,   120,   121,   122,   127,
+     133,   140,   148
   };
 
   // Print the state stack on the debug stream.
@@ -1349,11 +1449,11 @@ namespace yy {
     const token_number_type
     translate_table[] =
     {
-     0,     2,     2,     2,     2,     3,     2,     2,     2,     2,
+     0,     3,     4,     5,     6,     7,     8,     9,    10,    11,
+      12,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,    13,     2,     2,     2,     2,    14,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -1389,5 +1489,6 @@ namespace yy {
 
 
 } // yy
-#line 1390 "parser.example.h" // lalr1.cc:1167
-#line 22 "parser.example.y" // lalr1.cc:1168
+#line 1489 "parser.example.h" // lalr1.cc:1167
+#line 155 "parser.example.y" // lalr1.cc:1168
+
