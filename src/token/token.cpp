@@ -40,7 +40,7 @@ std::string convertToString(const Token *pToken) {
                                get_keyword_type_reversed(reinterpret_cast<const Keyword *>(pToken)->key_type));
         case TokenType::Marker:
             return fmt::format("{{ .type = Marker .marker_type = {} }}",
-                               reinterpret_cast<const Marker *>(pToken)->content);
+                               get_marker_type_reversed(reinterpret_cast<const Marker *>(pToken)->marker_type));
         case TokenType::ConstantString:
             return fmt::format("{{ .type = ConstantString .content = {} }}",
                                reinterpret_cast<const ConstantString *>(pToken)->content);
@@ -128,16 +128,7 @@ ConstantBoolean::~ConstantBoolean() {
     delete[]content;
 }
 
-Marker::Marker(const char *cmarker) : Token() {
-    this->type = TokenType::Marker;
-    int l = strlen(cmarker);
-    content = new char[l + 1];
-    strcpy(const_cast<char *>(content), cmarker);
-}
 
-Marker::~Marker() {
-    delete[]content;
-}
 
 keyword_mapping key_map = {
         keyword_mapping::value_type{"to", KeywordType::To},
@@ -161,6 +152,33 @@ keyword_mapping key_map = {
         keyword_mapping::value_type{"const", KeywordType::Const}
 };
 
+marker_mapping marker_map = {
+        marker_mapping::value_type{"<>", MarkerType::NEQ},
+        marker_mapping::value_type{"<=", MarkerType::LE},
+        marker_mapping::value_type{">=", MarkerType::GE},
+        marker_mapping::value_type{"<", MarkerType::LT},
+        marker_mapping::value_type{"=", MarkerType::EQ},
+        marker_mapping::value_type{">", MarkerType::GT},
+        marker_mapping::value_type{"..", MarkerType::Range},
+
+        marker_mapping::value_type{":=", MarkerType::Assign},
+        marker_mapping::value_type{"+", MarkerType::Add},
+        marker_mapping::value_type{"-", MarkerType::Sub},
+        marker_mapping::value_type{"*", MarkerType::Mul},
+        marker_mapping::value_type{"/", MarkerType::Div},
+        marker_mapping::value_type{"mod", MarkerType::Mod},
+
+        marker_mapping::value_type{"(", MarkerType::LParen},
+        marker_mapping::value_type{")", MarkerType::RParen},
+        marker_mapping::value_type{"[", MarkerType::LBracket},
+        marker_mapping::value_type{"]", MarkerType::RBracket},
+
+        marker_mapping::value_type{",", MarkerType::Comma},
+        marker_mapping::value_type{".", MarkerType::Dot},
+        marker_mapping::value_type{";", MarkerType::Semicolon},
+        marker_mapping::value_type{":", MarkerType::Colon},
+};
+
 reverse_keyword_mapping reverse_key_map;
 
 const char *get_keyword_type_reversed(KeywordType kt) {
@@ -170,4 +188,15 @@ const char *get_keyword_type_reversed(KeywordType kt) {
         }
     }
     return reverse_key_map.at(kt);
+}
+
+reverse_marker_mapping  reverse_marker_map;
+
+const char *get_marker_type_reversed(MarkerType mt) {
+    if (reverse_marker_map.empty()) {
+        for (auto &mv : marker_map) {
+            reverse_marker_map[mv.second] = mv.first.c_str();
+        }
+    }
+    return reverse_marker_map.at(mt);
 }

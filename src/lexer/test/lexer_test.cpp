@@ -84,14 +84,15 @@ INSTANTIATE_TEST_SUITE_P(Simple, GoodLexerGetAllTokensTest, testing::Values( /* 
         LexerGetAllTokensTestCase{"a",
                                   new std::vector<Token *>({new Identifier("a")})},
         LexerGetAllTokensTestCase{"mod",
-                                  new std::vector<Token *>({new Marker("mod")})},
-        LexerGetAllTokensTestCase{"a ",
+                                  new std::vector<Token *>({new Marker(marker_map.at("mod"))})},
+        LexerGetAllTokensTestCase{"A ",
                                   new std::vector<Token *>({new Identifier("a")})},
         LexerGetAllTokensTestCase{"a b",
                                   new std::vector<Token *>({new Identifier("a"), new Identifier("b")})},
-        LexerGetAllTokensTestCase{"a b\n a",
+        LexerGetAllTokensTestCase{"a //b\n a",
                                   new std::vector<Token *>({
-                                                                   new Identifier("a"), new Identifier("b"),
-                                                                   new Identifier("a")})}
+                                                                   new Identifier("a"),
+                                                                   new Identifier("a")})},
+        LexerGetAllTokensTestCase{"To", new std::vector<Token *>({new Keyword(key_map.at("to"))})}
 ));
 

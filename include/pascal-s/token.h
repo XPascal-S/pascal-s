@@ -70,9 +70,35 @@ enum class KeywordType {
 };
 
 
+using marker_type_underlying_type = uint8_t ;
+enum class MarkerType : marker_type_underlying_type {
+    Range = 0x00, // ..
+    NEQ = 0x01, // <>
+    LE = 0x02, // <=
+    GE = 0x03, // >=
+    LT = 0x04, // <
+    EQ = 0x05, // =
+    GT = 0x06, // >
+    Add = 0x10, // +
+    Sub = 0x11, // -
+    Mod = 0x12, // %
+    Mul = 0x20, // *
+    Div = 0x21, // /
+
+    LParen = 0x30, // (
+    RParen = 0x31, // )
+    LBracket = 0x40, // [
+    RBracket = 0x41, // ]
+
+    Assign = 0x50, // :=
+    Comma = 0x51, // ,
+    Dot = 0x52, // .
+    Semicolon = 0x53, // ;
+    Colon = 0x54, // :
+};
+
 struct Keyword : public Token {
     KeywordType key_type;
-    const char* attr;
 
     explicit Keyword(KeywordType key_type) : Token(), key_type(key_type) {
         this->type = TokenType::Keyword;
@@ -130,12 +156,10 @@ struct ConstantBoolean : public Token {
 };
 
 struct Marker : public Token {
-    const char *content;
-    const char *attr;
-
-    Marker(const char *content);
-
-    ~Marker();
+    MarkerType marker_type;
+    explicit Marker(MarkerType marker_type) : Token(), marker_type(marker_type){
+        this->type = TokenType::Marker;
+    }
 };
 
 void deleteToken(Token *pToken);
@@ -146,10 +170,14 @@ std::string convertToString(const Token *pToken);
 
 using keyword_mapping = std::map<std::string, KeywordType>;
 using reverse_keyword_mapping = std::map<KeywordType, const char *>;
+using marker_mapping = std::map<std::string, MarkerType>;
+using reverse_marker_mapping = std::map<MarkerType, const char*>;
 extern keyword_mapping key_map;
 extern reverse_keyword_mapping reverse_key_map;
+extern marker_mapping marker_map;
+extern reverse_marker_mapping  reverse_marker_map;
 
 const char *get_keyword_type_reversed(KeywordType kt);
-
+const char *get_marker_type_reversed(MarkerType mt);
 #endif
 
