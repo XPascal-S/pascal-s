@@ -3,6 +3,8 @@
 #ifndef PASCAL_S_TOKEN
 #define PASCAL_S_TOKEN
 #define KEYWORD_NUM 19
+#define KEYWORDTYPE(type) ((1 << 8) | type)
+#define MARKERTYPE(type) ((2 << 8) | type)
 
 #include <stdint.h>
 #include <map>
@@ -34,6 +36,7 @@ struct Token {
     //todo: add line, column info
     line_t line;
     column_t column;
+    virtual ~Token() {};
 };
 
 enum class KeywordType {
@@ -173,6 +176,7 @@ void deleteToken(Token *pToken);
 std::string convertToString(const Token *pToken);
 
 #include <map>
+#include <string>
 
 using keyword_mapping = std::map<std::string, KeywordType>;
 using reverse_keyword_mapping = std::map<KeywordType, const char *>;

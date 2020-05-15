@@ -478,11 +478,20 @@ void printAST(Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
+    case Type::ExpKeyword : put_tab(dep);
+#define cur_node (reinterpret_cast<ExpKeyword *>(node))
+      printf("{\n");
+      put_tab(dep + 1);
+      printf("type = keyword 0x%x\n", cur_node->value->key_type);
+      put_tab(dep);
+      printf("}\n");
+#undef cur_node
+      break;
         case Type::ExpMarker : put_tab(dep);
 #define cur_node (reinterpret_cast<ExpMarker *>(node))
             printf("{\n");
             put_tab(dep + 1);
-            printf("type = marker %s\n", cur_node->value->content);
+            printf("type = marker 0x%x\n", cur_node->value->marker_type);
             put_tab(dep);
             printf("}\n");
 #undef cur_node

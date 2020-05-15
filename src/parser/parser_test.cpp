@@ -9,6 +9,10 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <deque>
+
+#define KEYWORDTYPE(type) (0x100|(int)type)
+#define MARKERTYPE(type) (0x200|(int)type)
 
 void yy::parser::error(const std::string & msg) {
     std::cout << msg << std::endl;
@@ -34,8 +38,21 @@ private:
         if ((*current_token) == nullptr) {
             return 0;
         }
-
-        return static_cast<int>(token->type);
+        switch (token->type) {
+        case TokenType::Keyword:{
+          auto keyword_token = dynamic_cast<const Keyword*>(token);
+          printf("\ntoken keyword: %x\n", static_cast<int>(KEYWORDTYPE(keyword_token->key_type)));
+          return static_cast<int>(KEYWORDTYPE(keyword_token->key_type));
+        }
+        case TokenType::Marker:{
+          auto marker_token = dynamic_cast<const Marker*>(token);
+          printf("\ntoken marker: %x\n", static_cast<int>(MARKERTYPE(marker_token->marker_type)));
+          return static_cast<int>(MARKERTYPE(marker_token->marker_type));
+        }
+        default:
+          return static_cast<int>(token->type);
+        }
+        return static_cast<int>(token->type) ;
     }
 
     // void access_ast(void * ast) override {
@@ -49,7 +66,6 @@ private:
     // }
 
     void ast_reduce_nodes(int k, Type type) override {
-      printf("size: %d k %d\n", astTreeStack.size(), k);
       if( astTreeStack.size()<k ){
         throw RuntimeReinterpretASTException(astTreeStack.back());
       }
@@ -60,7 +76,6 @@ private:
       }
       astTreeStack.push_back(par_node);
       ast_root = par_node;
-      printf("size: %d k %d\n", astTreeStack.size(), k);
     }
 
 
@@ -83,11 +98,22 @@ int main() {
   // std::vector<Token *> mocking_stream{new ConstantChar(&c)};
   // std::vector<Token *> mocking_stream{new ConstantReal("1.0")};
   std::vector<Token *> mocking_stream{
+                                      new Keyword(KeywordType::If),
                                       new Identifier("i"),
-                                      new Marker(MarkerType::Add),
+                                      new Marker(MarkerType::EQ),
+                                      new ConstantInteger("1"),
+                                      new Keyword(KeywordType::Then),
+                                      new Identifier("i"),
+                                      new Marker(MarkerType::EQ),
+                                      new Identifier("i"),
+                                      new Marker(MarkerType::Mul),
                                       new Identifier("i"),
                                       new Marker(MarkerType::Sub),
-                                      new ConstantInteger("1")
+                                      new ConstantInteger("1"),
+                                      new Keyword(KeywordType::Else),
+                                      new Identifier("i"),
+                                      new Marker(MarkerType::EQ),
+                                      new ConstantInteger("-1")
                                       // new Identifier("="),
                                       // new ConstantInteger("1"),
                                       // new Identifier("i"),
@@ -110,6 +136,7 @@ int main() {
     printf("parsed result: ");
     // printAST(parser.parsed_result);
     // deleteAST(parser.parsed_result);
+    // printf("parser stack: %d\n", parser.astTreeStack.size());
     printAST(parser.ast_root);
     // deleteAST(parser.ast_root);
     return res;

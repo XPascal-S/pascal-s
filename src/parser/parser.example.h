@@ -36,8 +36,7 @@
 
 #define YYSTYPE void *
 
-
-#line 41 "parser.example.h" // lalr1.cc:404
+#line 40 "parser.example.h" // lalr1.cc:404
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -116,7 +115,7 @@
 
 
 namespace yy {
-#line 120 "parser.example.h" // lalr1.cc:408
+#line 119 "parser.example.h" // lalr1.cc:408
 
   template <class T, class S = std::vector<T> >
   class stack
@@ -262,9 +261,48 @@ namespace yy {
         INT = 5,
         BOOL = 6,
         IDENT = 7,
-        MARKER = 8,
-        NULLP = 9,
-        LEN = 10
+        NULLPTR = 9,
+        LENGTH = 10,
+        KEYWORD_PROGRAM = 256,
+        KEYWORD_CONST = 257,
+        KEYWORD_VAR = 258,
+        KEYWORD_PROCEDURE = 259,
+        KEYWORD_FUNCTION = 260,
+        KEYWORD_BEGIN = 261,
+        KEYWORD_END = 262,
+        KEYWORD_ARRAY = 263,
+        KEYWORD_INTEGER = 264,
+        KEYWORD_REAL = 265,
+        KEYWORD_BOOLEAN = 266,
+        KEYWORD_CHAR = 267,
+        KEYWORD_IF = 268,
+        KEYWORD_THEN = 269,
+        KEYWORD_ELSE = 270,
+        KEYWORD_FOR = 271,
+        KEYWORD_TO = 272,
+        KEYWORD_DO = 273,
+        KEYWORD_OF = 274,
+        KEYWORD_LENGTH = 275,
+        MARKER_RANGE = 512,
+        MARKER_NEQ = 513,
+        MARKER_LE = 514,
+        MARKER_GE = 515,
+        MARKER_LT = 516,
+        MARKER_EQ = 517,
+        MARKER_GT = 518,
+        MARKER_ADD = 528,
+        MARKER_SUB = 529,
+        MARKER_MUL = 544,
+        MARKER_DIV = 545,
+        MARKER_LPAREN = 560,
+        MARKER_RPAREN = 561,
+        MARKER_LBRACKET = 576,
+        MARKER_RBRACKET = 577,
+        MARKER_ASSIGN = 592,
+        MARKER_COMMA = 593,
+        MARKER_DOT = 594,
+        MARKER_SEMICOLON = 595,
+        MARKER_COLON = 596
       };
     };
 
@@ -446,7 +484,7 @@ namespace yy {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const signed char yycheck_[];
+  static const unsigned char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -563,12 +601,12 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 11,     ///< Last index in yytable_.
-      yynnts_ = 7,  ///< Number of nonterminal symbols.
-      yyfinal_ = 7, ///< Termination state number.
+      yylast_ = 17,     ///< Last index in yytable_.
+      yynnts_ = 12,  ///< Number of nonterminal symbols.
+      yyfinal_ = 4, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 15  ///< Number of tokens.
+      yyntokens_ = 52  ///< Number of tokens.
     };
 
 
@@ -577,7 +615,7 @@ namespace yy {
 
 
 } // yy
-#line 577 "parser.example.h" // lalr1.cc:408
+#line 615 "parser.example.h" // lalr1.cc:408
 
 
 
@@ -585,7 +623,7 @@ namespace yy {
 
 // User implementation prologue.
 
-#line 585 "parser.example.h" // lalr1.cc:412
+#line 623 "parser.example.h" // lalr1.cc:412
 
 
 #ifndef YY_
@@ -652,7 +690,7 @@ namespace yy {
 
 
 namespace yy {
-#line 652 "parser.example.h" // lalr1.cc:479
+#line 690 "parser.example.h" // lalr1.cc:479
 
   /// Build a parser object.
   parser::parser ()
@@ -1075,97 +1113,151 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 96 "parser.example.y" // lalr1.cc:859
+#line 70 "parser.example.y" // lalr1.cc:859
     {
-  printf("expression relop=\n");
-  (yylhs.value) = (yystack_[2].value);
-  ast_reduce_nodes(3, Type::ExpAssign);
+  ast_reduce_nodes(4, Type::IfElseStatement);
 }
-#line 1081 "parser.example.h" // lalr1.cc:859
-    break;
-
-  case 3:
-#line 108 "parser.example.y" // lalr1.cc:859
-    {(yylhs.value) = (yystack_[0].value);}
-#line 1087 "parser.example.h" // lalr1.cc:859
-    break;
-
-  case 4:
-#line 112 "parser.example.y" // lalr1.cc:859
-    {printf("simple_expression addop +\n"); ast_reduce_nodes(3, Type::BiExp); }
-#line 1093 "parser.example.h" // lalr1.cc:859
-    break;
-
-  case 5:
-#line 115 "parser.example.y" // lalr1.cc:859
-    {(yylhs.value) = (yystack_[0].value);}
-#line 1099 "parser.example.h" // lalr1.cc:859
-    break;
-
-  case 6:
-#line 120 "parser.example.y" // lalr1.cc:859
-    {printf("tern mulop *"); (yylhs.value) = (yystack_[2].value);}
-#line 1105 "parser.example.h" // lalr1.cc:859
-    break;
-
-  case 7:
-#line 121 "parser.example.y" // lalr1.cc:859
-    {printf("tern mulop /"); (yylhs.value) = (yystack_[2].value);}
-#line 1111 "parser.example.h" // lalr1.cc:859
-    break;
-
-  case 8:
-#line 122 "parser.example.y" // lalr1.cc:859
-    {(yylhs.value) = (yystack_[0].value);}
 #line 1117 "parser.example.h" // lalr1.cc:859
     break;
 
-  case 9:
-#line 127 "parser.example.y" // lalr1.cc:859
+  case 3:
+#line 73 "parser.example.y" // lalr1.cc:859
     {
-  printf("access integer attribute value: %lld\n", ((const ConstantInteger*)((yystack_[0].value)))->attr);
-  (yylhs.value) = new ExpConstantInteger(((const ConstantInteger*)((yystack_[0].value))));
-  access_ast((yylhs.value));
-  // ast_insert_leaf_node($$);
+  ast_reduce_nodes(6, Type::IfElseStatement);
 }
-#line 1128 "parser.example.h" // lalr1.cc:859
+#line 1125 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 4:
+#line 77 "parser.example.y" // lalr1.cc:859
+    {
+  (yylhs.value) = new ExpKeyword((const Keyword *)((yystack_[0].value)));
+  access_ast((yylhs.value));
+}
+#line 1134 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 5:
+#line 82 "parser.example.y" // lalr1.cc:859
+    {
+  (yylhs.value) = new ExpKeyword((const Keyword *)((yystack_[0].value)));
+  access_ast((yylhs.value));
+}
+#line 1143 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 6:
+#line 87 "parser.example.y" // lalr1.cc:859
+    {
+    (yylhs.value) = new ExpKeyword((const Keyword *)((yystack_[0].value)));
+    access_ast((yylhs.value));
+}
+#line 1152 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 7:
+#line 92 "parser.example.y" // lalr1.cc:859
+    {
+  ast_reduce_nodes(3, Type::ExpAssign);
+}
+#line 1160 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 8:
+#line 102 "parser.example.y" // lalr1.cc:859
+    { }
+#line 1166 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 9:
+#line 106 "parser.example.y" // lalr1.cc:859
+    {ast_reduce_nodes(3, Type::BiExp); }
+#line 1172 "parser.example.h" // lalr1.cc:859
     break;
 
   case 10:
-#line 133 "parser.example.y" // lalr1.cc:859
-    {
-  printf("access identifier attribute attr: %s name: %s\n", ((const Identifier*)((yystack_[0].value)))->attr, ((const Identifier*)((yystack_[0].value)))->content);
-  (yylhs.value) = new Ident(((const Identifier*)((yystack_[0].value))));
-  access_ast((yylhs.value));
-  // ast_insert_leaf_node($$);
-}
-#line 1139 "parser.example.h" // lalr1.cc:859
+#line 107 "parser.example.y" // lalr1.cc:859
+    {(yylhs.value) = (yystack_[0].value);}
+#line 1178 "parser.example.h" // lalr1.cc:859
     break;
 
   case 11:
-#line 140 "parser.example.y" // lalr1.cc:859
-    {
-  printf("access marker attribute %s %s\n", ((const Marker*)((yystack_[0].value)))->attr, ((const Marker*)((yystack_[0].value)))->content);
-  (yylhs.value) = new ExpMarker(((const Marker *)((yystack_[0].value))));
-  access_ast((yylhs.value));
-  // ast_insert_leaf_node($$);
-}
-#line 1150 "parser.example.h" // lalr1.cc:859
+#line 110 "parser.example.y" // lalr1.cc:859
+    {ast_reduce_nodes(3, Type::BiExp);}
+#line 1184 "parser.example.h" // lalr1.cc:859
     break;
 
   case 12:
-#line 148 "parser.example.y" // lalr1.cc:859
+#line 111 "parser.example.y" // lalr1.cc:859
+    {  }
+#line 1190 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 13:
+#line 114 "parser.example.y" // lalr1.cc:859
     {
-  printf("access marker attribute %s %s\n", ((const Marker*)((yystack_[0].value)))->attr, ((const Marker*)((yystack_[0].value)))->content);
+  (yylhs.value) = new ExpConstantInteger(((const ConstantInteger*)((yystack_[0].value))));
+  access_ast((yylhs.value));
+}
+#line 1199 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 14:
+#line 118 "parser.example.y" // lalr1.cc:859
+    {
+  (yylhs.value) = new Ident(((const Identifier*)((yystack_[0].value))));
+  access_ast((yylhs.value));
+}
+#line 1208 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 15:
+#line 123 "parser.example.y" // lalr1.cc:859
+    {
   (yylhs.value) = new ExpMarker((const Marker *)((yystack_[0].value)));
   access_ast((yylhs.value));
-// ast_insert_leaf_node($$);
 }
-#line 1161 "parser.example.h" // lalr1.cc:859
+#line 1217 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 16:
+#line 127 "parser.example.y" // lalr1.cc:859
+    {
+  (yylhs.value) = new ExpMarker((const Marker *)((yystack_[0].value)));
+  access_ast((yylhs.value));
+}
+#line 1226 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 17:
+#line 132 "parser.example.y" // lalr1.cc:859
+    {
+  (yylhs.value) = new ExpMarker((const Marker *)((yystack_[0].value)));
+  access_ast((yylhs.value));
+}
+#line 1235 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 18:
+#line 136 "parser.example.y" // lalr1.cc:859
+    {
+  (yylhs.value) = new ExpMarker((const Marker *)((yystack_[0].value)));
+  access_ast((yylhs.value));
+  }
+#line 1244 "parser.example.h" // lalr1.cc:859
+    break;
+
+  case 19:
+#line 141 "parser.example.y" // lalr1.cc:859
+    {
+    (yylhs.value) = new ExpMarker((const Marker *)((yystack_[0].value)));
+    access_ast((yylhs.value));
+  }
+#line 1253 "parser.example.h" // lalr1.cc:859
     break;
 
 
-#line 1165 "parser.example.h" // lalr1.cc:859
+#line 1257 "parser.example.h" // lalr1.cc:859
             default:
               break;
             }
@@ -1326,69 +1418,74 @@ namespace yy {
   }
 
 
-  const signed char parser::yypact_ninf_ = -11;
+  const signed char parser::yypact_ninf_ = -37;
 
   const signed char parser::yytable_ninf_ = -1;
 
   const signed char
   parser::yypact_[] =
   {
-      -7,   -11,   -11,     1,    -3,   -10,   -11,   -11,   -11,    -7,
-      -7,    -7,    -7,   -10,    -2,   -11,   -11,   -11
+     -22,   -37,     6,    -2,   -37,   -37,   -37,   -13,   -36,   -33,
+     -37,   -37,    -2,   -37,   -37,   -37,    -2,    -2,   -37,   -37,
+      -2,   -11,   -33,   -29,   -37,   -37,    -2,   -37
   };
 
   const unsigned char
   parser::yydefact_[] =
   {
-       0,     9,    10,     0,     3,     5,     8,     1,    11,     0,
-       0,     0,     0,     4,     2,     6,     7,    11
+       0,     4,     0,     0,     1,    13,    14,     0,     8,    10,
+      12,     5,     0,    19,    15,    16,     0,     0,    17,    18,
+       0,     2,     9,     7,    11,     6,     0,     3
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-     -11,   -11,    -1,     2,    -6,   -11,   -11
+     -37,   -37,   -37,   -37,   -37,   -12,    -4,     0,    -3,   -37,
+     -37,   -37
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-      -1,     3,     4,     5,     6,     9,    10
+      -1,     2,     3,    12,    26,     7,     8,     9,    10,    16,
+      20,    17
   };
 
   const unsigned char
   parser::yytable_[] =
   {
-       1,     7,     2,    11,    12,    15,    16,     8,    17,    14,
-       0,    13
+      21,    13,     1,    14,    15,     5,     4,     6,    18,    19,
+      14,    15,    11,    23,    27,    25,    22,    24
   };
 
-  const signed char
+  const unsigned char
   parser::yycheck_[] =
   {
-       7,     0,     9,    13,    14,    11,    12,    10,    10,    10,
-      -1,     9
+      12,    37,    24,    39,    40,     7,     0,     9,    41,    42,
+      39,    40,    25,    17,    26,    26,    16,    20
   };
 
   const unsigned char
   parser::yystos_[] =
   {
-       0,     7,     9,    16,    17,    18,    19,     0,    10,    20,
-      21,    13,    14,    18,    17,    19,    19,    10
+       0,    24,    53,    54,     0,     7,     9,    57,    58,    59,
+      60,    25,    55,    37,    39,    40,    61,    63,    41,    42,
+      62,    57,    59,    58,    60,    26,    56,    57
   };
 
   const unsigned char
   parser::yyr1_[] =
   {
-       0,    15,    16,    16,    17,    17,    18,    18,    18,    19,
-      19,    20,    21
+       0,    52,    53,    53,    54,    55,    56,    57,    57,    58,
+      58,    59,    59,    60,    60,    61,    61,    62,    62,    63
   };
 
   const unsigned char
   parser::yyr2_[] =
   {
-       0,     2,     3,     1,     3,     1,     3,     3,     1,     1,
-       1,     1,     1
+       0,     2,     4,     6,     1,     1,     1,     3,     1,     3,
+       1,     3,     1,     1,     1,     1,     1,     1,     1,     1
   };
 
 
@@ -1399,16 +1496,26 @@ namespace yy {
   const parser::yytname_[] =
   {
   "$end", "error", "$undefined", "KWORD", "STR", "CHAR", "REAL", "INT",
-  "BOOL", "IDENT", "MARKER", "NULLP", "LEN", "'*'", "'/'", "$accept",
-  "expression", "simple_expression", "term", "factor", "addop", "relop", YY_NULLPTR
+  "BOOL", "IDENT", "NULLPTR", "LENGTH", "KEYWORD_PROGRAM", "KEYWORD_CONST",
+  "KEYWORD_VAR", "KEYWORD_PROCEDURE", "KEYWORD_FUNCTION", "KEYWORD_BEGIN",
+  "KEYWORD_END", "KEYWORD_ARRAY", "KEYWORD_INTEGER", "KEYWORD_REAL",
+  "KEYWORD_BOOLEAN", "KEYWORD_CHAR", "KEYWORD_IF", "KEYWORD_THEN",
+  "KEYWORD_ELSE", "KEYWORD_FOR", "KEYWORD_TO", "KEYWORD_DO", "KEYWORD_OF",
+  "KEYWORD_LENGTH", "MARKER_RANGE", "MARKER_NEQ", "MARKER_LE", "MARKER_GE",
+  "MARKER_LT", "MARKER_EQ", "MARKER_GT", "MARKER_ADD", "MARKER_SUB",
+  "MARKER_MUL", "MARKER_DIV", "MARKER_LPAREN", "MARKER_RPAREN",
+  "MARKER_LBRACKET", "MARKER_RBRACKET", "MARKER_ASSIGN", "MARKER_COMMA",
+  "MARKER_DOT", "MARKER_SEMICOLON", "MARKER_COLON", "$accept",
+  "ifstatement", "if", "then", "else", "expression", "simple_expression",
+  "term", "factor", "addop", "mulop", "relop", YY_NULLPTR
   };
 
 
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    96,    96,   108,   112,   115,   120,   121,   122,   127,
-     133,   140,   148
+       0,    70,    70,    73,    77,    82,    87,    92,   102,   106,
+     107,   110,   111,   114,   118,   123,   127,   132,   136,   141
   };
 
   // Print the state stack on the debug stream.
@@ -1449,11 +1556,8 @@ namespace yy {
     const token_number_type
     translate_table[] =
     {
-     0,     3,     4,     5,     6,     7,     8,     9,    10,    11,
-      12,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,    13,     2,     2,     2,     2,    14,     2,     2,
+     0,     3,     4,     5,     6,     7,     8,     9,     2,    10,
+      11,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -1474,9 +1578,46 @@ namespace yy {
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     1,     2
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,    12,    13,    14,    15,
+      16,    17,    18,    19,    20,    21,    22,    23,    24,    25,
+      26,    27,    28,    29,    30,    31,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,    32,    33,    34,    35,    36,    37,    38,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,    39,    40,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,    41,    42,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      43,    44,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,    45,    46,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,    47,    48,    49,    50,    51,     1,     2
     };
-    const unsigned int user_token_number_max_ = 257;
+    const unsigned int user_token_number_max_ = 598;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -1489,6 +1630,6 @@ namespace yy {
 
 
 } // yy
-#line 1489 "parser.example.h" // lalr1.cc:1167
-#line 155 "parser.example.y" // lalr1.cc:1168
+#line 1630 "parser.example.h" // lalr1.cc:1167
+#line 146 "parser.example.y" // lalr1.cc:1168
 
