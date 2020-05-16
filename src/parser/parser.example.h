@@ -254,7 +254,7 @@ namespace yy {
     {
       enum yytokentype
       {
-        KWORD = 1,
+        KEYWORD = 1,
         STR = 2,
         CHAR = 3,
         REAL = 4,
@@ -1113,7 +1113,7 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 70 "parser.example.y" // lalr1.cc:859
+#line 72 "parser.example.y" // lalr1.cc:859
     {
   ast_reduce_nodes(4, Type::IfElseStatement);
 }
@@ -1121,7 +1121,7 @@ namespace yy {
     break;
 
   case 3:
-#line 73 "parser.example.y" // lalr1.cc:859
+#line 75 "parser.example.y" // lalr1.cc:859
     {
   ast_reduce_nodes(6, Type::IfElseStatement);
 }
@@ -1129,7 +1129,7 @@ namespace yy {
     break;
 
   case 4:
-#line 77 "parser.example.y" // lalr1.cc:859
+#line 79 "parser.example.y" // lalr1.cc:859
     {
   (yylhs.value) = new ExpKeyword((const Keyword *)((yystack_[0].value)));
   access_ast((yylhs.value));
@@ -1138,7 +1138,7 @@ namespace yy {
     break;
 
   case 5:
-#line 82 "parser.example.y" // lalr1.cc:859
+#line 84 "parser.example.y" // lalr1.cc:859
     {
   (yylhs.value) = new ExpKeyword((const Keyword *)((yystack_[0].value)));
   access_ast((yylhs.value));
@@ -1147,16 +1147,16 @@ namespace yy {
     break;
 
   case 6:
-#line 87 "parser.example.y" // lalr1.cc:859
+#line 89 "parser.example.y" // lalr1.cc:859
     {
-    (yylhs.value) = new ExpKeyword((const Keyword *)((yystack_[0].value)));
-    access_ast((yylhs.value));
+  (yylhs.value) = new ExpKeyword((const Keyword *)((yystack_[0].value)));
+  access_ast((yylhs.value));
 }
 #line 1152 "parser.example.h" // lalr1.cc:859
     break;
 
   case 7:
-#line 92 "parser.example.y" // lalr1.cc:859
+#line 94 "parser.example.y" // lalr1.cc:859
     {
   ast_reduce_nodes(3, Type::ExpAssign);
 }
@@ -1164,19 +1164,19 @@ namespace yy {
     break;
 
   case 8:
-#line 102 "parser.example.y" // lalr1.cc:859
+#line 104 "parser.example.y" // lalr1.cc:859
     { }
 #line 1166 "parser.example.h" // lalr1.cc:859
     break;
 
   case 9:
-#line 106 "parser.example.y" // lalr1.cc:859
+#line 107 "parser.example.y" // lalr1.cc:859
     {ast_reduce_nodes(3, Type::BiExp); }
 #line 1172 "parser.example.h" // lalr1.cc:859
     break;
 
   case 10:
-#line 107 "parser.example.y" // lalr1.cc:859
+#line 108 "parser.example.y" // lalr1.cc:859
     {(yylhs.value) = (yystack_[0].value);}
 #line 1178 "parser.example.h" // lalr1.cc:859
     break;
@@ -1250,9 +1250,9 @@ namespace yy {
   case 19:
 #line 141 "parser.example.y" // lalr1.cc:859
     {
-    (yylhs.value) = new ExpMarker((const Marker *)((yystack_[0].value)));
-    access_ast((yylhs.value));
-  }
+  (yylhs.value) = new ExpMarker((const Marker *)((yystack_[0].value)));
+  access_ast((yylhs.value));
+}
 #line 1253 "parser.example.h" // lalr1.cc:859
     break;
 
@@ -1495,7 +1495,7 @@ namespace yy {
   const char*
   const parser::yytname_[] =
   {
-  "$end", "error", "$undefined", "KWORD", "STR", "CHAR", "REAL", "INT",
+  "$end", "error", "$undefined", "KEYWORD", "STR", "CHAR", "REAL", "INT",
   "BOOL", "IDENT", "NULLPTR", "LENGTH", "KEYWORD_PROGRAM", "KEYWORD_CONST",
   "KEYWORD_VAR", "KEYWORD_PROCEDURE", "KEYWORD_FUNCTION", "KEYWORD_BEGIN",
   "KEYWORD_END", "KEYWORD_ARRAY", "KEYWORD_INTEGER", "KEYWORD_REAL",
@@ -1514,8 +1514,8 @@ namespace yy {
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    70,    70,    73,    77,    82,    87,    92,   102,   106,
-     107,   110,   111,   114,   118,   123,   127,   132,   136,   141
+       0,    72,    72,    75,    79,    84,    89,    94,   104,   107,
+     108,   110,   111,   114,   118,   123,   127,   132,   136,   141
   };
 
   // Print the state stack on the debug stream.

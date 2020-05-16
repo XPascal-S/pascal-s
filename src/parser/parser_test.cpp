@@ -10,6 +10,7 @@
 #include <string>
 #include <iostream>
 #include <deque>
+#include <algorithm>
 
 #define KEYWORDTYPE(type) (0x100|(int)type)
 #define MARKERTYPE(type) (0x200|(int)type)
@@ -29,7 +30,7 @@ public:
     Node * parsed_result;
     Node * ast_root;
 
-    std::deque<Node *> astTreeStack;
+    std::vector<Node *> astTreeStack;
 
 private:
     int yylex(void ** current_token) override {
@@ -72,12 +73,12 @@ private:
       Node *par_node = new Node(type);
       for(int i=0;i<k;++i){
         Node* n = astTreeStack.back(); astTreeStack.pop_back();
-        par_node->children.push_front(n);
+        par_node->children.push_back(n);
       }
+      reverse(par_node->children.begin(), par_node->children.end());
       astTreeStack.push_back(par_node);
       ast_root = par_node;
     }
-
 
 };
 
@@ -131,13 +132,13 @@ int main() {
 
   for (auto tok : lexer.token_stream) {
     deleteToken(tok);
-    }
+  }
 
-    printf("parsed result: ");
-    // printAST(parser.parsed_result);
-    // deleteAST(parser.parsed_result);
-    // printf("parser stack: %d\n", parser.astTreeStack.size());
-    printAST(parser.ast_root);
-    // deleteAST(parser.ast_root);
-    return res;
+  printf("parsed result: ");
+  // printAST(parser.parsed_result);
+  // deleteAST(parser.parsed_result);
+  // printf("parser stack: %d\n", parser.astTreeStack.size());
+  printAST(parser.ast_root);
+  // deleteAST(parser.ast_root);
+  return res;
 }

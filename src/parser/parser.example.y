@@ -87,8 +87,8 @@ then: KEYWORD_THEN {
 }
 
 else : KEYWORD_ELSE {
-    $$ = new ExpKeyword((const Keyword *)($1));
-    access_ast($$);
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
 }
 
 expression : simple_expression relop simple_expression {
@@ -102,15 +102,13 @@ expression : simple_expression relop simple_expression {
 // | simple_expression '>' simple_expression {printf("expression relop>\n"); }
 // | simple_expression ">=" simple_expression {printf("expression relop>=\n"); }
 | simple_expression { }
-;
 
 simple_expression:
 simple_expression addop term {ast_reduce_nodes(3, Type::BiExp); }
 | term {$$ = $1;}
-;
 
 term : term mulop factor{ast_reduce_nodes(3, Type::BiExp);}
-| factor {  };
+| factor {  }
 
 factor:
 INT {
@@ -141,8 +139,8 @@ mulop : MARKER_MUL {
   }
 
 relop : MARKER_EQ {
-    $$ = new ExpMarker((const Marker *)($1));
-    access_ast($$);
-  }
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
 
 %%

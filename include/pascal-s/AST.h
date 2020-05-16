@@ -89,7 +89,7 @@ struct Node {//�ڵ����
 
     Type type;
 
-    std::deque<Node *> children;
+    std::vector<Node *> children;
 
     explicit Node(Type type) : type(type) {}
 
@@ -547,7 +547,6 @@ struct ExpMarker : public Exp {
 
 struct ExpKeyword : public Node{
   const Keyword* value;
-
   explicit ExpKeyword(const Keyword *value) : Node(Type::ExpKeyword), value(value) {}
 };
 
