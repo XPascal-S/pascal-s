@@ -5,7 +5,7 @@ project(pascal-s)
 # test_main source files -> compile to lib to reduce compile time
 add_library(gtest-main STATIC test/test-main.cpp)
 target_link_libraries(gtest-main gtest)
-target_include_directories(gtest-main SYSTEM PUBLIC gtest gmock fmt)
+target_include_directories(gtest-main SYSTEM PUBLIC gtest gmock fmt pybind11)
 
 # description: create a gtest target
 # param:

@@ -7,8 +7,8 @@
 #include "token.h"
 
 #include <vector>
+#include <cstring>
 #include <utility>
-#include <deque>
 
 
 
@@ -93,6 +93,7 @@ struct Node {//�ڵ����
 
     explicit Node(Type type) : type(type) {}
 
+     char* GetTokenSymbol();
 };
 
 

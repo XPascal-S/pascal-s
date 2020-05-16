@@ -5,6 +5,7 @@ project(pascal-s)
 message(${CMAKE_SYSTEM_NAME} " " ${CMAKE_SYSTEM_PROCESSOR} " " ${CMAKE_SYSTEM_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_definitions(-DYY_NO_UNISTD_H)
@@ -27,6 +28,10 @@ include_directories(fmt/include)
 #flex
 include_directories(flex/src)
 
+#pybind11
+add_subdirectory(pybind11)
+include_directories(pybind11/include)
+include_directories(/usr/include/python3.6)
 
 # include files
 include_directories(include)

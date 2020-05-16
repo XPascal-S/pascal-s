@@ -1,9 +1,8 @@
-
-#include <pascal-s/token.h>
+#include <cstdlib>
 #include <cstring>
 #include <fmt/core.h>
-#include <cassert>
-#include <cstdlib>
+#include <pascal-s/token.h>
+#include <string>
 
 void deleteToken(Token *pToken) {
     switch (pToken->type) {
@@ -60,6 +59,14 @@ std::string convertToString(const Token *pToken) {
             throw RuntimeReinterpretTokenException(pToken);
     }
     assert(false);
+}
+
+Keyword::Keyword(const char *attr, KeywordType key_type)
+    : Token(), key_type(key_type) {
+  this->type = TokenType::Keyword;
+  int l = strlen(attr);
+  this->attr = new char[l + 1];
+  strcpy(const_cast<char *>(this->attr), attr);
 }
 
 ConstantReal::ConstantReal(const char *creal) : Token() {
@@ -133,6 +140,18 @@ Marker::Marker(const char *cmarker) : Token() {
     int l = strlen(cmarker);
     content = new char[l + 1];
     strcpy(const_cast<char *>(content), cmarker);
+}
+
+Marker::Marker(MarkerType marker_type) : Token(), marker_type(marker_type) {
+  this->type = TokenType::Marker;
+}
+
+Marker::Marker(const char *cmarker, MarkerType marker_type)
+  : Token(), marker_type(marker_type) {
+  this->type = TokenType::Marker;
+  int l = strlen(cmarker);
+  content = new char[l + 1];
+  strcpy(const_cast<char *>(content), cmarker);
 }
 
 Marker::~Marker() {

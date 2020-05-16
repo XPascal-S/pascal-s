@@ -3,11 +3,10 @@
 #ifndef PASCAL_S_TOKEN
 #define PASCAL_S_TOKEN
 #define KEYWORD_NUM 19
-#define KEYWORDTYPE(type) ((1 << 8) | type)
-#define MARKERTYPE(type) ((2 << 8) | type)
 
 #include <stdint.h>
 #include <map>
+#include <cassert>
 #include "exception.h"
 
 struct LexerInfo {
@@ -102,6 +101,8 @@ struct Keyword : public Token {
     KeywordType key_type;
     const char* attr;
 
+    explicit Keyword(const char *attr, KeywordType key_type);
+
     explicit Keyword(KeywordType key_type) : Token(), key_type(key_type) {
         this->type = TokenType::Keyword;
     }
@@ -164,9 +165,9 @@ struct Marker : public Token {
 
     Marker(const char *content);
 
-    explicit Marker(MarkerType marker_type) : Token(), marker_type(marker_type) {
-      this->type = TokenType::Marker;
-    }
+    explicit Marker(MarkerType marker_type);
+
+    explicit Marker(const char *content, MarkerType marker_type);
 
     ~Marker();
 };

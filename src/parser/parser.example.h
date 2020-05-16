@@ -1251,13 +1251,15 @@ namespace yy {
 #line 141 "parser.example.y" // lalr1.cc:859
     {
   (yylhs.value) = new ExpMarker((const Marker *)((yystack_[0].value)));
+  const Marker* test = static_cast<const Marker *>(static_cast<const ExpMarker *>((yylhs.value))->value);
+  printf("\n\n\n\n\nmarker eq: %s\n\n\n\n\n", test->content);
   access_ast((yylhs.value));
 }
-#line 1253 "parser.example.h" // lalr1.cc:859
+#line 1255 "parser.example.h" // lalr1.cc:859
     break;
 
 
-#line 1257 "parser.example.h" // lalr1.cc:859
+#line 1259 "parser.example.h" // lalr1.cc:859
             default:
               break;
             }
@@ -1630,6 +1632,6 @@ namespace yy {
 
 
 } // yy
-#line 1630 "parser.example.h" // lalr1.cc:1167
-#line 146 "parser.example.y" // lalr1.cc:1168
+#line 1632 "parser.example.h" // lalr1.cc:1167
+#line 148 "parser.example.y" // lalr1.cc:1168
 
