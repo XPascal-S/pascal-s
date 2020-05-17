@@ -65,31 +65,379 @@
 /* %token int 5 */
 /* %token boolean 6 */
 
-%start ifstatement
+%start 
 
 %%
 
-ifstatement: if expression then expression{
-  ast_reduce_nodes(4, Type::IfElseStatement);
+programstruct:program_head semicolon program_body dot {ast_reduce_nodes(4, Type::Program);}
+    ;
+
+dot: MARKER_DOT{
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
 }
-| if expression then expression else expression{
-  ast_reduce_nodes(6, Type::IfElseStatement);
+;
+
+program_head:
+  program id lparen idlist rparen  {ast_reduce_nodes(5, Type::Program);}
+| program id                      {ast_reduce_nodes(2, Type::Program);}
+;
+
+program:KEYWORD_PROGRAM{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
 }
+;
+
+program_body:const_declarations var_declarations subprogram_declarations compound_statement  {ast_reduce_nodes(4, Type::Program);}
+    ;
+
+idlist:
+  idlist comma id  {ast_reduce_nodes(2, Type::IdentList);}
+| id             {$$ = $1;}
+;
+
+const_declarations:
+  const const_declaration ';'{ast_reduce_nodes(2, Type::ConstDecls);}
+|                                       { }
+;
+
+const:KEYWORD_CONST{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+const_declaration:
+  const_declaration semicolon id eq const_value {ast_reduce_nodes(5, Type::ConstDecls);}
+|id eq const_value           {ast_reduce_nodes(3, Type::ConstDecls);}
+;
+
+eq:MARKER_EQ {
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
+  }
+;
+
+const_value:add num          {ast_reduce_nodes(2, Type::Statement);}
+    |sub num             {ast_reduce_nodes(2, Type::Statement);}
+    |num                {$$ = $1;}
+    |quo char quo        {ast_reduce_nodes(3, Type::Statement);}
+    ;
+
+quo:MARKER_QUO {                   // to do!!!!!!
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
+; 
+
+num:INT {
+  $$ = new ExpConstantInteger(((const ConstantInteger*)($1)));
+  access_ast($$);
+}
+;
+
+char:CHAR {
+  $$ = new ExpConstantChar(((const ConstantChar*)($1)));
+  access_ast($$);
+}
+;
+
+add:MARKER_ADD {
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
+; 
+
+sub:MARKER_SUB {
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
+;
+
+var_declarations:              { }
+|var var_declaration semicolon {ast_reduce_nodes(3, Type::VarDecls);}
+;
+
+var_declaration:
+  var_declaration semicolon idlist colon type   {ast_reduce_nodes(5, Type::VarDecls);}
+| idlist colon type                             {ast_reduce_nodes(3, Type::VarDecls);}
+;
+
+type:
+  basic_type                               {$$ = $1;}
+| array lbracket period rbracket of basic_type         {ast_reduce_nodes(6, Type::TypeSpec);}
+;
+
+array:KEYWORD_ARRAY{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+of:KEYWORD_OF{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+basic_type:
+  integer           {$$ = $1;}
+| real          {$$ = $1;}
+| boolean          {$$ = $1;}
+| char          {$$ = $1;}
+;
+
+integer:KEYWORD_INTEGER{
+  $$ = new BasicTypeSpec((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+char:KEYWORD_CHAR{
+  $$ = new BasicTypeSpec((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+real:KEYWORD_REAL{
+  $$ = new BasicTypeSpec((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+boolean:KEYWORD_BOOLEAN{
+  $$ = new BasicTypeSpec((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+period:
+  period comma num range num        {ast_reduce_nodes(3, Type::ArrayTypeSpec);}
+| num range num                    {ast_reduce_nodes(3, Type::ArrayTypeSpec);}
+;
+
+range: MARKER_RANGE{
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
+
+subprogram_declarations:                    { }
+| subprogram_declarations subprogram semicolon  {ast_reduce_nodes(3, Type::Program);}
+;
+
+subprogram:
+  subprogram_head semicolon subprogram_body {ast_reduce_nodes(3, Type::Program);}
+;
+
+subprogram_head:
+  procedure id formal_parameter   {ast_reduce_nodes(3, Type::Procedure );}
+| function id formal_parameter colon basic_type  {ast_reduce_nodes(5, Type::FunctionDecl);}
+;
+
+procedure:KEYWORD_PROCEDURE{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+function:KEYWORD_FUNCTION{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+formal_parameter:               {   }
+|lparen parameter_list rparen       {ast_reduce_nodes(3, Type::ParamList);}
+;
+
+parameter_list:
+  parameter_list semicolon parameter   {ast_reduce_nodes(2, Type::ParamList);}
+| parameter                     {$$ = $1;}
+;
+
+parameter:
+  var_parameter         {$$ = $1;}
+| value_parameter       {$$ = $1;}
+;
+
+var_parameter: 
+  var value_parameter  {
+   ast_reduce_nodes(2, Type::VarDecl);
+}
+;
+
+var:KEYWORD_VAR{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+
+value_parameter: 
+  idlist colon basic_type       {
+    ast_reduce_nodes(3, Type::VarDecl);
+}
+;
+
+colon: MARKER_COLON{
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
+
+subprogram_body:
+const_declarations var_declarations compound_statement  {ast_reduce_nodes(3, Type::Statement);}
+;
+
+compound_statement:
+begin statement_list end         {ast_reduce_nodes(3, Type::Statement);}
+;
+
+begin:KEYWORD_BEGIN{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+end:KEYWORD_END{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+statement_list:
+  statement_list semicolon statement     {ast_reduce_nodes(3, Type::Statement);}
+| statement                              {$$ = $1;}
+;
+
+semicolon: MARKER_SEMICOLON{
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
+
+statement:
+| variable assign expression                        {ast_reduce_nodes(3, Type::Statement);}
+| procedure_call                                    {$$ = $1;}
+| compound_statement                                {$$ = $1;}
+| if expression then statement else_part            {ast_reduce_nodes(5, Type::IfElseStatement);}
+| for id assign expression to expression do statement {ast_reduce_nodes(8, Type::ForStatement);}
+| READ lparen variable_list rparen
+| WRITE lparen expression_list rparen
+;
+
+for:KEYWORD_FOR{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+to:KEYWORD_TO{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+do:KEYWORD_DO{
+  $$ = new ExpKeyword((const Keyword *)($1));
+  access_ast($$);
+}
+;
+
+assign: MARKER_ASSIGN{
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
+
+else_part:           /*empty*/
+|else statement    {
+  ast_reduce_nodes(2, Type::IfElseStatement);
+} 
+;
 
 if : KEYWORD_IF {
   $$ = new ExpKeyword((const Keyword *)($1));
   access_ast($$);
 }
+;
 
 then: KEYWORD_THEN {
   $$ = new ExpKeyword((const Keyword *)($1));
   access_ast($$);
 }
+;
 
 else : KEYWORD_ELSE {
-  $$ = new ExpKeyword((const Keyword *)($1));
+    $$ = new ExpKeyword((const Keyword *)($1));
+    access_ast($$);
+}
+;
+
+variable_list:variable_list comma variable  {printf("variable_list\n"); ast_reduce_nodes(3, Type::Statement);}
+| variable                                {$$ = $1;}
+;
+
+variable:
+  id id_varpart  {
+  printf("access ID attribute value: %s\n", ((const Identifier*)($1))->attr);
+  ast_reduce_nodes(2,Type::Statement);
+}
+;
+
+id_varpart:                 /*empty*/
+| lbracket expression_list rbracket {
+    ast_reduce_nodes(3,Type::Statement);
+  }
+;
+
+lbracket: MARKER_LBRACKET{
+  $$ = new ExpMarker((const Marker *)($1));
   access_ast($$);
 }
+
+rbracket: MARKER_RBRACKET{
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
+
+procedure_call:
+  id          {
+    printf("access ID attribute value: %s\n", ((const Identifier*)($1))->attr);
+    ast_reduce_nodes(1,Type::ExpCall);
+  }
+| id lparen expression_list rparen    {
+    printf("access ID attribute value: %s\n", ((const Identifier*)($1))->attr);
+    ast_reduce_nodes(4,Type::ExpCall);
+  }
+;
+
+lparen: MARKER_LPAREN{
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
+
+rparen: MARKER_RPAREN{
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
+
+id: IDENT{
+    $$ = new ExpMarker((const Identifier *)($1));
+    access_ast($$);
+}
+
+expression_list:
+  expression_list comma expression {
+    printf("expression list , expression\n");
+    ast_reduce_nodes(3, Type::Exp);
+}
+| expression                   {$$ = $1;}
+;
+
+comma : MARKER_COMMA {
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
+}
+;
 
 expression : simple_expression relop simple_expression {
   ast_reduce_nodes(3, Type::ExpAssign);
@@ -102,13 +450,15 @@ expression : simple_expression relop simple_expression {
 // | simple_expression '>' simple_expression {printf("expression relop>\n"); }
 // | simple_expression ">=" simple_expression {printf("expression relop>=\n"); }
 | simple_expression { }
+;
 
 simple_expression:
 simple_expression addop term {ast_reduce_nodes(3, Type::BiExp); }
 | term {$$ = $1;}
+;
 
 term : term mulop factor{ast_reduce_nodes(3, Type::BiExp);}
-| factor {  }
+| factor {  };
 
 factor:
 INT {
@@ -128,6 +478,11 @@ addop : MARKER_ADD {
   $$ = new ExpMarker((const Marker *)($1));
   access_ast($$);
 }
+| MARKER_OR{
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
+
 
 mulop : MARKER_MUL {
   $$ = new ExpMarker((const Marker *)($1));
@@ -137,10 +492,37 @@ mulop : MARKER_MUL {
   $$ = new ExpMarker((const Marker *)($1));
   access_ast($$);
   }
-
-relop : MARKER_EQ {
+| MARKER_MOD {
   $$ = new ExpMarker((const Marker *)($1));
   access_ast($$);
-}
+  }
+| MARKER_AND {
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+  }
 
+relop : MARKER_EQ {
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
+  }
+| MARKER_NEQ {
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
+  }
+| MARKER_LT {
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
+  }
+| MARKER_GT {
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
+  }
+| MARKER_LE {
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
+  }
+| MARKER_GE {
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
+  }
 %%
