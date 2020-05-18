@@ -1,3 +1,5 @@
+import math
+
 import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
@@ -13,7 +15,7 @@ sizes = {}
 
 def travel_tree(ast_g, node: py_ast.Node, dep):
     ast_g.add_node(node)
-    sizes[node] = 1000 / dep
+    sizes[node] = 1000 / (math.log10(dep) + 1)
     if not node.children:
         labels[node] = node.GetTokenSymbol()
     else:
@@ -28,6 +30,8 @@ ast_root = py_ast.ParseToken()
 travel_tree(G, ast_root, 1)
 pos = graphviz_layout(G, prog='dot')
 plt.figure(figsize=(16, 9))
-nx.draw(G, pos, alpha=0.5, node_sizes=sizes, arrows=True)
-nx.draw_networkx_labels(G, pos, labels)
+nx.draw(G, pos, alpha=0.5, node_size=list(
+    sizes.values()), arrows=True, node_shape='o')
+nx.draw_networkx_labels(
+    G, dict(map(lambda x: (x[0], (x[1][0], x[1][1]-15)), pos.items())), labels)
 plt.show()
