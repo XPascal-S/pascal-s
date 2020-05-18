@@ -60,17 +60,33 @@
 %token  MARKER_SEMICOLON   0x253
 %token  MARKER_COLON       0x254
 
+ // TODO
+%token  MARKER_AND         0xfff0
+%token  MARKER_OR          0xfff1
+%token  MARKER_MOD         0xfff2
+%token  MARKER_QUO         0xfff3
+
+
+ // TODO
+%token  READ               0xffff0
+%token  WRITE              0xffff1
+
 /* %token char 3 */
 /* %token real 4 */
 /* %token int 5 */
 /* %token boolean 6 */
 
-%start 
+ // %nonassoc IFX
+ // %nonassoc ELSE
 
+%start programstruct
+ // %start statement
 %%
 
-programstruct:program_head semicolon program_body dot {ast_reduce_nodes(4, Type::Program);}
-    ;
+programstruct: program_head semicolon program_body dot {
+  ast_reduce_nodes(4, Type::Program);
+ }
+;
 
 dot: MARKER_DOT{
   $$ = new ExpMarker((const Marker *)($1));
@@ -79,7 +95,7 @@ dot: MARKER_DOT{
 ;
 
 program_head:
-  program id lparen idlist rparen  {ast_reduce_nodes(5, Type::Program);}
+  program id lparen idlist rparen {ast_reduce_nodes(5, Type::Program);}
 | program id                      {ast_reduce_nodes(2, Type::Program);}
 ;
 
@@ -89,17 +105,19 @@ program:KEYWORD_PROGRAM{
 }
 ;
 
-program_body:const_declarations var_declarations subprogram_declarations compound_statement  {ast_reduce_nodes(4, Type::Program);}
-    ;
+program_body : const_declarations var_declarations subprogram_declarations compound_statement {
+  ast_reduce_nodes(4, Type::Program);
+}
+;
 
 idlist:
-  idlist comma id  {ast_reduce_nodes(2, Type::IdentList);}
+  idlist comma id  {ast_reduce_nodes(3, Type::IdentList);}
 | id             {$$ = $1;}
 ;
 
 const_declarations:
-  const const_declaration ';'{ast_reduce_nodes(2, Type::ConstDecls);}
-|                                       { }
+  const const_declaration semicolon {ast_reduce_nodes(3, Type::ConstDecls);}
+|                                       { $$ = new ExpVoid();  access_ast($$); }
 ;
 
 const:KEYWORD_CONST{
@@ -129,7 +147,7 @@ quo:MARKER_QUO {                   // to do!!!!!!
   $$ = new ExpMarker((const Marker *)($1));
   access_ast($$);
 }
-; 
+;
 
 num:INT {
   $$ = new ExpConstantInteger(((const ConstantInteger*)($1)));
@@ -147,7 +165,7 @@ add:MARKER_ADD {
   $$ = new ExpMarker((const Marker *)($1));
   access_ast($$);
 }
-; 
+;
 
 sub:MARKER_SUB {
   $$ = new ExpMarker((const Marker *)($1));
@@ -155,7 +173,7 @@ sub:MARKER_SUB {
 }
 ;
 
-var_declarations:              { }
+var_declarations:              { $$ = new ExpVoid();  access_ast($$); }
 |var var_declaration semicolon {ast_reduce_nodes(3, Type::VarDecls);}
 ;
 
@@ -213,7 +231,7 @@ boolean:KEYWORD_BOOLEAN{
 ;
 
 period:
-  period comma num range num        {ast_reduce_nodes(3, Type::ArrayTypeSpec);}
+  period comma num range num        {ast_reduce_nodes(5, Type::ArrayTypeSpec);}
 | num range num                    {ast_reduce_nodes(3, Type::ArrayTypeSpec);}
 ;
 
@@ -222,7 +240,7 @@ range: MARKER_RANGE{
   access_ast($$);
 }
 
-subprogram_declarations:                    { }
+subprogram_declarations:                    { $$ = new ExpVoid();  access_ast($$); }
 | subprogram_declarations subprogram semicolon  {ast_reduce_nodes(3, Type::Program);}
 ;
 
@@ -247,7 +265,7 @@ function:KEYWORD_FUNCTION{
 }
 ;
 
-formal_parameter:               {   }
+formal_parameter:               { $$ = new ExpVoid();  access_ast($$);  }
 |lparen parameter_list rparen       {ast_reduce_nodes(3, Type::ParamList);}
 ;
 
@@ -261,7 +279,7 @@ parameter:
 | value_parameter       {$$ = $1;}
 ;
 
-var_parameter: 
+var_parameter:
   var value_parameter  {
    ast_reduce_nodes(2, Type::VarDecl);
 }
@@ -274,7 +292,7 @@ var:KEYWORD_VAR{
 ;
 
 
-value_parameter: 
+value_parameter:
   idlist colon basic_type       {
     ast_reduce_nodes(3, Type::VarDecl);
 }
@@ -315,14 +333,15 @@ semicolon: MARKER_SEMICOLON{
   access_ast($$);
 }
 
-statement:
+statement:                                          {$$ = new ExpVoid();  access_ast($$);}
 | variable assign expression                        {ast_reduce_nodes(3, Type::Statement);}
 | procedure_call                                    {$$ = $1;}
 | compound_statement                                {$$ = $1;}
-| if expression then statement else_part            {ast_reduce_nodes(5, Type::IfElseStatement);}
+  if expression then statement else_part            {ast_reduce_nodes(5, Type::IfElseStatement);}
+// if expression then statement else statement            {ast_reduce_nodes(5, Type::IfElseStatement);}
 | for id assign expression to expression do statement {ast_reduce_nodes(8, Type::ForStatement);}
-| READ lparen variable_list rparen
-| WRITE lparen expression_list rparen
+| READ lparen variable_list rparen                   {}
+| WRITE lparen expression_list rparen                {}
 ;
 
 for:KEYWORD_FOR{
@@ -349,9 +368,9 @@ assign: MARKER_ASSIGN{
 }
 
 else_part:           /*empty*/
-|else statement    {
+  else statement    {
   ast_reduce_nodes(2, Type::IfElseStatement);
-} 
+}
 ;
 
 if : KEYWORD_IF {
@@ -421,7 +440,7 @@ rparen: MARKER_RPAREN{
 }
 
 id: IDENT{
-    $$ = new ExpMarker((const Identifier *)($1));
+    $$ = new Ident((const Identifier *)($1));
     access_ast($$);
 }
 

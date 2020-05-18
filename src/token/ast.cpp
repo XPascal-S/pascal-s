@@ -5,6 +5,8 @@
 #include <pascal-s/AST.h>
 #include <pascal-s/exception.h>
 #include <cstdio>
+#include <cstring>
+#include <cstdlib>
 
 void deleteAST(Node *node) {
     if (node == nullptr) {
@@ -29,6 +31,9 @@ void deleteAST(Node *node) {
         case Type::StatementBlock:
             delete reinterpret_cast<StatementBlock *>(node);
             break;
+        case Type::Statement:
+          delete reinterpret_cast<Statement *>(node);
+          break;
         case Type::ExpCall:
             delete reinterpret_cast<ExpCall *>(node);
             break;
@@ -71,6 +76,12 @@ void deleteAST(Node *node) {
         case Type::ExpAssign:
             delete reinterpret_cast<ExpAssign *>(node);
             break;
+        case Type::Exp:
+          delete reinterpret_cast<Exp *>(node);
+          break;
+        case Type::TypeSpec:
+          delete reinterpret_cast<TypeSpec *>(node);
+          break;
         case Type::UnExp:
             delete reinterpret_cast<UnExp *>(node);
             break;
@@ -98,6 +109,15 @@ void deleteAST(Node *node) {
         case Type::ArrayTypeSpec:
             delete reinterpret_cast<ArrayTypeSpec *>(node);
             break;
+        case Type::ExpKeyword:
+            delete reinterpret_cast<ExpKeyword *>(node);
+            break;
+        case Type::ExpMarker:
+            delete reinterpret_cast<ExpMarker *>(node);
+            break;
+        case Type::ExpVoid:
+            delete reinterpret_cast<ExpVoid *>(node);
+            break;
     }
 }
 
@@ -114,7 +134,7 @@ void printAST(Node *node, int dep) {
         return;
     }
     switch (node->type) {
-        default:
+    default:
         case Type::Unknown:
           throw RuntimeReinterpretASTException(node);
         case Type::Program:
@@ -185,6 +205,19 @@ void printAST(Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
+        case Type::Statement:
+#define cur_node (reinterpret_cast<Statement *>(node))
+          put_tab(dep);
+          printf("{\n");
+          put_tab(dep + 1);
+          printf("type = Statement\n");
+          //            for (auto &stmt: cur_node->stmts) {
+          //                printAST(stmt, dep + 1);
+          //            }
+          put_tab(dep);
+          printf("}\n");
+#undef cur_node
+          break;
         case Type::ExpCall:
 #define cur_node (reinterpret_cast<ExpCall*>(node))
             put_tab(dep);
@@ -361,6 +394,32 @@ void printAST(Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
+        case Type::Exp:
+#define cur_node (reinterpret_cast<Exp *>(node))
+          put_tab(dep);
+          printf("{\n");
+          put_tab(dep + 1);
+          printf("type = Exp\n");
+          for (Node *c : cur_node->children) {
+            printAST(c, dep + 1);
+          }
+          put_tab(dep);
+          printf("}\n");
+#undef cur_node
+          break;
+        case Type::TypeSpec:
+#define cur_node (reinterpret_cast<TypeSpec *>(node))
+          put_tab(dep);
+          printf("{\n");
+          put_tab(dep + 1);
+          printf("type = TypeSpec\n");
+          for (Node *c : cur_node->children) {
+            printAST(c, dep + 1);
+          }
+          put_tab(dep);
+          printf("}\n");
+#undef cur_node
+          break;
         case Type::UnExp:
 #define cur_node (reinterpret_cast<UnExp*>(node))
             put_tab(dep);
@@ -492,6 +551,14 @@ void printAST(Node *node, int dep) {
       printf("{\n");
       put_tab(dep + 1);
       printf("type = marker %s\n", cur_node->value->content);
+      put_tab(dep);
+      printf("}\n");
+#undef cur_node
+    case Type::ExpVoid : put_tab(dep);
+#define cur_node (reinterpret_cast<ExpVoid *>(node))
+      printf("{\n");
+      put_tab(dep + 1);
+      printf("type = void\n");
       put_tab(dep);
       printf("}\n");
 #undef cur_node

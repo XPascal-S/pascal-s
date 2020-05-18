@@ -6,9 +6,6 @@
 #include "parser.h"
 #include <pascal-s/mock.h>
 #include <vector>
-#include <string>
-#include <iostream>
-#include <algorithm>
 
 //  protected:
 //      virtual int yylex(const Token**) = 0;
@@ -27,26 +24,22 @@ int main() {
   // std::vector<Token *> mocking_stream{new ConstantChar(&c)};
   // std::vector<Token *> mocking_stream{new ConstantReal("1.0")};
   std::vector<Token *> mocking_stream{
-                                      new Keyword("If",KeywordType::If),
-                                      new Identifier("i"),
-                                      new Marker("=", MarkerType::EQ),
-                                      new ConstantInteger("1"),
-                                      new Keyword("Then", KeywordType::Then),
-                                      new Identifier("i"),
-                                      new Marker("=", MarkerType::EQ),
-                                      new Identifier("i"),
-                                      new Marker("*", MarkerType::Mul),
-                                      new Identifier("i"),
-                                      new Marker("-", MarkerType::Sub),
-                                      new ConstantInteger("1"),
-                                      new Keyword("Else", KeywordType::Else),
-                                      new Identifier("i"),
-                                      new Marker("=", MarkerType::EQ),
-                                      new ConstantInteger("-1")
-                                      // new Identifier("="),
-                                      // new ConstantInteger("1"),
-                                      // new Identifier("i"),
-                                      // new Keyword(KeywordType::Length)
+      new Keyword("program", KeywordType::Program),
+      new Identifier("test"),
+      new Marker(";", MarkerType::Semicolon),
+      new Keyword("const", KeywordType::Const),
+      new Identifier("a"),
+      new Marker("=", MarkerType::EQ),
+      new ConstantInteger("2"),
+      new Marker(";", MarkerType::Semicolon),
+      new Keyword("var", KeywordType::Var),
+      new Identifier("b"),
+      new Marker(":", MarkerType::Colon),
+      new Keyword("integer", KeywordType::Integer),
+      new Marker(";", MarkerType::Semicolon),
+      new Keyword("begin", KeywordType::Begin),
+      new Keyword("end", KeywordType::End),
+      new Marker(".", MarkerType::Dot)
   };
 
   MockLexer lexer(mocking_stream);
@@ -57,7 +50,6 @@ int main() {
   parser.set_debug_level(1);
 
   auto res = parser.parse();
-
 
   printf("parsed result: ");
   // printAST(parser.parsed_result);

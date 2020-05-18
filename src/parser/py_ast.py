@@ -30,7 +30,7 @@ ast_root = py_ast.ParseToken()
 travel_tree(G, ast_root, 1)
 pos = graphviz_layout(G, prog='dot')
 plt.figure(figsize=(16, 9))
-nx.draw(G, pos, alpha=0.5, node_size=list(
+nx.draw(G, pos, alpha=0.3, node_size=list(
     sizes.values()), arrows=True, node_shape='o')
 nx.draw_networkx_labels(
     G, dict(map(lambda x: (x[0], (x[1][0], x[1][1]-15)), pos.items())), labels)

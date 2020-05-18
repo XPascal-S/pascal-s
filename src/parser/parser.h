@@ -76,15 +76,9 @@ private:
       par_node->children.push_back(n);
     }
     reverse(par_node->children.begin(), par_node->children.end());
-    // for (int i = 0; i < k; ++i) {
-    //   Node *n = par_node->children[i];
-    //   if( n->type==Type::ExpMarker ){
-    //     printf("\n\n\n\n\nmarker eq: %s\n\n\n\n\n", reinterpret_cast<ExpMarker *>(n)->value->content);
-    //   }
-    // }
     astTreeStack.push_back(par_node);
     ast_root = par_node;
-    printAST(ast_root);
+    // printAST(ast_root);
   }
 };
 
