@@ -14,6 +14,8 @@ sizes = {}
 
 
 def travel_tree(ast_g, node: py_ast.Node, dep):
+    if node.type == py_ast.Type.ExpVoid:
+        return
     ast_g.add_node(node)
     sizes[node] = 1000 / (math.log10(dep) + 1)
     if not node.children:
@@ -21,8 +23,9 @@ def travel_tree(ast_g, node: py_ast.Node, dep):
     else:
         labels[node] = node.type.name
     for c in node.children:
-        ast_g.add_edge(node, c)
-        travel_tree(ast_g, c, dep+1)
+        if not c.type == py_ast.Type.ExpVoid:
+            ast_g.add_edge(node, c)
+            travel_tree(ast_g, c, dep+1)
 
 
 G = nx.DiGraph()

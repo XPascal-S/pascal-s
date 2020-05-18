@@ -602,6 +602,14 @@ char* Node::GetTokenSymbol() {
     strcpy(buffer, cur_node->value->content);
 #undef cur_node
     break;
+  case Type::BasicTypeSpec:
+#define cur_node (reinterpret_cast<BasicTypeSpec *>(this))
+    if( cur_node->keyword->attr == NULL ){
+      return NULL;
+    }
+    strcpy(buffer, cur_node->keyword->attr);
+#undef cur_node
+    break;
   default:
     return NULL;
   }
