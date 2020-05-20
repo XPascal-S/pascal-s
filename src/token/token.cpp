@@ -1,9 +1,8 @@
-
-#include <pascal-s/token.h>
+#include <cstdlib>
 #include <cstring>
 #include <fmt/core.h>
-#include <cassert>
-#include <cstdlib>
+#include <pascal-s/token.h>
+#include <string>
 
 void deleteToken(Token *pToken) {
     switch (pToken->type) {
@@ -60,6 +59,14 @@ std::string convertToString(const Token *pToken) {
             throw RuntimeReinterpretTokenException(pToken);
     }
     assert(false);
+}
+
+Keyword::Keyword(const char *attr, KeywordType key_type)
+    : Token(), key_type(key_type) {
+  this->type = TokenType::Keyword;
+  int l = strlen(attr);
+  this->attr = new char[l + 1];
+  strcpy(const_cast<char *>(this->attr), attr);
 }
 
 ConstantReal::ConstantReal(const char *creal) : Token() {
@@ -129,6 +136,22 @@ ConstantBoolean::~ConstantBoolean() {
 }
 
 
+Marker::Marker(MarkerType marker_type) : Token(), marker_type(marker_type) {
+  this->type = TokenType::Marker;
+}
+
+Marker::Marker(const char *cmarker, MarkerType marker_type)
+  : Token(), marker_type(marker_type) {
+  this->type = TokenType::Marker;
+  int l = strlen(cmarker);
+  content = new char[l + 1];
+  strcpy(const_cast<char *>(content), cmarker);
+}
+
+Marker::~Marker() {
+    delete[]content;
+}
+
 
 keyword_mapping key_map = {
         keyword_mapping::value_type{"to", KeywordType::To},
@@ -197,6 +220,10 @@ const char *get_keyword_type_reversed(KeywordType kt) {
     return reverse_key_map.at(kt);
 }
 
+marker_type_underlying_type get_marker_pri(MarkerType marker_type) {
+  return static_cast<marker_type_underlying_type>(marker_type) >> 0x4U;
+}
+
 reverse_marker_mapping  reverse_marker_map;
 
 const char *get_marker_type_reversed(MarkerType mt) {
@@ -207,3 +234,4 @@ const char *get_marker_type_reversed(MarkerType mt) {
     }
     return reverse_marker_map.at(mt);
 }
+

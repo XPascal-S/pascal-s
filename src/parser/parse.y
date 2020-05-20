@@ -122,7 +122,7 @@
 	}
 	return ans;
   }
-  
+
   string string_shuzu(string temp) {
 	string ans;
 	for (int i = 0; i < temp.length(); i++) {
@@ -168,7 +168,7 @@ idlist:idlist ',' id  {$$ = $1+","+$3;}
     ;
 
 const_declarations:const const_declaration ';'{$$ = $2 + ";\n";}
-    |                                       {$$ = "";} 
+    |                                       {$$ = "";}
     ;
 
 const_declaration:const_declaration ';' id '=' const_value  {string temp = $1 + ";" + $3 + "=" + $5;
@@ -182,7 +182,7 @@ const_value:'+'num          {$$ = $2;}
     |'\''letter'\''        {$$ = $2;}
     ;
 
-var_declarations:              {$$ = "";} 
+var_declarations:              {$$ = "";}
     |var var_declaration';'{$$ = $2+";\n";}
     ;
 
@@ -199,14 +199,14 @@ basic_type:integer  {$$ = "int";}
     | real          {$$ = "double";}
     | boolean       {$$ = "bool";}
     | char          {$$ = "char";}
-    ; 
+    ;
 
 period:period ',' num '..' num        {$$ = $1+","+$3+".."+$5;}
     | num '..' num                    {$$ = $1+".."+$3;}
     ;
 
-subprogram_declarations:                    {$$ = "";} 
-    |subprogram_declarations subprogram';'  {$$ = $1 + $2 + ";\n";} 
+subprogram_declarations:                    {$$ = "";}
+    |subprogram_declarations subprogram';'  {$$ = $1 + $2 + ";\n";}
     ;
 
 subprogram:subprogram_head ';' subprogram_body {$$ = $1+";"+$3+"\n";}
@@ -216,8 +216,8 @@ subprogram_head:procedure id formal_parameter   {$$ = "void "+$2+$3;}
     |function id formal_parameter ':' basic_type  {$$ = $5 + $2 + $3;}
     ;
 
-formal_parameter:               {$$ = "";} 
-    |'('parameter_list')'       {$$ = "("+$2+")";} 
+formal_parameter:               {$$ = "";}
+    |'('parameter_list')'       {$$ = "("+$2+")";}
     ;
 
 parameter_list:parameter_list';'parameter   {$$ = $1 + "," +$3;}
@@ -229,11 +229,11 @@ parameter:var_parameter         {$$ = $1;}
     ;
 
 var_parameter: var value_parameter      {$$ = $2;}
-    ;     
+    ;
 
 value_parameter: idlist':'basic_type            {string temp = $3+" "+$1;
                                                   $$ = string_canshu(temp);}
-    ;   
+    ;
 
 subprogram_body:const_declarations var_declarations compound_statement  {$$ = $1+$2+$3;}
     ;
@@ -262,7 +262,7 @@ variable_list:variable_list','variable         {$$ = $1+","+$3;}
 variable:id id_varpart  {$$ = $1+$2;}
 ;
 
-id_varpart:                 {$$ = "";} 
+id_varpart:                 {$$ = "";}
 |'['expression_list']'      {string temp = "["+$2+"]";
                              $$ = string_shuzu(temp);}
 ;
@@ -271,8 +271,8 @@ procedure_call:id           {$$ = $1+"()"}
 | id'('expression_list')'    {$$ = $1+"("+$3+")";}
 ;
 
-else_part:                      {$$ = "";} 
-|else statement                 {$$ = "else{"+$2+"}\n";} 
+else_part:                      {$$ = "";}
+|else statement                 {$$ = "else{"+$2+"}\n";}
 ;
 
 expression_list:expression_list','expression    {$$ = $1+","+$3;}
