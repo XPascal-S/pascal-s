@@ -59,12 +59,11 @@ enum class KeywordType {
     Do,
     Of,
 
-    //todo: keyword type
-//    Div,
-//    Mod,
-//    And,
-//    Or,
-//    Not,
+    Div,
+    Mod,
+    And,
+    Or,
+    Not,
 
     Length
 };

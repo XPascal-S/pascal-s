@@ -47,8 +47,6 @@ namespace target_c {
         CBuilder(std::vector<std::string> &include_files,
                  Buffer &buf) : include_files(std::move(include_files)), buf(buf) {}
 
-        CBuilder(std::vector<std::string> &&include_files,
-                 Buffer &buf) : include_files(std::move(include_files)), buf(buf) {}
 
         int code_gen(const Node *node){
             for (const auto &f : include_files) {

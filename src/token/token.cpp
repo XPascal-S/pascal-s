@@ -149,7 +149,12 @@ keyword_mapping key_map = {
         keyword_mapping::value_type{"procedure", KeywordType::Procedure},
         keyword_mapping::value_type{"program", KeywordType::Program},
         keyword_mapping::value_type{"var", KeywordType::Var},
-        keyword_mapping::value_type{"const", KeywordType::Const}
+        keyword_mapping::value_type{"const", KeywordType::Const},
+        keyword_mapping::value_type{"div", KeywordType::Div},
+        keyword_mapping::value_type{"mod", KeywordType::Mod},
+        keyword_mapping::value_type{"and", KeywordType::And},
+        keyword_mapping::value_type{"or", KeywordType::Or},
+        keyword_mapping::value_type{"not", KeywordType::Not}
 };
 
 marker_mapping marker_map = {
@@ -166,7 +171,7 @@ marker_mapping marker_map = {
         marker_mapping::value_type{"-", MarkerType::Sub},
         marker_mapping::value_type{"*", MarkerType::Mul},
         marker_mapping::value_type{"/", MarkerType::Div},
-        marker_mapping::value_type{"mod", MarkerType::Mod},
+        marker_mapping::value_type{"%", MarkerType::Mod},
 
         marker_mapping::value_type{"(", MarkerType::LParen},
         marker_mapping::value_type{")", MarkerType::RParen},
@@ -176,7 +181,7 @@ marker_mapping marker_map = {
         marker_mapping::value_type{",", MarkerType::Comma},
         marker_mapping::value_type{".", MarkerType::Dot},
         marker_mapping::value_type{";", MarkerType::Semicolon},
-        marker_mapping::value_type{":", MarkerType::Colon},
+        marker_mapping::value_type{":", MarkerType::Colon}
 };
 
 reverse_keyword_mapping reverse_key_map;
