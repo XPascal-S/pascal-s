@@ -83,15 +83,23 @@ TEST_P(GoodLexerGetAllTokensTest, WillNotThrowException) /* NOLINT */
 INSTANTIATE_TEST_SUITE_P(Simple, GoodLexerGetAllTokensTest, testing::Values( /* NOLINT */
         LexerGetAllTokensTestCase{"a",
                                   new std::vector<Token *>({new Identifier("a")})},
-        LexerGetAllTokensTestCase{"mod",
-                                  new std::vector<Token *>({new Marker("mod")})},
-        LexerGetAllTokensTestCase{"a ",
+        LexerGetAllTokensTestCase{"%",
+                                  new std::vector<Token *>({new Marker(marker_map.at("%"))})},
+        LexerGetAllTokensTestCase{"A ",
                                   new std::vector<Token *>({new Identifier("a")})},
         LexerGetAllTokensTestCase{"a b",
                                   new std::vector<Token *>({new Identifier("a"), new Identifier("b")})},
-        LexerGetAllTokensTestCase{"a b\n a",
+        LexerGetAllTokensTestCase{"a //b\n a",
                                   new std::vector<Token *>({
-                                                                   new Identifier("a"), new Identifier("b"),
-                                                                   new Identifier("a")})}
+                                                                   new Identifier("a"),
+                                                                   new Identifier("a")})},
+        LexerGetAllTokensTestCase{"To", new std::vector<Token *>({new Keyword(key_map.at("to"))})},
+        LexerGetAllTokensTestCase{"div mod And Or Not read write", new std::vector<Token *>({
+            new Keyword(key_map.at("div")),
+            new Keyword(key_map.at("mod")),
+            new Keyword(key_map.at("and")),
+            new Keyword(key_map.at("or")),
+            new Keyword(key_map.at("not")),
+            new Keyword(key_map.at("write")),
+            new Keyword(key_map.at("read"))})}
 ));
-

@@ -89,7 +89,7 @@ void printAST(Node *node, int dep=0);
 
 
 
-struct Node {//�ڵ����
+struct Node {
 
     Type type;
 
@@ -103,7 +103,7 @@ struct Node {//�ڵ����
 
 
 
-struct Exp : public Node {//���ʽ����
+struct Exp : public Node {
 
     explicit Exp(Type type) : Node(type) {}
 
@@ -111,7 +111,7 @@ struct Exp : public Node {//���ʽ����
 
 
 
-struct Function : public Node {//�����͹��̻���
+struct Function : public Node {
 
 
 
@@ -121,7 +121,7 @@ struct Function : public Node {//�����͹��̻���
 
 
 
-struct TypeSpec : public Node {//������������
+struct TypeSpec : public Node {
 
     explicit TypeSpec(Type type) : Node(type) {}
 
@@ -129,7 +129,7 @@ struct TypeSpec : public Node {//������������
 
 
 
-struct BasicTypeSpec : public TypeSpec {//������������ e.g.integer
+struct BasicTypeSpec : public TypeSpec {// e.g.integer
 
     const Keyword* keyword;
 
@@ -139,7 +139,7 @@ struct BasicTypeSpec : public TypeSpec {//������������ e
 
 
 
-struct ArrayTypeSpec : public TypeSpec {//������������  e.g.Array
+struct ArrayTypeSpec : public TypeSpec {// e.g.Array
 
     const Keyword* keyword;
 
@@ -151,7 +151,7 @@ struct ArrayTypeSpec : public TypeSpec {//������������  
 
 
 
-struct ParamList : public Node {//�βα�
+struct ParamList : public Node {//
 
     std::vector<Exp*> params;
 
@@ -175,7 +175,7 @@ struct ParamList : public Node {//�βα�
 
 
 
-struct VariableList : public Node {//�����Ĳ�����
+struct VariableList : public Node {//
 
     std::vector<Exp*> params;
 
@@ -199,7 +199,7 @@ struct VariableList : public Node {//�����Ĳ�����
 
 
 
-struct IdentList : public Node {//id list  program���id
+struct IdentList : public Node {//id list  program
 
     std::vector<const Identifier*> idents;
 
@@ -211,7 +211,7 @@ struct IdentList : public Node {//id list  program���id
 
 
 
-struct ConstDecl : public Node {//��������ֵ
+struct ConstDecl : public Node {//ֵ
 
     const Identifier* ident;
 
@@ -247,7 +247,7 @@ struct ConstDecls : public Node {
 
 
 
-struct VarDecl : public Node {//�������ͺ�ֵ
+struct VarDecl : public Node {//ֵ
 
     TypeSpec* type_spec;
 
@@ -395,7 +395,7 @@ struct ExpAssign : public Exp {   //:=
 
 
 
-struct UnExp : public Exp {    //һԪ���� lhs�ǲ��� marker�Ƿ���
+struct UnExp : public Exp {    //
 
     Exp* lhs;
 
@@ -415,9 +415,9 @@ struct UnExp : public Exp {    //һԪ���� lhs�ǲ��� marker�Ƿ�
 
 
 
-struct BiExp : public Exp { //��Ԫ����
+struct BiExp : public Exp { //
 
-    Exp* lhs, * rhs;//���Ҳ���
+    Exp* lhs, * rhs;//
 
     const Marker* marker;
 
