@@ -196,7 +196,6 @@ marker_mapping marker_map = {
         marker_mapping::value_type{"-", MarkerType::Sub},
         marker_mapping::value_type{"*", MarkerType::Mul},
         marker_mapping::value_type{"/", MarkerType::Div},
-        marker_mapping::value_type{"%", MarkerType::Mod},
 
         marker_mapping::value_type{"(", MarkerType::LParen},
         marker_mapping::value_type{")", MarkerType::RParen},

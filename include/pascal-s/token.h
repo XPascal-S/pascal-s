@@ -73,32 +73,6 @@ enum class KeywordType {
 
 using marker_type_underlying_type = uint8_t ;
 enum class MarkerType :marker_type_underlying_type {
-                                                    Range = 0x00, // ..
-                                                    NEQ = 0x01, // <>
-                                                    LE = 0x02, // <=
-                                                    GE = 0x03, // >=
-                                                    LT = 0x04, // <
-                                                    EQ = 0x05, // =
-                                                    GT = 0x06, // >
-                                                    Add = 0x10, // +
-                                                    Sub = 0x11, // -
-                                                    Mul = 0x20, // *
-                                                    Div = 0x21, // /
-
-                                                    LParen = 0x30, // (
-                                                    RParen = 0x31, // )
-                                                    LBracket = 0x40, // [
-                                                    RBracket = 0x41, // ]
-
-                                                    Assign = 0x50, // :=
-                                                    Comma = 0x51, // ,
-                                                    Dot = 0x52, // .
-                                                    Semicolon = 0x53, // ;
-                                                    Colon = 0x54, // :
-};
-
-using marker_type_underlying_type = uint8_t ;
-enum class MarkerType : marker_type_underlying_type {
     Range = 0x00, // ..
     NEQ = 0x01, // <>
     LE = 0x02, // <=
@@ -108,7 +82,6 @@ enum class MarkerType : marker_type_underlying_type {
     GT = 0x06, // >
     Add = 0x10, // +
     Sub = 0x11, // -
-    Mod = 0x12, // %
     Mul = 0x20, // *
     Div = 0x21, // /
 
@@ -124,9 +97,12 @@ enum class MarkerType : marker_type_underlying_type {
     Colon = 0x54, // :
 };
 
+using marker_type_underlying_type = uint8_t ;
+
+
 struct Keyword : public Token {
     KeywordType key_type;
-
+    const char *attr;
     explicit Keyword(const char *attr, KeywordType key_type);
 
     explicit Keyword(KeywordType key_type) : Token(), key_type(key_type) {
