@@ -64,7 +64,8 @@ enum class KeywordType {
     And,
     Or,
     Not,
-
+    Read,
+    Write,
     Length
 };
 

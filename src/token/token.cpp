@@ -154,7 +154,9 @@ keyword_mapping key_map = {
         keyword_mapping::value_type{"mod", KeywordType::Mod},
         keyword_mapping::value_type{"and", KeywordType::And},
         keyword_mapping::value_type{"or", KeywordType::Or},
-        keyword_mapping::value_type{"not", KeywordType::Not}
+        keyword_mapping::value_type{"not", KeywordType::Not},
+        keyword_mapping::value_type{"read", KeywordType::Read},
+        keyword_mapping::value_type{"write", KeywordType::Write}
 };
 
 marker_mapping marker_map = {
