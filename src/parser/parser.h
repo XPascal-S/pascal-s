@@ -65,8 +65,9 @@ private:
   //   astTreeStack.push_back((Node *)leaf_node);
   // }
 
-  void ast_reduce_nodes(int k, Type type) override {
+  Node* ast_reduce_nodes(int k, Type type) override {
     if (astTreeStack.size() < k) {
+      printf("size less than reducing require");
       throw RuntimeReinterpretASTException(astTreeStack.back());
     }
     Node *par_node = new Node(type);
@@ -78,7 +79,9 @@ private:
     reverse(par_node->children.begin(), par_node->children.end());
     astTreeStack.push_back(par_node);
     ast_root = par_node;
+    return par_node;
     // printAST(ast_root);
+    // printf("root type: %d\n", ast_root->type);
   }
 };
 

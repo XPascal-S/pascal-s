@@ -95,8 +95,16 @@ dot: MARKER_DOT{
 ;
 
 program_head:
-  program id lparen idlist rparen {ast_reduce_nodes(5, Type::Program);}
-| program id                      {ast_reduce_nodes(2, Type::Program);}
+  program id lparen idlist rparen {
+    ast_reduce_nodes(5, Type::ProgramHead);
+  }
+| program id{
+  ProgramHead *node = reinterpret_cast<ProgramHead *>(ast_reduce_nodes(2, Type::ProgramHead));
+  node->programKeyword = (const ExpKeyword*)(node->children.front());
+  node->children.pop_front();
+  node->id = (const Ident*)(node->children.front());
+  node->children.pop_front();
+  }
 ;
 
 program:KEYWORD_PROGRAM{
@@ -128,7 +136,7 @@ const:KEYWORD_CONST{
 
 const_declaration:
   const_declaration semicolon id eq const_value {ast_reduce_nodes(5, Type::ConstDecls);}
-|id eq const_value           {ast_reduce_nodes(3, Type::ConstDecls);}
+|id eq const_value           {ast_reduce_nodes(3, Type::ConstDecl);}
 ;
 
 eq:MARKER_EQ {
@@ -291,7 +299,6 @@ var:KEYWORD_VAR{
 }
 ;
 
-
 value_parameter:
   idlist colon basic_type       {
     ast_reduce_nodes(3, Type::VarDecl);
@@ -391,7 +398,7 @@ else : KEYWORD_ELSE {
 }
 ;
 
-variable_list:variable_list comma variable  {printf("variable_list\n"); ast_reduce_nodes(3, Type::Statement);}
+variable_list: variable_list comma variable  {printf("variable_list\n"); ast_reduce_nodes(3, Type::Statement);}
 | variable                                {$$ = $1;}
 ;
 

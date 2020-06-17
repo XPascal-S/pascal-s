@@ -37,4 +37,5 @@ nx.draw(G, pos, alpha=0.3, node_size=list(
     sizes.values()), arrows=True, node_shape='o')
 nx.draw_networkx_labels(
     G, dict(map(lambda x: (x[0], (x[1][0], x[1][1]-15)), pos.items())), labels)
+plt.savefig("ast.png")
 plt.show()

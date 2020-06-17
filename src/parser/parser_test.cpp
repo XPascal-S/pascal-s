@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <pascal-s/interface.h>
 
-#include <pascal-s/AST.h>
+#include <pascal-s/yacc_ast.h>
 #include "parser.h"
 #include <pascal-s/mock.h>
 #include <vector>
@@ -55,7 +55,9 @@ int main() {
   // printAST(parser.parsed_result);
   // deleteAST(parser.parsed_result);
   // printf("parser stack: %d\n", parser.astTreeStack.size());
-  printAST(parser.ast_root);
+  // printAST(parser.ast_root);
+
+  printf("%s\n", reinterpret_cast<Program*>(parser.ast_root)->programHead->id->ident->content);
 
   for (auto tok : lexer.token_stream) {
     deleteToken(tok);
