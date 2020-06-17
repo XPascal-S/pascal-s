@@ -26,7 +26,7 @@ int main() {
   std::vector<Token *> mocking_stream{
       new Keyword("program", KeywordType::Program),
       new Identifier("test"),
-      new Marker(";", MarkerType::Semicolon),
+      // new Marker(";", MarkerType::Semicolon),
       new Keyword("const", KeywordType::Const),
       new Identifier("a"),
       new Marker("=", MarkerType::EQ),
@@ -39,7 +39,7 @@ int main() {
       new Marker(";", MarkerType::Semicolon),
       new Keyword("begin", KeywordType::Begin),
       new Keyword("end", KeywordType::End),
-      new Marker(".", MarkerType::Dot)
+      // new Marker(".", MarkerType::Dot)
   };
 
   MockLexer lexer(mocking_stream);
@@ -56,8 +56,6 @@ int main() {
   // deleteAST(parser.parsed_result);
   // printf("parser stack: %d\n", parser.astTreeStack.size());
   // printAST(parser.ast_root);
-
-  printf("%s\n", reinterpret_cast<Program*>(parser.ast_root)->programHead->id->ident->content);
 
   for (auto tok : lexer.token_stream) {
     deleteToken(tok);

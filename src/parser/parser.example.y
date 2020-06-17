@@ -83,9 +83,12 @@
  // %start statement
 %%
 
-programstruct: program_head semicolon program_body dot {
+programstruct:  program_head semicolon program_body dot {
   ast_reduce_nodes(4, Type::Program);
  }
+|  program_head semicolon program_body error{ printf("\n\n\n\n Missing dot\n"); yyerrok; }
+|  program_head error program_body { printf("\n\n\n\nMissing semicolon\n"); yyerrok; }
+
 ;
 
 dot: MARKER_DOT{
@@ -528,27 +531,27 @@ mulop : MARKER_MUL {
   }
 
 relop : MARKER_EQ {
-    $$ = new ExpMarker((const Marker *)($1));
-    access_ast($$);
-  }
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
+}
 | MARKER_NEQ {
-    $$ = new ExpMarker((const Marker *)($1));
-    access_ast($$);
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
   }
 | MARKER_LT {
-    $$ = new ExpMarker((const Marker *)($1));
-    access_ast($$);
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
   }
 | MARKER_GT {
-    $$ = new ExpMarker((const Marker *)($1));
-    access_ast($$);
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
   }
 | MARKER_LE {
-    $$ = new ExpMarker((const Marker *)($1));
-    access_ast($$);
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
   }
 | MARKER_GE {
-    $$ = new ExpMarker((const Marker *)($1));
-    access_ast($$);
+  $$ = new ExpMarker((const Marker *)($1));
+  access_ast($$);
   }
 %%
