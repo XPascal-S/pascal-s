@@ -18,8 +18,9 @@ Lexer::~Lexer() {
 int Lexer::addIdentifier() {
     std::cout
             << (fmt::format("found identifier {} {} \t in line {}\n", yytext, current_offset - line_offset, yylineno));
-    auto tok = new Identifier(yytext);
-
+    std::string str_temp = std::string(yytext);
+    std::transform(str_temp.begin(),str_temp.end(),str_temp.begin(),tolower);
+    auto tok = new Identifier(str_temp.c_str());
     return addToken(tok);
 }
 
@@ -44,13 +45,15 @@ int Lexer::addBoolean() {
 
 int Lexer::addKeyword() {
     std::cout << (fmt::format("found Keyword {} {} \t in line {} \n", yytext, current_offset - line_offset, yylineno));
-    auto tok = new Keyword(key_map.at(yytext));
+    std::string str_temp = std::string(yytext);
+    std::transform(str_temp.begin(),str_temp.end(),str_temp.begin(),tolower);
+    auto tok = new Keyword(key_map.at(str_temp));
     return addToken(tok);
 }
 
 int Lexer::addMarker() {
     std::cout << (fmt::format("found Marker {} {} \t in line {} \n", yytext, current_offset - line_offset, yylineno));
-    auto tok = new Marker(yytext);
+    auto tok = new Marker(marker_map.at(yytext));
     return addToken(tok);
 }
 
