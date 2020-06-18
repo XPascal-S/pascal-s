@@ -78,6 +78,10 @@ struct WriterProxy {
         return operator<<(data);
     }
 
+    [[maybe_unused]] WriterProxy &write_data(char *const data) {
+        return operator<<(data);
+    }
+
     [[maybe_unused]] WriterProxy &write_data(const std::string &data) {
         return operator<<(data.c_str());
     }
@@ -94,16 +98,16 @@ template<typename File>
 struct FileProxy {
     DefaultProxyConstructor(FileProxy, File, f)
 
-    [[maybe_unused]] pascal_errno seek(int offset) {
+    [[maybe_unused]] pascal_errno seek(size_t offset) {
         return f.seek(offset);
     }
 
-    [[maybe_unused]] pascal_errno read(char *buf, int len) {
+    [[maybe_unused]] pascal_errno read(char *buf, size_t len) {
         return f.read(buf, len);
     }
 
     template<typename OStream>
-    [[maybe_unused]] pascal_errno read(WriterProxy<OStream> buf, int len) {
+    [[maybe_unused]] pascal_errno read(WriterProxy<OStream> buf, size_t len) {
         return f.read(buf, len);
     }
 };

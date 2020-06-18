@@ -63,14 +63,6 @@ ErrorToken::ErrorToken(const char *content, const char *hint)
         : Token() {
     this->type = TokenType::ErrorToken;
     this->content = copy_string(content);
-    this->hint = nullptr;
-    if (hint != nullptr) this->hint = copy_string(hint);
-}
-
-ErrorToken::ErrorToken(const char *content, const char *&&hint)
-        : Token() {
-    this->type = TokenType::ErrorToken;
-    this->content = copy_string(content);
     this->hint = hint;
 }
 
@@ -79,6 +71,10 @@ ErrorToken::~ErrorToken() {
     this->content = nullptr;
     delete[] this->hint;
     this->hint = nullptr;
+}
+
+ErrorToken *ErrorToken::copy_in(const char *content, const char *hint) {
+    return new ErrorToken(content, copy_string(hint));
 }
 
 ConstantReal::ConstantReal(const char *content, double attr) : Token() {

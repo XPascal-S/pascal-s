@@ -233,6 +233,8 @@ int Lexer::addASCIIChar() {
     return static_cast<lexer_action_code_underlying_type>(LexerActionCode::LexEnd);
 }
 
+const static auto CharErrorHint = "not a valid char";
+
 /*
  * addChar 在token流后追加一个ConstantChar
  *
@@ -243,7 +245,7 @@ int Lexer::addChar() {
     // unicode rule can be extend
     // code = code ? code : addUnicodeChar();
     if (!code) {
-        auto tok = new ErrorToken(yytext);
+        auto tok = ErrorToken::copy_in(yytext, CharErrorHint);
         return addError(tok), addToken(tok);
     }
     return code;

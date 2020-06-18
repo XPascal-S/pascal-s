@@ -116,7 +116,7 @@ struct ErrorToken : public Token {
 
     explicit ErrorToken(const char *content, const char *hint = nullptr);
 
-    explicit ErrorToken(const char *content, const char *&&hint);
+    static ErrorToken *copy_in(const char *content, const char *hint = nullptr);
 
     ~ErrorToken();
 };
