@@ -38,6 +38,47 @@ static testing::AssertionResult CompareIdentifier(const char *lhs_expression,
     return AssertionSuccess();
 }
 
+static testing::AssertionResult CompareConstantChar(const char *lhs_expression,
+                                                    const char *rhs_expression, const ConstantChar *lhs,
+                                                    const ConstantChar *rhs) {
+    using namespace testing;
+
+    equal_field(lhs->attr, rhs->attr);
+
+    return AssertionSuccess();
+}
+
+static testing::AssertionResult CompareConstantReal(const char *lhs_expression,
+                                                    const char *rhs_expression, const ConstantReal *lhs,
+                                                    const ConstantReal *rhs) {
+    using namespace testing;
+
+    str_equal_field(lhs->content, rhs->content);
+    equal_field(lhs->attr, rhs->attr);
+
+    return AssertionSuccess();
+}
+
+static testing::AssertionResult CompareConstantInteger(const char *lhs_expression,
+                                                       const char *rhs_expression, const ConstantInteger *lhs,
+                                                       const ConstantInteger *rhs) {
+    using namespace testing;
+
+    equal_field(lhs->attr, rhs->attr);
+
+    return AssertionSuccess();
+}
+
+static testing::AssertionResult CompareConstantBoolean(const char *lhs_expression,
+                                                       const char *rhs_expression, const ConstantBoolean *lhs,
+                                                       const ConstantBoolean *rhs) {
+    using namespace testing;
+
+    equal_field(lhs->attr, rhs->attr);
+
+    return AssertionSuccess();
+}
+
 
 static testing::AssertionResult
 CompareMarker(const char *lhs_expression, const char *rhs_expression, const Marker *lhs, const Marker *rhs) {
@@ -84,6 +125,22 @@ static testing::AssertionResult CompareToken(const char *lhs_expression,
             return CompareKeyword(lhs_expression, rhs_expression,
                                   reinterpret_cast<const Keyword *>(lhs),
                                   reinterpret_cast<const Keyword *>(rhs));
+        case TokenType::ConstantChar:
+            return CompareConstantChar(lhs_expression, rhs_expression,
+                                       reinterpret_cast<const ConstantChar *>(lhs),
+                                       reinterpret_cast<const ConstantChar *>(rhs));
+        case TokenType::ConstantReal:
+            return CompareConstantReal(lhs_expression, rhs_expression,
+                                       reinterpret_cast<const ConstantReal *>(lhs),
+                                       reinterpret_cast<const ConstantReal *>(rhs));
+        case TokenType::ConstantInteger:
+            return CompareConstantInteger(lhs_expression, rhs_expression,
+                                          reinterpret_cast<const ConstantInteger *>(lhs),
+                                          reinterpret_cast<const ConstantInteger *>(rhs));
+        case TokenType::ConstantBoolean:
+            return CompareConstantBoolean(lhs_expression, rhs_expression,
+                                          reinterpret_cast<const ConstantBoolean *>(lhs),
+                                          reinterpret_cast<const ConstantBoolean *>(rhs));
         case TokenType::ErrorToken:
             return CompareErrorToken(lhs_expression, rhs_expression,
                                      reinterpret_cast<const ErrorToken *>(lhs),

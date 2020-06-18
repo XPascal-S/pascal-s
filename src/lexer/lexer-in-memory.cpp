@@ -56,6 +56,7 @@ void FullInMemoryLexer::addError(ErrorToken *token) {
 int FullInMemoryLexer::addToken(Token *token) {
     token->line = yylineno;
     token->column = current_offset - line_offset - yyleng;
+    token->length = yyleng;
     tokens.push_back(token);
     return 1;
 }

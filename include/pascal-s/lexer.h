@@ -56,6 +56,8 @@ private:
 
     int addMarker();
 
+    int addASCIIChar();
+
     int addChar();
 
     int recordNewLine();

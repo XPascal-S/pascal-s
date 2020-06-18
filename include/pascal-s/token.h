@@ -2,16 +2,12 @@
 
 #ifndef PASCAL_S_TOKEN
 #define PASCAL_S_TOKEN
-#define KEYWORD_NUM 19
 
-#include <stdint.h>
 #include <map>
 #include <cassert>
 #include "exception.h"
 
-struct LexerInfo {
-    int64_t row, column;
-};
+using pascal_s_integer_t = int64_t;
 
 enum class TokenType {
     Unknown = 0,
@@ -30,12 +26,14 @@ enum class TokenType {
 
 using line_t = uint64_t;
 using column_t = uint64_t;
+using length_t = uint64_t;
 
 struct Token {
     TokenType type;
     //todo: add line, column info
     line_t line;
     column_t column;
+    length_t length;
 };
 
 enum class KeywordType {
@@ -102,25 +100,23 @@ using marker_type_underlying_type = uint8_t ;
 
 struct Keyword : public Token {
     KeywordType key_type;
-    const char *attr;
 
-    explicit Keyword(const char *attr, KeywordType key_type);
-
-    explicit Keyword(KeywordType key_type) : Token(), key_type(key_type) {
-        this->type = TokenType::Keyword;
-    }
+    explicit Keyword(KeywordType key_type);
 };
+
 
 struct ErrorToken : public Token {
     const char *content;
+    const char *hint;
 
-    explicit ErrorToken(const char *content);
+    explicit ErrorToken(const char *content, const char *hint = nullptr);
+
+    explicit ErrorToken(const char *content, const char *&&hint);
 
     ~ErrorToken();
 };
 
 struct ConstantString : public Token {
-    const char *content;
     const char *attr;
 };
 
@@ -128,57 +124,47 @@ struct ConstantReal : public Token {
     const char *content;
     double attr;
 
-    ConstantReal(const char *content);
+    ConstantReal(const char *content, double attr);
 
     ~ConstantReal();
 };
 
 struct ConstantInteger : public Token {
-    const char *content;
-    int64_t attr;
+    pascal_s_integer_t attr;
 
-    ConstantInteger(const char *content);
+    explicit ConstantInteger(pascal_s_integer_t attr);
 
     ~ConstantInteger();
 };
 
 struct ConstantChar : public Token {
-    const char *content;
-    const char* attr;
+    char attr;
 
-    ConstantChar(const char *content);
+    explicit ConstantChar(char ch);
 
     ~ConstantChar();
 };
 
 struct Identifier : public Token {
     const char *content;
-    const char* attr;
 
-    Identifier(const char *content);
+    explicit Identifier(const char *content);
 
     ~Identifier();
 };
 
 struct ConstantBoolean : public Token {
-    const char *content;
     bool attr;
 
-    ConstantBoolean(const char *content);
+    explicit ConstantBoolean(bool attr);
 
     ~ConstantBoolean();
 };
 
 struct Marker : public Token {
-    const char *content;
-    const char *attr;
     MarkerType marker_type;
 
-    Marker(const char *content);
-
     explicit Marker(MarkerType marker_type);
-
-    explicit Marker(const char *content, MarkerType marker_type);
 
     ~Marker();
 };

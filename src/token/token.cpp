@@ -4,66 +4,6 @@
 #include <pascal-s/token.h>
 #include <string>
 
-void deleteToken(Token *pToken) {
-    switch (pToken->type) {
-        case TokenType::Keyword:
-            delete reinterpret_cast<Keyword *>(pToken);
-            break;
-        case TokenType::Marker:
-            delete reinterpret_cast<Marker *>(pToken);
-            break;
-        case TokenType::ConstantString:
-            delete reinterpret_cast<ConstantString *>(pToken);
-            break;
-        case TokenType::ConstantReal:
-            delete reinterpret_cast<ConstantReal *>(pToken);
-            break;
-        case TokenType::ConstantInteger:
-            delete reinterpret_cast<ConstantInteger *>(pToken);
-            break;
-        case TokenType::ConstantChar:
-            delete reinterpret_cast<ConstantChar *>(pToken);
-            break;
-        case TokenType::Identifier:
-            delete reinterpret_cast<Identifier *>(pToken);
-            break;
-        case TokenType::ErrorToken:
-            delete reinterpret_cast<ErrorToken *>(pToken);
-            break;
-        default:
-            throw RuntimeReinterpretTokenException(pToken);
-    }
-}
-
-std::string convertToString(const Token *pToken) {
-    switch (pToken->type) {
-        case TokenType::Keyword:
-            return fmt::format("{{ .type = Keyword .key_type = {} }}",
-                               get_keyword_type_reversed(reinterpret_cast<const Keyword *>(pToken)->key_type));
-        case TokenType::Marker:
-            return fmt::format("{{ .type = Marker .marker_type = {} }}",
-                               get_marker_type_reversed(reinterpret_cast<const Marker *>(pToken)->marker_type));
-        case TokenType::ConstantString:
-            return fmt::format("{{ .type = ConstantString .content = {} }}",
-                               reinterpret_cast<const ConstantString *>(pToken)->content);
-        case TokenType::ConstantReal:
-            return fmt::format("{{ .type = ConstantReal .content = {} }}",
-                               reinterpret_cast<const ConstantReal *>(pToken)->content);
-        case TokenType::ConstantInteger:
-            return fmt::format("{{ .type = ConstantInteger .content = {} }}",
-                               reinterpret_cast<const ConstantInteger *>(pToken)->content);
-        case TokenType::ConstantChar:
-            return fmt::format("{{ .type = ConstantChar .content = {} }}",
-                               reinterpret_cast<const ConstantChar *>(pToken)->content);
-        case TokenType::Identifier:
-            return fmt::format("{{ .type = Identifier .content = {} }}",
-                               reinterpret_cast<const Identifier *>(pToken)->content);
-        default:
-            throw RuntimeReinterpretTokenException(pToken);
-    }
-    assert(false);
-}
-
 
 char *copy_string(const char *content, int length) {
     char *ns = new char[length + 1];
@@ -76,106 +16,119 @@ char *copy_string(const char *content) {
 }
 
 
-ErrorToken::ErrorToken(const char *content) {
+std::string convertToString(const Token *pToken) {
+    switch (pToken->type) {
+        case TokenType::Keyword:
+            return fmt::format("{{ .type = Keyword .key_type = {} }}",
+                               get_keyword_type_reversed(
+                                       reinterpret_cast<const Keyword *>(pToken)->key_type));
+        case TokenType::Marker:
+            return fmt::format(
+                    "{{ .type = Marker .marker_type = {} }}",
+                    get_marker_type_reversed(
+                            reinterpret_cast<const Marker *>(pToken)->marker_type));
+        case TokenType::ConstantString:
+            return fmt::format(
+                    "{{ .type = ConstantString .attr = {} }}",
+                    reinterpret_cast<const ConstantString *>(pToken)->attr);
+        case TokenType::ConstantReal:
+            return fmt::format(
+                    "{{ .type = ConstantReal .attr = {}, .raw = {} }}",
+                    reinterpret_cast<const ConstantReal *>(pToken)->attr,
+                    reinterpret_cast<const ConstantReal *>(pToken)->content);
+        case TokenType::ConstantInteger:
+            return fmt::format(
+                    "{{ .type = ConstantInteger .attr = {} }}",
+                    reinterpret_cast<const ConstantInteger *>(pToken)->attr);
+        case TokenType::ConstantChar:
+            return fmt::format(
+                    "{{ .type = ConstantChar .attr = {} }}",
+                    reinterpret_cast<const ConstantChar *>(pToken)->attr);
+        case TokenType::Identifier:
+            return fmt::format(
+                    "{{ .type = Identifier .content = {} }}",
+                    reinterpret_cast<const Identifier *>(pToken)->content);
+        default:
+            throw RuntimeReinterpretTokenException(pToken);
+    }
+    assert(false);
+}
+
+Keyword::Keyword(KeywordType key_type) : Token(), key_type(key_type) {
+    this->type = TokenType::Keyword;
+}
+
+
+ErrorToken::ErrorToken(const char *content, const char *hint)
+        : Token() {
     this->type = TokenType::ErrorToken;
     this->content = copy_string(content);
+    this->hint = nullptr;
+    if (hint != nullptr) this->hint = copy_string(hint);
+}
+
+ErrorToken::ErrorToken(const char *content, const char *&&hint)
+        : Token() {
+    this->type = TokenType::ErrorToken;
+    this->content = copy_string(content);
+    this->hint = hint;
 }
 
 ErrorToken::~ErrorToken() {
     delete[] this->content;
     this->content = nullptr;
+    delete[] this->hint;
+    this->hint = nullptr;
 }
 
-Keyword::Keyword(const char *attr, KeywordType key_type)
-        : Token(), key_type(key_type) {
-    this->type = TokenType::Keyword;
-    int l = strlen(attr);
-    this->attr = new char[l + 1];
-    strcpy(const_cast<char *>(this->attr), attr);
-}
-
-ConstantReal::ConstantReal(const char *creal) : Token() {
+ConstantReal::ConstantReal(const char *content, double attr) : Token() {
     this->type = TokenType::ConstantReal;
-    int l = strlen(creal);
-    this->content = new char[l + 1];
-    strcpy(const_cast<char *>(content), creal);
-    //bug: not safe
-    this->attr = strtod(content, NULL);
+    this->content = copy_string(content);
+    this->attr = attr;
 }
 
 ConstantReal::~ConstantReal() {
-    delete[]content;
+    delete[] this->content;
+    this->content = nullptr;
 }
 
-ConstantInteger::ConstantInteger(const char *cint) : Token() {
+ConstantInteger::ConstantInteger(pascal_s_integer_t attr) : Token() {
     this->type = TokenType::ConstantInteger;
-    int l = strlen(cint);
-    this->content = new char[l + 1];
-    strcpy(const_cast<char *>(content), cint);
-    //bug: not safe
-    this->attr = strtoll(content, NULL, 10);
+    this->attr = attr;
 }
 
-ConstantInteger::~ConstantInteger() {
-    delete[]content;
-}
+ConstantInteger::~ConstantInteger() = default;
 
-ConstantChar::ConstantChar(const char *cchar) : Token() {
+ConstantChar::ConstantChar(char ch) : Token() {
     this->type = TokenType::ConstantChar;
-    int l = strlen(cchar);
-    this->content = new char[l + 1];
-    strcpy(const_cast<char *>(content), cchar);
-    this->attr = content;
+    this->attr = ch;
 }
 
-ConstantChar::~ConstantChar() {
-    delete[]content;
-}
+ConstantChar::~ConstantChar() = default;
 
-Identifier::Identifier(const char *identifier) : Token() {
+Identifier::Identifier(const char *content) : Token() {
     this->type = TokenType::Identifier;
-    int l = strlen(identifier);
-    this->content = new char[l + 1];
-    strcpy(const_cast<char *>(content), identifier);
+    this->content = copy_string(content);
 }
 
 Identifier::~Identifier() {
     delete[]content;
 }
 
-ConstantBoolean::ConstantBoolean(const char *cbool) : Token() {
+ConstantBoolean::ConstantBoolean(bool attr) : Token() {
     this->type = TokenType::ConstantBoolean;
-    int l = strlen(cbool);
-    this->content = new char[l + 1];
-    strcpy(const_cast<char *>(content), cbool);
-    if (this->content[0] == 't')
-        this->attr = true;
-    else if (this->content[0] == 'f')
-        this->attr = false;
-    else
-        assert(false);
+    this->attr = attr;
 }
 
-ConstantBoolean::~ConstantBoolean() {
-    delete[]content;
-}
+ConstantBoolean::~ConstantBoolean() = default;
 
 
-Marker::Marker(MarkerType marker_type) : Token(), marker_type(marker_type) {
-    this->type = TokenType::Marker;
-}
-
-Marker::Marker(const char *cmarker, MarkerType marker_type)
+Marker::Marker(MarkerType marker_type)
         : Token(), marker_type(marker_type) {
     this->type = TokenType::Marker;
-    int l = strlen(cmarker);
-    content = new char[l + 1];
-    strcpy(const_cast<char *>(content), cmarker);
 }
 
-Marker::~Marker() {
-    delete[]content;
-}
+Marker::~Marker() = default;
 
 
 keyword_mapping key_map = {
@@ -245,7 +198,8 @@ const char *get_keyword_type_reversed(KeywordType kt) {
 }
 
 marker_type_underlying_type get_marker_pri(MarkerType marker_type) {
-    return static_cast<marker_type_underlying_type>(marker_type) >> 0x4U;
+    return static_cast<marker_type_underlying_type>(marker_type)
+            >> 0x4U;
 }
 
 reverse_marker_mapping reverse_marker_map;

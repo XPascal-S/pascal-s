@@ -185,7 +185,7 @@ void printAST(Node *node, int dep) {
 //                put_tab(dep + 1);
 //                printf("body = \n");
 //                printAST(cur_node->body, dep + 1);
-//#undef  cur_node
+#undef  cur_node
 //            } else {
 //                assert(false);
 //            }
@@ -549,9 +549,9 @@ void printAST(Node *node, int dep) {
     case Type::ExpMarker : put_tab(dep);
 #define cur_node (reinterpret_cast<ExpMarker *>(node))
       printf("{\n");
-      put_tab(dep + 1);
-      printf("type = marker %s\n", cur_node->value->content);
-      put_tab(dep);
+            put_tab(dep + 1);
+            printf("type = marker 0x%x\n", cur_node->value->marker_type);
+            put_tab(dep);
       printf("}\n");
 #undef cur_node
     case Type::ExpVoid : put_tab(dep);
@@ -567,51 +567,52 @@ void printAST(Node *node, int dep) {
 }
 
 char* Node::GetTokenSymbol() {
-  char *buffer = new char(1<<10);
-  memset(buffer, 0, sizeof(buffer));
-  switch (this->type) {
-  case Type::ExpConstantInteger:
-#define cur_node (reinterpret_cast<ExpConstantInteger*>(this))
-    if( cur_node->value->content == NULL ){
-      return NULL;
-    }
-    strcpy(buffer, cur_node->value->content);
-#undef  cur_node
-    break;
-  case Type::Ident:
-#define cur_node (reinterpret_cast<Ident*>(this))
-    if( cur_node->ident->content == NULL ){
-      return NULL;
-    }
-    strcpy(buffer, cur_node->ident->content);
-    break;
-#undef  cur_node
-  case Type::ExpKeyword:
-#define cur_node (reinterpret_cast<ExpKeyword *>(this))
-    if( cur_node->value->attr == NULL ){
-      return NULL;
-    }
-    strcpy(buffer, cur_node->value->attr);
-#undef cur_node
-    break;
-  case Type::ExpMarker:
-#define cur_node (reinterpret_cast<ExpMarker *>(this))
-    if( cur_node->value->content == NULL ){
-      return NULL;
-    }
-    strcpy(buffer, cur_node->value->content);
-#undef cur_node
-    break;
-  case Type::BasicTypeSpec:
-#define cur_node (reinterpret_cast<BasicTypeSpec *>(this))
-    if( cur_node->keyword->attr == NULL ){
-      return NULL;
-    }
-    strcpy(buffer, cur_node->keyword->attr);
-#undef cur_node
-    break;
-  default:
-    return NULL;
-  }
-  return buffer;
+    throw std::runtime_error("todo");
+//  char *buffer = new char(1<<10);
+//  memset(buffer, 0, sizeof(buffer));
+//  switch (this->type) {
+//  case Type::ExpConstantInteger:
+//#define cur_node (reinterpret_cast<ExpConstantInteger*>(this))
+//    if( cur_node->value->content == NULL ){
+//      return NULL;
+//    }
+//    strcpy(buffer, cur_node->value->content);
+//#undef  cur_node
+//    break;
+//  case Type::Ident:
+//#define cur_node (reinterpret_cast<Ident*>(this))
+//    if( cur_node->ident->content == NULL ){
+//      return NULL;
+//    }
+//    strcpy(buffer, cur_node->ident->content);
+//    break;
+//#undef  cur_node
+//  case Type::ExpKeyword:
+//#define cur_node (reinterpret_cast<ExpKeyword *>(this))
+//    if( cur_node->value->attr == NULL ){
+//      return NULL;
+//    }
+//    strcpy(buffer, cur_node->value->attr);
+//#undef cur_node
+//    break;
+//  case Type::ExpMarker:
+//#define cur_node (reinterpret_cast<ExpMarker *>(this))
+//    if( cur_node->value->content == NULL ){
+//      return NULL;
+//    }
+//    strcpy(buffer, cur_node->value->content);
+//#undef cur_node
+//    break;
+//  case Type::BasicTypeSpec:
+//#define cur_node (reinterpret_cast<BasicTypeSpec *>(this))
+//    if( cur_node->keyword->attr == NULL ){
+//      return NULL;
+//    }
+//    strcpy(buffer, cur_node->keyword->attr);
+//#undef cur_node
+//    break;
+//  default:
+//    return NULL;
+//  }
+//  return buffer;
 }
