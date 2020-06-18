@@ -129,7 +129,7 @@ private:
     void work_out_tokens(int, const char *[]) {
         if (exited) return;
         if (!options.out_with_token.empty()) {
-            OStreamProxy<std::ostream> os(std::cout);
+            WriterProxy<std::ostream> os(std::cout);
             feature::output_tokens(lexer.get_all_tokens(), os);
             lexer.reset_cursor();
         }

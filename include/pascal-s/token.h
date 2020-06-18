@@ -8,8 +8,9 @@
 #include "exception.h"
 
 using pascal_s_integer_t = int64_t;
+using pascal_s_real_t = double;
 
-enum class TokenType {
+enum class TokenType : int32_t {
     Unknown = 0,
     Keyword = 1,
     ConstantString = 2,
@@ -24,16 +25,20 @@ enum class TokenType {
     Length = 11,
 };
 
-using line_t = uint64_t;
-using column_t = uint64_t;
-using length_t = uint64_t;
+using line_t = uint32_t;
+using column_t = uint32_t;
+using length_t = uint32_t;
+using offset_t = uint64_t;
 
 struct Token {
+    // 0 ~ 8字节
     TokenType type;
-    //todo: add line, column info
     line_t line;
+    // 8 ~ 16字节
     column_t column;
     length_t length;
+    // 16 ~ 24字节
+    offset_t offset;
 };
 
 enum class KeywordType {
@@ -122,7 +127,7 @@ struct ConstantString : public Token {
 
 struct ConstantReal : public Token {
     const char *content;
-    double attr;
+    pascal_s_real_t attr;
 
     ConstantReal(const char *content, double attr);
 

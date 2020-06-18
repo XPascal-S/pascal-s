@@ -11,11 +11,16 @@
 namespace feature {
 
     template<typename OStream>
-    void output_tokens(const std::vector<Token *> &tokens, OStreamProxy<OStream> &os) {
+    void output_tokens(const std::vector<Token *> &tokens, WriterProxy<OStream> &os) {
         os << "out tokens\n";
         for (auto &token: tokens) {
             os.write_data(fmt::format("{}:{}: {}\n", token->line, token->column, convertToString(token)));
         }
+    }
+
+    template<typename File, typename OStream, typename Error>
+    void format_line_column_error(FileProxy<File> f, ErrorProxy<Error> err, WriterProxy<OStream> &os) {
+
     }
 }
 

@@ -9,7 +9,12 @@
 #include "logger.h"
 #include "token.h"
 
-
+using lexer_action_code_underlying_type = int;
+enum class LexerActionCode : lexer_action_code_underlying_type {
+    LexEnd = 0,
+    AppendToken = 1,
+    AuxFunctionCalled = 2,
+};
 
 class Lexer : public yyFlexLexer {
 public:
@@ -36,6 +41,8 @@ protected:
     int yylex() final;
 
     Logger logger;
+
+    // current_offset由gulp.h中的YY_USER_ACTION更新
     column_t current_offset = 0, line_offset = 0;
 
     virtual int addToken(Token *token) = 0;

@@ -2,52 +2,79 @@
 #include <iostream>
 #include <string_view>
 #include <pascal-s/logger.h>
+#include <pascal-s/lib/convert.h>
 #include <pascal-s/token.h>
 #include <pascal-s/lexer.h>
+
+/*
+ * Lexer 构造函数与析构函数
+ */
 
 Lexer::Lexer(std::istream *in, std::ostream *out)
         : yyFlexLexer(in, out) {}
 
-
-Lexer::~Lexer() {
-}
+Lexer::~Lexer() = default;
 
 
+/*
+ * Lexer 解析regex匹配到的各种字符串
+ */
+
+/*
+ * addIdentifier 在token流后追加一个Identifier
+ *
+ * 将regex文本大小写全转为小写
+ * 将regex文本装入Identifier
+ * todo: 是否合理？
+ */
 int Lexer::addIdentifier() {
     std::string str_temp = std::string(yytext);
-    std::transform(str_temp.begin(),str_temp.end(),str_temp.begin(),tolower);
+    std::transform(str_temp.begin(), str_temp.end(), str_temp.begin(), tolower);
     auto tok = new Identifier(str_temp.c_str());
     return addToken(tok);
 }
 
-
+/*
+ * addReal 在token流后追加一个ConstantReal
+ *
+ * 将regex文本转换为pascal_s_real_t
+ * 将数值装入ConstantReal
+ * 由于精度损失，原字符串也会一并传入ConstantReal
+ */
 int Lexer::addReal() {
 
     auto tok = new ConstantReal(yytext, std::strtod(yytext, nullptr));
     return addToken(tok);
 }
 
+/*
+ * addInteger 在token流后追加一个ConstantInteger
+ *
+ * 将regex文本转换为pascal_s_integer_t
+ * 将数值装入ConstantInteger
+ */
 int Lexer::addInteger() {
     auto tok = new ConstantInteger(std::strtoll(yytext, nullptr, 10));
     return addToken(tok);
 }
 
-bool parseBool(const char *literal) {
-    if (!strcmp(literal, "true")) {
-        return true;
-    }
-    if (!strcmp(literal, "false")) {
-        return false;
-    }
-    throw std::invalid_argument("convert failed");
-}
-
+/*
+ * addBoolean 在token流后追加一个ConstantBoolean
+ *
+ * 将regex文本转换为bool
+ * 将数值装入ConstantBoolean
+ */
 int Lexer::addBoolean() {
     auto tok = new ConstantBoolean(parseBool(yytext));
     return addToken(tok);
 }
 
-
+/*
+ * addBoolean 在token流后追加一个ConstantBoolean
+ *
+ * 将regex文本转换为bool
+ * 将数值装入ConstantBoolean
+ */
 int Lexer::addKeyword() {
     std::string str_temp = std::string(yytext);
     std::transform(str_temp.begin(), str_temp.end(), str_temp.begin(), tolower);
@@ -55,13 +82,33 @@ int Lexer::addKeyword() {
     return addToken(tok);
 }
 
+
+/*
+ * addMarker 在token流后追加一个Marker
+ *
+ * 将regex文本转换marker_type
+ * 将类型装入Marker
+ */
 int Lexer::addMarker() {
     auto tok = new Marker(marker_map.at(yytext));
     return addToken(tok);
 }
 
+/*
+ * char_spec 保存全局的char映射信息
+ *
+ * 包含变量spec_char_map
+ *   + [ch]: 若\ch是一个合法的单字符转义文本，则返回对应的char类型值
+ *   + count: 返回ch映射是否存在于表中
+ * 表中包含\n, \t, \r, \\
+ *
+ * 包含变量hex_table
+ *   + [ch]: 若\ch是一个合法的16进制数字，则返回对应的16进制数值
+ *   + count: 返回ch映射是否存在于表中
+ * 表中包含0-9, a-f, A-F
+ */
 namespace char_spec {
-    const char invalid = '0';
+    static const char invalid = '0';
 
     static struct _spec_char_map_t {
         char inner[256]{};
@@ -119,14 +166,19 @@ namespace char_spec {
             return inner[a] != invalid;
         }
     } hex_table;
-
-
 }
 
-int ishex(char n) {
-    return char_spec::hex_table.count(n);
+/*
+ * 返回ch是否是一个合法的16进制单字符
+ */
+static int ishex(char ch) {
+    return char_spec::hex_table.count(ch);
 }
 
+/*
+ * addASCIIChar 如果regex文本是一个合法的ascii字符（包括转义）, 则在token流后追加一个ConstantChar
+ * 否则返回0
+ */
 int Lexer::addASCIIChar() {
 
     // from this line, yytext.length >= 0, safe index: 0
@@ -135,7 +187,9 @@ int Lexer::addASCIIChar() {
     // case1: any but '
     //        0 1
     // case2: ' $
-    if (yytext[0] != '\'' || yytext[1] == '\00') return 0;
+    if (yytext[0] != '\'' || yytext[1] == '\00') {
+        return static_cast<lexer_action_code_underlying_type>(LexerActionCode::LexEnd);
+    }
 
     // from this line, yytext.length >= 2, safe index: 0-2
 
@@ -175,9 +229,15 @@ int Lexer::addASCIIChar() {
         }
     }
 
-    return 0;
+
+    return static_cast<lexer_action_code_underlying_type>(LexerActionCode::LexEnd);
 }
 
+/*
+ * addChar 在token流后追加一个ConstantChar
+ *
+ * 如果转换失败，在错误流后追加一个错误
+ */
 int Lexer::addChar() {
     int code = addASCIIChar();
     // unicode rule can be extend
@@ -189,14 +249,19 @@ int Lexer::addChar() {
     return code;
 }
 
-int Lexer::recordNewLine() {
-    line_offset = current_offset;
-    return 1;
-}
-
+/*
+ * skipErrorString 在错误流后追加一个错误
+ */
 int Lexer::skipErrorString() {
     auto tok = new ErrorToken(yytext);
-    addError(tok);
-    return addToken(tok);
+    return addError(tok), addToken(tok);
+}
+
+/*
+ * recordNewLine 更新行偏移
+ */
+int Lexer::recordNewLine() {
+    line_offset = current_offset;
+    return static_cast<lexer_action_code_underlying_type>(LexerActionCode::AuxFunctionCalled);
 }
 
