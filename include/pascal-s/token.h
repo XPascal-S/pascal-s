@@ -23,8 +23,9 @@ enum class TokenType {
     ConstantBoolean = 6,
     Identifier = 7,
     Marker = 8,
-    Nullptr= 9,
-    Length = 10,
+    Nullptr = 9,
+    ErrorToken = 10,
+    Length = 11,
 };
 
 using line_t = uint64_t;
@@ -35,7 +36,6 @@ struct Token {
     //todo: add line, column info
     line_t line;
     column_t column;
-    virtual ~Token() {};
 };
 
 enum class KeywordType {
@@ -103,6 +103,7 @@ using marker_type_underlying_type = uint8_t ;
 struct Keyword : public Token {
     KeywordType key_type;
     const char *attr;
+
     explicit Keyword(const char *attr, KeywordType key_type);
 
     explicit Keyword(KeywordType key_type) : Token(), key_type(key_type) {
@@ -110,13 +111,21 @@ struct Keyword : public Token {
     }
 };
 
-struct ConstantString: public Token {
-    const char* content;
-    const char* attr;
+struct ErrorToken : public Token {
+    const char *content;
+
+    explicit ErrorToken(const char *content);
+
+    ~ErrorToken();
 };
 
-struct ConstantReal: public Token {
-    const char* content;
+struct ConstantString : public Token {
+    const char *content;
+    const char *attr;
+};
+
+struct ConstantReal : public Token {
+    const char *content;
     double attr;
 
     ConstantReal(const char *content);

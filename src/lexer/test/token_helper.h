@@ -48,6 +48,16 @@ CompareMarker(const char *lhs_expression, const char *rhs_expression, const Mark
 }
 
 static testing::AssertionResult
+CompareErrorToken(const char *lhs_expression, const char *rhs_expression, const ErrorToken *lhs,
+                  const ErrorToken *rhs) {
+    using namespace testing;
+    str_equal_field(lhs->content, rhs->content);
+
+    return AssertionSuccess();
+}
+
+
+static testing::AssertionResult
 CompareKeyword(const char *lhs_expression, const char *rhs_expression, const Keyword *lhs, const Keyword *rhs) {
     using namespace testing;
 
@@ -68,12 +78,16 @@ static testing::AssertionResult CompareToken(const char *lhs_expression,
                                      reinterpret_cast<const Identifier *>(rhs));
         case TokenType::Marker:
             return CompareMarker(lhs_expression, rhs_expression,
-                                     reinterpret_cast<const Marker *>(lhs),
-                                     reinterpret_cast<const Marker *>(rhs));
+                                 reinterpret_cast<const Marker *>(lhs),
+                                 reinterpret_cast<const Marker *>(rhs));
         case TokenType::Keyword:
             return CompareKeyword(lhs_expression, rhs_expression,
-                                 reinterpret_cast<const Keyword *>(lhs),
-                                 reinterpret_cast<const Keyword *>(rhs));
+                                  reinterpret_cast<const Keyword *>(lhs),
+                                  reinterpret_cast<const Keyword *>(rhs));
+        case TokenType::ErrorToken:
+            return CompareErrorToken(lhs_expression, rhs_expression,
+                                     reinterpret_cast<const ErrorToken *>(lhs),
+                                     reinterpret_cast<const ErrorToken *>(rhs));
         default:
             return AssertionFailure() << fmt::format("unknown token type {}", lhs->type);
     }

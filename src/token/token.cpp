@@ -27,6 +27,9 @@ void deleteToken(Token *pToken) {
         case TokenType::Identifier:
             delete reinterpret_cast<Identifier *>(pToken);
             break;
+        case TokenType::ErrorToken:
+            delete reinterpret_cast<ErrorToken *>(pToken);
+            break;
         default:
             throw RuntimeReinterpretTokenException(pToken);
     }
@@ -61,12 +64,34 @@ std::string convertToString(const Token *pToken) {
     assert(false);
 }
 
+
+char *copy_string(const char *content, int length) {
+    char *ns = new char[length + 1];
+    strcpy(ns, content);
+    return ns;
+}
+
+char *copy_string(const char *content) {
+    return copy_string(content, strlen(content));
+}
+
+
+ErrorToken::ErrorToken(const char *content) {
+    this->type = TokenType::ErrorToken;
+    this->content = copy_string(content);
+}
+
+ErrorToken::~ErrorToken() {
+    delete[] this->content;
+    this->content = nullptr;
+}
+
 Keyword::Keyword(const char *attr, KeywordType key_type)
-    : Token(), key_type(key_type) {
-  this->type = TokenType::Keyword;
-  int l = strlen(attr);
-  this->attr = new char[l + 1];
-  strcpy(const_cast<char *>(this->attr), attr);
+        : Token(), key_type(key_type) {
+    this->type = TokenType::Keyword;
+    int l = strlen(attr);
+    this->attr = new char[l + 1];
+    strcpy(const_cast<char *>(this->attr), attr);
 }
 
 ConstantReal::ConstantReal(const char *creal) : Token() {
@@ -137,15 +162,15 @@ ConstantBoolean::~ConstantBoolean() {
 
 
 Marker::Marker(MarkerType marker_type) : Token(), marker_type(marker_type) {
-  this->type = TokenType::Marker;
+    this->type = TokenType::Marker;
 }
 
 Marker::Marker(const char *cmarker, MarkerType marker_type)
-  : Token(), marker_type(marker_type) {
-  this->type = TokenType::Marker;
-  int l = strlen(cmarker);
-  content = new char[l + 1];
-  strcpy(const_cast<char *>(content), cmarker);
+        : Token(), marker_type(marker_type) {
+    this->type = TokenType::Marker;
+    int l = strlen(cmarker);
+    content = new char[l + 1];
+    strcpy(const_cast<char *>(content), cmarker);
 }
 
 Marker::~Marker() {
@@ -220,10 +245,10 @@ const char *get_keyword_type_reversed(KeywordType kt) {
 }
 
 marker_type_underlying_type get_marker_pri(MarkerType marker_type) {
-  return static_cast<marker_type_underlying_type>(marker_type) >> 0x4U;
+    return static_cast<marker_type_underlying_type>(marker_type) >> 0x4U;
 }
 
-reverse_marker_mapping  reverse_marker_map;
+reverse_marker_mapping reverse_marker_map;
 
 const char *get_marker_type_reversed(MarkerType mt) {
     if (reverse_marker_map.empty()) {

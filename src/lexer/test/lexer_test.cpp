@@ -56,7 +56,7 @@ struct LexerGetAllTokensTestCase {
     std::vector<Token *> *expected;
 };
 
-class GoodLexerGetAllTokensTest : public testing::TestWithParam<LexerGetAllTokensTestCase> {
+class LexerGetAllTokensTest : public testing::TestWithParam<LexerGetAllTokensTestCase> {
 
     void TearDown() override {
         auto &tokens = GetParam().expected;
@@ -66,6 +66,9 @@ class GoodLexerGetAllTokensTest : public testing::TestWithParam<LexerGetAllToken
         tokens->clear();
         delete tokens;
     };
+};
+
+class GoodLexerGetAllTokensTest : public LexerGetAllTokensTest {
 };
 
 TEST_P(GoodLexerGetAllTokensTest, WillNotThrowException) /* NOLINT */
@@ -92,12 +95,39 @@ INSTANTIATE_TEST_SUITE_P(Simple, GoodLexerGetAllTokensTest, testing::Values( /* 
                                                                    new Identifier("a"),
                                                                    new Identifier("a")})},
         LexerGetAllTokensTestCase{"To", new std::vector<Token *>({new Keyword(key_map.at("to"))})},
-        LexerGetAllTokensTestCase{"div mod And Or Not read write", new std::vector<Token *>({
-            new Keyword(key_map.at("div")),
-            new Keyword(key_map.at("mod")),
-            new Keyword(key_map.at("and")),
-            new Keyword(key_map.at("or")),
-            new Keyword(key_map.at("not")),
-            new Keyword(key_map.at("write")),
-            new Keyword(key_map.at("read"))})}
+        LexerGetAllTokensTestCase{
+                "div mod And Or Not read write",
+                new std::vector<Token *>(
+                        {
+                                new Keyword(key_map.at("div")),
+                                new Keyword(key_map.at("mod")),
+                                new Keyword(key_map.at("and")),
+                                new Keyword(key_map.at("or")),
+                                new Keyword(key_map.at("not")),
+                                new Keyword(key_map.at("write")),
+                                new Keyword(key_map.at("read"))})}
+));
+
+class BadLexerGetAllTokensTest : public LexerGetAllTokensTest {
+};
+
+
+TEST_P(BadLexerGetAllTokensTest, WillNotThrowException) /* NOLINT */
+{
+    auto &&param = GetParam();
+    std::stringstream in(param.input);
+    FullInMemoryLexer lexer(&in);
+    auto tokens = lexer.get_all_tokens();
+    ASSERT_EQ(tokens.size(), param.expected->size());
+    for (size_t i = 0; i < tokens.size(); i++) {
+        ASSERT_TOKEN_EQUAL(tokens[i], (*param.expected)[i]);
+    }
+    ASSERT_TRUE(lexer.has_error());
+}
+
+
+INSTANTIATE_TEST_SUITE_P(Simple, BadLexerGetAllTokensTest, testing::Values( /* NOLINT */
+        LexerGetAllTokensTestCase{"1a",
+                                  new std::vector<Token *>(
+                                          {new ErrorToken("1a")})}
 ));

@@ -48,10 +48,23 @@ const FullInMemoryLexer::token_container &FullInMemoryLexer::get_all_tokens() {
     return tokens;
 }
 
+void FullInMemoryLexer::addError(ErrorToken *token) {
+    errors.push_back(token);
+}
+
+
 int FullInMemoryLexer::addToken(Token *token) {
     token->line = yylineno;
     token->column = current_offset - line_offset - yyleng;
     tokens.push_back(token);
     return 1;
+}
+
+const Lexer::error_references &FullInMemoryLexer::get_all_errors() {
+    return errors;
+}
+
+bool FullInMemoryLexer::has_error() {
+    return !errors.empty();
 }
 
