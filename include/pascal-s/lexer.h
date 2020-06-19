@@ -69,7 +69,7 @@ private:
 
     int recordNewLine();
 
-    int skipErrorString();
+    int skipErrorString(const char *hint = "occurs a lexical error here");
 };
 
 class FullInMemoryLexer : public Lexer {

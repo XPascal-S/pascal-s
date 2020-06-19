@@ -25,7 +25,8 @@ true|false { return addBoolean(); }
 [0-9]+ { return addInteger(); }
 '.*' { return addChar(); }
 
-[^[:space:]]+ { return skipErrorString(); }
+[\_a-zA-Z0-9]* { return skipErrorString("identifier started with number was not allow"); }
+[^[:space:]] { return skipErrorString("unknown character in input stream"); }
 
 %%
 

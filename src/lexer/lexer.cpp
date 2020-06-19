@@ -256,8 +256,8 @@ int Lexer::addChar() {
 /*
  * skipErrorString 在错误流后追加一个错误
  */
-int Lexer::skipErrorString() {
-    auto tok = new ErrorToken(yytext);
+int Lexer::skipErrorString(const char *hint) {
+    auto tok = ErrorToken::copy_in(yytext, hint);
     return addError(tok), addToken(tok);
 }
 
