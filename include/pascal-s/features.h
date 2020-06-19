@@ -93,15 +93,15 @@ namespace feature {
         }
         os << '\n';
 
-        int hl = 0;
+        int hl = column;
         if (show_width < column) {
             auto h = fmt::format(text_style::fmt.style, "(omitting {} chars) ", column - show_width);
             os.write_data(fmt::format(text_style::fmt.style, "{}", h));
-            hl = h.length();
+            hl = fmt::format("{}", column - show_width).length() + 18 + offset - buffer_read_l;
         }
         os.write_data(fmt::format(text_style::fmt.style, "{}", pBuffer + buffer_read_l)) << '\n';
         os.write_data(fmt::format(text_style::fmt.style, "{:>{}}\n", fmt::format("{:^<{}}", "", length),
-                                  hl + column + length));
+                                  hl + length));
     }
 }
 
