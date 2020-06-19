@@ -340,8 +340,8 @@ int yyFlexLexer::yylex()
     (yy_hold_char) = *yy_cp; \
     *yy_cp = '\0'; \
     (yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 15
-#define YY_END_OF_BUFFER 16
+#define YY_NUM_RULES 16
+#define YY_END_OF_BUFFER 17
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info {
@@ -350,7 +350,7 @@ struct yy_trans_info {
 };
 static const flex_int16_t yy_accept[134] =
         {0,
-         13, 13, 16, 14, 15, 1, 7, 14, 6, 6,
+         13, 13, 17, 14, 15, 1, 7, 14, 6, 6,
          6, 11, 6, 6, 6, 9, 9, 9, 9, 9,
          9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
          9, 9, 9, 14, 0, 12, 6, 10, 0, 0,
@@ -528,9 +528,9 @@ static const flex_int16_t yy_chk[327] =
         };
 
 /* Table of booleans, true if rule could match eol. */
-static const flex_int32_t yy_rule_can_match_eol[16] =
+static const flex_int32_t yy_rule_can_match_eol[17] =
         {0,
-         1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,};
+         1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,};
 
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
@@ -541,10 +541,8 @@ static const flex_int32_t yy_rule_can_match_eol[16] =
 #define YY_RESTORE_YY_MORE_OFFSET
 #line 1 "lexer.flex"
 #line 9 "lexer.flex"
-
 #include <pascal-s/lexer.h>
 #include "gulp.h"
-
 #line 548 "flex-lexer.cpp"
 #line 549 "flex-lexer.cpp"
 
@@ -556,7 +554,6 @@ static const flex_int32_t yy_rule_can_match_eol[16] =
  * The user has a chance to override it with an option.
  */
 #include <unistd.h>
-
 #endif
 
 #ifndef YY_EXTRA_TYPE
@@ -733,144 +730,150 @@ yy_find_action:
 ;
 			}
 
-do_action:	/* This label is used only to access EOF actions. */
+            do_action:    /* This label is used only to access EOF actions. */
 
-		switch ( yy_act ) { /* beginning of action switch */
-            case 0: /* must back up */
-                /* undo the effects of YY_DO_BEFORE_ACTION */
-                *yy_cp = (yy_hold_char);
-                yy_cp = (yy_last_accepting_cpos);
-                yy_current_state = (yy_last_accepting_state);
-                goto yy_find_action;
+            switch (yy_act) { /* beginning of action switch */
+                case 0: /* must back up */
+                    /* undo the effects of YY_DO_BEFORE_ACTION */
+                    *yy_cp = (yy_hold_char);
+                    yy_cp = (yy_last_accepting_cpos);
+                    yy_current_state = (yy_last_accepting_state);
+                    goto yy_find_action;
 
-            case 1:
+                case 1:
 /* rule 1 can match eol */
-                YY_RULE_SETUP
+                    YY_RULE_SETUP
 #line 15 "lexer.flex"
-                { return recordNewLine(); }
-                YY_BREAK
-            case 2:
+                    { return recordNewLine(); }
+                    YY_BREAK
+                case 2:
 /* rule 2 can match eol */
-                YY_RULE_SETUP
+                    YY_RULE_SETUP
 #line 16 "lexer.flex"
-                {} /* do nothing */
-                YY_BREAK
-            case 3:
+                    {} /* do nothing */
+                    YY_BREAK
+                case 3:
 /* rule 3 can match eol */
-                YY_RULE_SETUP
+                    YY_RULE_SETUP
 #line 17 "lexer.flex"
-                {} /* do nothing */
-                YY_BREAK
-            case 4:
-                YY_RULE_SETUP
+                    {} /* do nothing */
+                    YY_BREAK
+                case 4:
+                    YY_RULE_SETUP
 #line 18 "lexer.flex"
-                { return addKeyword(); }
-                YY_BREAK
-            case 5:
-                YY_RULE_SETUP
+                    { return addKeyword(); }
+                    YY_BREAK
+                case 5:
+                    YY_RULE_SETUP
 #line 19 "lexer.flex"
-                { return addKeyword(); }
-                YY_BREAK
-            case 6:
-                YY_RULE_SETUP
+                    { return addKeyword(); }
+                    YY_BREAK
+                case 6:
+                    YY_RULE_SETUP
 #line 20 "lexer.flex"
-                { return addMarker(); }
-                YY_BREAK
-            case 7:
-                YY_RULE_SETUP
+                    { return addMarker(); }
+                    YY_BREAK
+                case 7:
+                    YY_RULE_SETUP
 #line 21 "lexer.flex"
-                { return addMarker(); }
-                YY_BREAK
-            case 8:
-                YY_RULE_SETUP
+                    { return addMarker(); }
+                    YY_BREAK
+                case 8:
+                    YY_RULE_SETUP
 #line 22 "lexer.flex"
-                { return addBoolean(); }
-                YY_BREAK
-            case 9:
-                YY_RULE_SETUP
+                    { return addBoolean(); }
+                    YY_BREAK
+                case 9:
+                    YY_RULE_SETUP
 #line 23 "lexer.flex"
-                { return addIdentifier(); }
-                YY_BREAK
-            case 10:
-                YY_RULE_SETUP
+                    { return addIdentifier(); }
+                    YY_BREAK
+                case 10:
+                    YY_RULE_SETUP
 #line 24 "lexer.flex"
-                { return addReal(); }
-                YY_BREAK
-            case 11:
-                YY_RULE_SETUP
+                    { return addReal(); }
+                    YY_BREAK
+                case 11:
+                    YY_RULE_SETUP
 #line 25 "lexer.flex"
-                { return addInteger(); }
-                YY_BREAK
-            case 12:
-                YY_RULE_SETUP
+                    { return addInteger(); }
+                    YY_BREAK
+                case 12:
+                    YY_RULE_SETUP
 #line 26 "lexer.flex"
-                { return addChar(); }
-                YY_BREAK
-            case 13:
-                YY_RULE_SETUP
+                    { return addChar(); }
+                    YY_BREAK
+                case 13:
+                    YY_RULE_SETUP
 #line 28 "lexer.flex"
-                { return skipErrorString("identifier started with number was not allow"); }
-                YY_BREAK
-            case 14:
-                YY_RULE_SETUP
+                    { return skipErrorString("identifier started with number was not allow"); }
+                    YY_BREAK
+                case 14:
+                    YY_RULE_SETUP
 #line 29 "lexer.flex"
-                { return skipErrorString("unknown character in input stream"); }
-                YY_BREAK
-            case 15:
-                YY_RULE_SETUP
-#line 31 "lexer.flex"
-                ECHO;
-                YY_BREAK
-#line 828 "flex-lexer.cpp"
-            case YY_STATE_EOF(INITIAL):
-                yyterminate();
+                    { return skipErrorString("unknown character in input stream"); }
+                    YY_BREAK
+                case 15:
+/* rule 15 can match eol */
+                    YY_RULE_SETUP
+#line 30 "lexer.flex"
+                    {} /* do nothing */
+                    YY_BREAK
+                case 16:
+                    YY_RULE_SETUP
+#line 32 "lexer.flex"
+                    ECHO;
+                    YY_BREAK
+#line 834 "flex-lexer.cpp"
+                case YY_STATE_EOF(INITIAL):
+                    yyterminate();
 
-            case YY_END_OF_BUFFER: {
-                /* Amount of text matched not including the EOB char. */
-                int yy_amount_of_matched_text = (int) (yy_cp - (yytext_ptr)) - 1;
+                case YY_END_OF_BUFFER: {
+                    /* Amount of text matched not including the EOB char. */
+                    int yy_amount_of_matched_text = (int) (yy_cp - (yytext_ptr)) - 1;
 
-                /* Undo the effects of YY_DO_BEFORE_ACTION. */
-                *yy_cp = (yy_hold_char);
-                YY_RESTORE_YY_MORE_OFFSET
+                    /* Undo the effects of YY_DO_BEFORE_ACTION. */
+                    *yy_cp = (yy_hold_char);
+                    YY_RESTORE_YY_MORE_OFFSET
 
-                if (YY_CURRENT_BUFFER_LVALUE->yy_buffer_status == YY_BUFFER_NEW) {
-                    /* We're scanning a new file or input source.  It's
-                     * possible that this happened because the user
-                     * just pointed yyin at a new source and called
-                     * yylex().  If so, then we have to assure
-                     * consistency between YY_CURRENT_BUFFER and our
-                     * globals.  Here is the right place to do so, because
-                     * this is the first action (other than possibly a
-                     * back-up) that will match for the new input source.
+                    if (YY_CURRENT_BUFFER_LVALUE->yy_buffer_status == YY_BUFFER_NEW) {
+                        /* We're scanning a new file or input source.  It's
+                         * possible that this happened because the user
+                         * just pointed yyin at a new source and called
+                         * yylex().  If so, then we have to assure
+                         * consistency between YY_CURRENT_BUFFER and our
+                         * globals.  Here is the right place to do so, because
+                         * this is the first action (other than possibly a
+                         * back-up) that will match for the new input source.
+                         */
+                        (yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
+                        YY_CURRENT_BUFFER_LVALUE->yy_input_file = yyin.rdbuf();
+                        YY_CURRENT_BUFFER_LVALUE->yy_buffer_status = YY_BUFFER_NORMAL;
+                    }
+
+                    /* Note that here we test for yy_c_buf_p "<=" to the position
+                     * of the first EOB in the buffer, since yy_c_buf_p will
+                     * already have been incremented past the NUL character
+                     * (since all states make transitions on EOB to the
+                     * end-of-buffer state).  Contrast this with the test
+                     * in input().
                      */
-			(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
-			YY_CURRENT_BUFFER_LVALUE->yy_input_file = yyin.rdbuf();
-			YY_CURRENT_BUFFER_LVALUE->yy_buffer_status = YY_BUFFER_NORMAL;
-			}
+                    if ((yy_c_buf_p) <=
+                        &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[(yy_n_chars)]) { /* This was really a NUL. */
+                        yy_state_type yy_next_state;
 
-		/* Note that here we test for yy_c_buf_p "<=" to the position
-		 * of the first EOB in the buffer, since yy_c_buf_p will
-		 * already have been incremented past the NUL character
-		 * (since all states make transitions on EOB to the
-		 * end-of-buffer state).  Contrast this with the test
-		 * in input().
-		 */
-		if ( (yy_c_buf_p) <= &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[(yy_n_chars)] )
-			{ /* This was really a NUL. */
-			yy_state_type yy_next_state;
+                        (yy_c_buf_p) = (yytext_ptr) + yy_amount_of_matched_text;
 
-			(yy_c_buf_p) = (yytext_ptr) + yy_amount_of_matched_text;
+                        yy_current_state = yy_get_previous_state();
 
-			yy_current_state = yy_get_previous_state(  );
-
-			/* Okay, we're now positioned to make the NUL
-			 * transition.  We couldn't have
-			 * yy_get_previous_state() go ahead and do it
-			 * for us because it doesn't know how to deal
-			 * with the possibility of jamming (and we don't
-			 * want to build jamming into it because then it
-			 * will run more slowly).
-			 */
+                        /* Okay, we're now positioned to make the NUL
+                         * transition.  We couldn't have
+                         * yy_get_previous_state() go ahead and do it
+                         * for us because it doesn't know how to deal
+                         * with the possibility of jamming (and we don't
+                         * want to build jamming into it because then it
+                         * will run more slowly).
+                         */
 
 			yy_next_state = yy_try_NUL_trans( yy_current_state );
 
@@ -1784,7 +1787,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 31 "lexer.flex"
+#line 32 "lexer.flex"
 
 
 
