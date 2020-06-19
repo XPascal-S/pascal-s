@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <pascal-s/lexer.h>
 #include <pascal-s/features.h>
+#include <pascal-s/lib/stream_file.h>
 
 struct ShowErrorTestCase {
     const char *input;
@@ -18,21 +19,6 @@ public:
     explicit CFile(FILE *f) : f(f) {}
 };
 
-class CPPStreamFile {
-    std::istream &f;
-
-public:
-    explicit CPPStreamFile(std::istream &f) : f(f) {}
-
-    pascal_errno seek(size_t offset) {
-        f.seekg(offset);
-    }
-
-    pascal_errno read(char *buf, size_t len) {
-        f.read(buf, len);
-    }
-};
-
 TEST_P(GoodShowErrorTest, WillNotThrowException) /* NOLINT */
 {
     auto &param = GetParam();
@@ -42,8 +28,8 @@ TEST_P(GoodShowErrorTest, WillNotThrowException) /* NOLINT */
     lexer.get_all_tokens();
     ASSERT_TRUE(lexer.has_error());
 
-    CPPStreamFile fin(in);
-    FileProxy<CPPStreamFile> fp(fin);
+    pascal_s::CPPStreamFile fin(in);
+    FileProxy<pascal_s::CPPStreamFile> fp(fin);
     WriterProxy<std::ostream> os(std::cout);
 
     for (auto e : lexer.get_all_errors()) {

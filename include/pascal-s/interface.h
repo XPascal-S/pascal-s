@@ -52,7 +52,7 @@ struct LexerProxy {
     [[maybe_unused]] const error_references &get_all_errors() { return lexer.get_all_errors(); }
 
     // 判断是否存在词法错误
-    [[maybe_unused]] bool &has_error() { return lexer.has_error(); }
+    [[maybe_unused]] bool has_error() { return lexer.has_error(); }
 };
 
 using pascal_errno = int;

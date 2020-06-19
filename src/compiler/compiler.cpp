@@ -5,10 +5,13 @@
 #include <dep/opt.h>
 #include <iostream>
 #include <fstream>
-#include <fmt/core.h>
+#include <pascal-s/interface.h>
 #include <pascal-s/features.h>
 #include <pascal-s/lexer.h>
-#include <pascal-s/interface.h>
+#include <pascal-s/lib/stream_file.h>
+//#include <pascal-s/parser.h>
+//#include <target/llvm.h>
+#include <target/task.h>
 #include <functional>
 #include <utility>
 
@@ -26,6 +29,8 @@ string_view_return basename(string_view s) {
 
 static const char *cat_default = "";
 static const char *cat_compile_options = "compile options";
+
+extern int target_compile(int argc, const char **pString, CompilerTargetTask *task);
 
 struct CompilerOptions {
     bool help = false;
@@ -48,13 +53,13 @@ struct CompilerOptions {
                        cat_compile_options, ".", "i");
         parser.addOpts("out", &out_path,
                        "Output path",
-                       cat_compile_options, ".", "o");
+                       cat_compile_options, "main.o", "o");
         parser.addOpts("out-ir", &out_with_ir,
-                       "Output IR code, enum of {json, yml, fmt, binary, console}",
-                       cat_compile_options, "binary", "f");
+                       "Output IR code, enum of {, json, yml, fmt, binary, console}",
+                       cat_compile_options, "", "f");
         parser.addOpts("out-token", &out_with_token,
-                       "Output tokens, enum of {json, yml, fmt, binary, console}",
-                       cat_compile_options, "binary", "tf");
+                       "Output tokens, enum of {, json, yml, fmt, binary, console}",
+                       cat_compile_options, "", "tf");
     }
 
     ~CompilerOptions() {
@@ -63,37 +68,45 @@ struct CompilerOptions {
         }
     }
 
-
     std::vector<std::fstream *> files;
 
+    std::fstream *source_file = nullptr;
     std::istream &get_source() {
         if (source_path == "stdin") {
             return std::cin;
         } else {
+            if (source_file != nullptr) {
+                return *source_file;
+            }
+
             auto fs = new std::fstream(source_path);
             if (fs->fail()) {
                 delete fs;
-                std::cout << strerror(errno) << ": " << source_path;
+                std::cout << "Open Source File Error: " << strerror(errno) << ": " << source_path;
                 exit(errno);
             }
 
             files.push_back(fs);
+            source_file = fs;
             return *fs;
         }
     }
 };
 
-template<typename Lexer>
+template<typename Lexer //, typename Parser
+>
 struct Compiler {
-    const CompilerOptions &options;
+    CompilerOptions &options;
     std::function<void(int code)> _exit;
     LexerProxy<Lexer> lexer;
+//    ParserProxy<Parser> parser;
 
     Compiler(
             LexerProxy<Lexer> lexer,
-            const CompilerOptions &options, std::function<void(int)> _exit)
+//            ParserProxy<Parser> parser,
+            CompilerOptions &options, std::function<void(int)> _exit)
             :
-            lexer(std::move(lexer)),
+            lexer(std::move(lexer)), // parser(std::move(parser)),
             options(options), _exit(std::move(_exit)) {}
 
     void work(int &argc, const char *argv[]) {
@@ -101,6 +114,7 @@ struct Compiler {
         work_help(argc, argv);
         work_version(argc, argv);
         work_out_tokens(argc, argv);
+        work_compile(argc, argv);
     }
 
     void reset() {
@@ -135,6 +149,31 @@ private:
         }
     }
 
+    void work_compile(int argc, const char *argv[]) {
+        if (exited) return;
+
+        CompilerTargetTask task;
+
+        task.target = options.out_path;
+//        task.source = parser.parse();
+        lexer.get_all_tokens();
+
+        if (lexer.has_error()) {
+
+            pascal_s::CPPStreamFile fin(options.get_source());
+            FileProxy<pascal_s::CPPStreamFile> fp(fin);
+            WriterProxy<std::ostream> os(std::cout);
+
+            for (auto e : lexer.get_all_errors()) {
+                feature::format_line_column_error(fp, ErrorProxy<ErrorToken>(*e), os);
+            }
+        }
+
+        task.out_ir = !options.out_with_ir.empty();
+
+        _exit(target_compile(argc, argv, &task));
+    }
+
     void exit(int code) {
         exited = true;
         _exit(code);
@@ -147,11 +186,15 @@ int main(int argc, const char *argv[]) {
 
     CompilerOptions options(dep::_global);
     dep::parseOpts(argc, argv);
+
     FullInMemoryLexer lexer(&options.get_source(), &std::cout);
     LexerProxy<FullInMemoryLexer> lexer_proxy(lexer);
+//    Parser<FullInMemoryLexer> parser(lexer_proxy);
+//    ParserProxy<Parser<FullInMemoryLexer>> parser_proxy(parser);
 
-    Compiler<FullInMemoryLexer> compiler(
-            lexer_proxy,
+    Compiler<FullInMemoryLexer //, Parser<FullInMemoryLexer>
+    > compiler(
+            lexer_proxy, //parser_proxy,
             options, exit);
 
     compiler.work(argc, argv);

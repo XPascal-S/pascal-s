@@ -240,18 +240,18 @@ INSTANTIATE_TEST_SUITE_P(Stream, GoodLexerGetAllTokensTest, testing::Values( /* 
                                   new std::vector<Token *>({
                                                                    new Identifier("a"),
                                                                    new Identifier("a")})},
-        LexerGetAllTokensTestCase{"To", new std::vector<Token *>({new Keyword(key_map.at("to"))})},
+        LexerGetAllTokensTestCase{"To", new std::vector<Token *>({new Keyword(get_keyword_type("to"))})},
         LexerGetAllTokensTestCase{
                 "div mod And Or Not read write",
                 new std::vector<Token *>(
                         {
-                                new Keyword(key_map.at("div")),
-                                new Keyword(key_map.at("mod")),
-                                new Keyword(key_map.at("and")),
-                                new Keyword(key_map.at("or")),
-                                new Keyword(key_map.at("not")),
-                                new Keyword(key_map.at("write")),
-                                new Keyword(key_map.at("read"))})}
+                                new Keyword(get_keyword_type("div")),
+                                new Keyword(get_keyword_type("mod")),
+                                new Keyword(get_keyword_type("and")),
+                                new Keyword(get_keyword_type("or")),
+                                new Keyword(get_keyword_type("not")),
+                                new Keyword(get_keyword_type("write")),
+                                new Keyword(get_keyword_type("read"))})}
 ));
 
 class BadLexerGetAllTokensTest : public LexerGetAllTokensTest {

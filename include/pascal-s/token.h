@@ -10,7 +10,13 @@
 using pascal_s_integer_t = int64_t;
 using pascal_s_real_t = double;
 
-enum class TokenType : int32_t {
+using line_t = uint32_t;
+using column_t = uint32_t;
+using length_t = uint32_t;
+using offset_t = uint64_t;
+
+using token_type_underlying_type = uint32_t;
+enum class TokenType : token_type_underlying_type {
     Unknown = 0,
     Keyword = 1,
     ConstantString = 2,
@@ -25,24 +31,10 @@ enum class TokenType : int32_t {
     Length = 11,
 };
 
-using line_t = uint32_t;
-using column_t = uint32_t;
-using length_t = uint32_t;
-using offset_t = uint64_t;
 
-struct Token {
-    // 0 ~ 8字节
-    TokenType type;
-    line_t line;
-    // 8 ~ 16字节
-    column_t column;
-    length_t length;
-    // 16 ~ 24字节
-    offset_t offset;
-};
-
-enum class KeywordType {
-    Program ,
+using keyword_type_underlying_type = uint8_t;
+enum class KeywordType : keyword_type_underlying_type {
+    Program,
     Const,
     Var,
     Procedure,
@@ -100,13 +92,15 @@ enum class MarkerType :marker_type_underlying_type {
     Colon = 0x54, // :
 };
 
-using marker_type_underlying_type = uint8_t ;
-
-
-struct Keyword : public Token {
-    KeywordType key_type;
-
-    explicit Keyword(KeywordType key_type);
+struct Token {
+    // 0 ~ 8字节
+    TokenType type;
+    line_t line;
+    // 8 ~ 16字节
+    column_t column;
+    length_t length;
+    // 16 ~ 24字节
+    offset_t offset;
 };
 
 
@@ -119,6 +113,12 @@ struct ErrorToken : public Token {
     static ErrorToken *copy_in(const char *content, const char *hint = nullptr);
 
     ~ErrorToken();
+};
+
+struct Keyword : public Token {
+    KeywordType key_type;
+
+    explicit Keyword(KeywordType key_type);
 };
 
 struct ConstantString : public Token {
@@ -178,22 +178,13 @@ void deleteToken(Token *pToken);
 
 std::string convertToString(const Token *pToken);
 
-#include <map>
-#include <string>
-
-using keyword_mapping = std::map<std::string, KeywordType>;
-using reverse_keyword_mapping = std::map<KeywordType, const char *>;
-using marker_mapping = std::map<std::string, MarkerType>;
-using reverse_marker_mapping = std::map<MarkerType, const char*>;
-extern keyword_mapping key_map;
-extern reverse_keyword_mapping reverse_key_map;
-extern marker_mapping marker_map;
-extern reverse_marker_mapping  reverse_marker_map;
+KeywordType get_keyword_type(const std::string &kt);
 
 const char *get_keyword_type_reversed(KeywordType kt);
 
 marker_type_underlying_type get_marker_pri(MarkerType);
 
+MarkerType get_marker_type(const std::string &mt);
 
 const char *get_marker_type_reversed(MarkerType mt);
 

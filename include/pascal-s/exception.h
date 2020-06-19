@@ -7,11 +7,11 @@
 #include <utility>
 
 struct Token;
-enum class TokenType;
-using token_type_underlying_type =  uint16_t;
+using token_type_underlying_type = uint32_t;
+enum class TokenType : token_type_underlying_type;
 
 //namespace ast {
-    struct Node;
+struct Node;
 //}
 
 class RuntimeReinterpretTokenException : public std::exception {

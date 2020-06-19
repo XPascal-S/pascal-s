@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <stdexcept>
 
 void deleteAST(Node *node) {
     if (node == nullptr) {

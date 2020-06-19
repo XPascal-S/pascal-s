@@ -1,10 +1,12 @@
 
-#include <iostream>
-#include <string_view>
 #include <pascal-s/logger.h>
 #include <pascal-s/lib/convert.h>
 #include <pascal-s/token.h>
 #include <pascal-s/lexer.h>
+
+#include <iostream>
+#include <string_view>
+#include <algorithm>
 
 /*
  * Lexer 构造函数与析构函数
@@ -78,7 +80,7 @@ int Lexer::addBoolean() {
 int Lexer::addKeyword() {
     std::string str_temp = std::string(yytext);
     std::transform(str_temp.begin(), str_temp.end(), str_temp.begin(), tolower);
-    auto tok = new Keyword(key_map.at(str_temp));
+    auto tok = new Keyword(get_keyword_type(str_temp));
     return addToken(tok);
 }
 
@@ -90,7 +92,7 @@ int Lexer::addKeyword() {
  * 将类型装入Marker
  */
 int Lexer::addMarker() {
-    auto tok = new Marker(marker_map.at(yytext));
+    auto tok = new Marker(get_marker_type(yytext));
     return addToken(tok);
 }
 

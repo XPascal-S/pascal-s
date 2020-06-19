@@ -32,10 +32,14 @@ namespace feature {
         static const int show_width = 50;
         static char buffer[(show_width * 2) + 5];
         char *pBuffer = buffer;
-
-        size_t offset = err.visit_offset();
+        size_t line = err.visit_line();
         size_t column = err.visit_column();
         size_t length = err.visit_length();
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+        size_t offset = err.visit_offset() + line - 1;
+#else
+        size_t offset = err.visit_offset();
+#endif
         size_t buffer_read_l = offset - std::min<size_t>(show_width, column),
                 buffer_read_r = offset + std::max<size_t>(show_width, length);
         const char *hint = err.visit_hint();
@@ -51,7 +55,7 @@ namespace feature {
             }
         }
 
-        os.write_data(fmt::format("{}:{}: ", err.visit_line(), column));
+        os.write_data(fmt::format("{}:{}: ", line, column));
         if (hint != nullptr) {
             os.write_data(hint);
         }

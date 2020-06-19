@@ -1,4 +1,4 @@
-#include <cstdlib>
+
 #include <cstring>
 #include <fmt/core.h>
 #include <pascal-s/token.h>
@@ -48,6 +48,10 @@ std::string convertToString(const Token *pToken) {
             return fmt::format(
                     "{{ .type = Identifier .content = {} }}",
                     reinterpret_cast<const Identifier *>(pToken)->content);
+        case TokenType::ErrorToken:
+            return fmt::format(
+                    "{{ .type = LexerError .content = {} }}",
+                    reinterpret_cast<const ErrorToken *>(pToken)->content);
         default:
             throw RuntimeReinterpretTokenException(pToken);
     }
@@ -125,87 +129,3 @@ Marker::Marker(MarkerType marker_type)
 }
 
 Marker::~Marker() = default;
-
-
-keyword_mapping key_map = {
-        keyword_mapping::value_type{"to", KeywordType::To},
-        keyword_mapping::value_type{"do", KeywordType::Do},
-        keyword_mapping::value_type{"of", KeywordType::Of},
-        keyword_mapping::value_type{"for", KeywordType::For},
-        keyword_mapping::value_type{"else", KeywordType::Else},
-        keyword_mapping::value_type{"if", KeywordType::If},
-        keyword_mapping::value_type{"then", KeywordType::Then},
-        keyword_mapping::value_type{"char", KeywordType::Char},
-        keyword_mapping::value_type{"boolean", KeywordType::Boolean},
-        keyword_mapping::value_type{"real", KeywordType::Real},
-        keyword_mapping::value_type{"integer", KeywordType::Integer},
-        keyword_mapping::value_type{"array", KeywordType::Array},
-        keyword_mapping::value_type{"end", KeywordType::End},
-        keyword_mapping::value_type{"begin", KeywordType::Begin},
-        keyword_mapping::value_type{"function", KeywordType::Function},
-        keyword_mapping::value_type{"procedure", KeywordType::Procedure},
-        keyword_mapping::value_type{"program", KeywordType::Program},
-        keyword_mapping::value_type{"var", KeywordType::Var},
-        keyword_mapping::value_type{"const", KeywordType::Const},
-        keyword_mapping::value_type{"div", KeywordType::Div},
-        keyword_mapping::value_type{"mod", KeywordType::Mod},
-        keyword_mapping::value_type{"and", KeywordType::And},
-        keyword_mapping::value_type{"or", KeywordType::Or},
-        keyword_mapping::value_type{"not", KeywordType::Not},
-        keyword_mapping::value_type{"read", KeywordType::Read},
-        keyword_mapping::value_type{"write", KeywordType::Write}
-};
-
-marker_mapping marker_map = {
-        marker_mapping::value_type{"<>", MarkerType::NEQ},
-        marker_mapping::value_type{"<=", MarkerType::LE},
-        marker_mapping::value_type{">=", MarkerType::GE},
-        marker_mapping::value_type{"<", MarkerType::LT},
-        marker_mapping::value_type{"=", MarkerType::EQ},
-        marker_mapping::value_type{">", MarkerType::GT},
-        marker_mapping::value_type{"..", MarkerType::Range},
-
-        marker_mapping::value_type{":=", MarkerType::Assign},
-        marker_mapping::value_type{"+", MarkerType::Add},
-        marker_mapping::value_type{"-", MarkerType::Sub},
-        marker_mapping::value_type{"*", MarkerType::Mul},
-        marker_mapping::value_type{"/", MarkerType::Div},
-
-        marker_mapping::value_type{"(", MarkerType::LParen},
-        marker_mapping::value_type{")", MarkerType::RParen},
-        marker_mapping::value_type{"[", MarkerType::LBracket},
-        marker_mapping::value_type{"]", MarkerType::RBracket},
-
-        marker_mapping::value_type{",", MarkerType::Comma},
-        marker_mapping::value_type{".", MarkerType::Dot},
-        marker_mapping::value_type{";", MarkerType::Semicolon},
-        marker_mapping::value_type{":", MarkerType::Colon}
-};
-
-reverse_keyword_mapping reverse_key_map;
-
-const char *get_keyword_type_reversed(KeywordType kt) {
-    if (reverse_key_map.empty()) {
-        for (auto &kv: key_map) {
-            reverse_key_map[kv.second] = kv.first.c_str();
-        }
-    }
-    return reverse_key_map.at(kt);
-}
-
-marker_type_underlying_type get_marker_pri(MarkerType marker_type) {
-    return static_cast<marker_type_underlying_type>(marker_type)
-            >> 0x4U;
-}
-
-reverse_marker_mapping reverse_marker_map;
-
-const char *get_marker_type_reversed(MarkerType mt) {
-    if (reverse_marker_map.empty()) {
-        for (auto &mv : marker_map) {
-            reverse_marker_map[mv.second] = mv.first.c_str();
-        }
-    }
-    return reverse_marker_map.at(mt);
-}
-
