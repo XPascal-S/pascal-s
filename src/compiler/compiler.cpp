@@ -165,7 +165,7 @@ private:
             WriterProxy<std::ostream> os(std::cout);
 
             for (auto e : lexer.get_all_errors()) {
-                feature::format_line_column_error(fp, ErrorProxy<ErrorToken>(*e), os);
+                feature::format_line_column_error(fp, ErrorProxy<ErrorToken>(*e), os, options.source_path.c_str());
             }
         }
 

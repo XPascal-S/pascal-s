@@ -25,8 +25,8 @@ true|false { return addBoolean(); }
 [0-9]+ { return addInteger(); }
 '.*' { return addChar(); }
 
-[\_a-zA-Z0-9]* { return skipErrorString("identifier started with number was not allow"); }
-[^[:space:]] { return skipErrorString("unknown character in input stream"); }
+[\_a-zA-Z0-9]* { return skipErrorString("lexical error: identifier started with number is not allow"); }
+[^[:space:]] { return skipErrorString("lexical error: unknown character in input stream"); }
 [[:space:]] {} /* do nothing */
 
 %%

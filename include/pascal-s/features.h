@@ -9,6 +9,7 @@
 #include "token.h"
 #include <functional>
 #include <algorithm>
+#include <fmt/color.h>
 
 namespace feature {
 
@@ -27,8 +28,23 @@ namespace feature {
         }
     }
 
+    namespace text_style {
+        static const struct _format_color_t {
+            fmt::text_style style{};
+
+            _format_color_t() FMT_NOEXCEPT {
+                style = fmt::fg(
+                        fmt::color::tomato
+//                        fmt::rgb(0xde6c74)
+                );
+            }
+        } fmt;
+    }
+
+
     template<typename File, typename OStream, typename Error>
-    void format_line_column_error(FileProxy<File> f, ErrorProxy<Error> err, WriterProxy<OStream> &os) {
+    void format_line_column_error(FileProxy<File> f, ErrorProxy<Error> err, WriterProxy<OStream> &os,
+                                  const char *file_path = nullptr, const char *function_name = nullptr) {
         static const int show_width = 50;
         static char buffer[(show_width * 2) + 5];
         char *pBuffer = buffer;
@@ -55,20 +71,37 @@ namespace feature {
             }
         }
 
-        os.write_data(fmt::format("{}:{}: ", line, column));
+        using fmt_t = decltype(fmt::format(""));
+
+        fmt_t fh;
+
+        if (file_path != nullptr) {
+            fh = fmt::format(text_style::fmt.style, "{}:{}:{}: ", file_path, line, column + 1);
+        } else {
+            fh = fmt::format(text_style::fmt.style, "{}:{}: ", line, column + 1);
+        }
+
+        if (function_name != nullptr) {
+            os.write_data(fh);
+            os.write_data(fmt::format(text_style::fmt.style, "in function {}", function_name));
+            os << '\n';
+        }
+
+        os.write_data(fh);
         if (hint != nullptr) {
-            os.write_data(hint);
+            os.write_data(fmt::format(text_style::fmt.style, "{}", hint));
         }
         os << '\n';
 
         int hl = 0;
         if (show_width < column) {
-            auto h = fmt::format("(omitting {} chars) ", column - show_width);
-            os.write_data(h);
+            auto h = fmt::format(text_style::fmt.style, "(omitting {} chars) ", column - show_width);
+            os.write_data(fmt::format(text_style::fmt.style, "{}", h));
             hl = h.length();
         }
-        os.write_data(pBuffer + buffer_read_l) << '\n';
-        os.write_data(fmt::format("{:>{}}\n", fmt::format("{:^<{}}", "", length), hl + column + length));
+        os.write_data(fmt::format(text_style::fmt.style, "{}", pBuffer + buffer_read_l)) << '\n';
+        os.write_data(fmt::format(text_style::fmt.style, "{:>{}}\n", fmt::format("{:^<{}}", "", length),
+                                  hl + column + length));
     }
 }
 

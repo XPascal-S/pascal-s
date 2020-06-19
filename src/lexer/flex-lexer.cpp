@@ -806,12 +806,12 @@ yy_find_action:
                 case 13:
                     YY_RULE_SETUP
 #line 28 "lexer.flex"
-                    { return skipErrorString("identifier started with number was not allow"); }
+                    { return skipErrorString("lexical error: identifier started with number is not allow"); }
                     YY_BREAK
                 case 14:
                     YY_RULE_SETUP
 #line 29 "lexer.flex"
-                    { return skipErrorString("unknown character in input stream"); }
+                    { return skipErrorString("lexical error: unknown character in input stream"); }
                     YY_BREAK
                 case 15:
 /* rule 15 can match eol */
