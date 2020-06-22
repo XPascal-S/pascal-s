@@ -36,7 +36,7 @@ set(llvm_components support core irreader mc native)
 #x86asmparser x86codegen x86desc x86disassembler x86info
 
 llvm_map_components_to_libnames(LLVMLIBS ${llvm_components})
-message(${LLVM_DYLIB_COMPONENTS})
+#message(${LLVM_DYLIB_COMPONENTS})
 
 add_definitions(${LLVM_DEFINITIONS})
 
