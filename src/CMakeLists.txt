@@ -7,6 +7,10 @@ add_library(gtest-main STATIC test/test-main.cpp)
 target_link_libraries(gtest-main gtest gmock)
 target_include_directories(gtest-main SYSTEM PUBLIC gtest gmock fmt)
 
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    add_definitions(-DYY_NO_UNISTD_H)
+endif ()
+
 # description: create a gtest target
 # param:
 #     test_name: string, the name of target (also the name of entry file)
@@ -47,17 +51,31 @@ add_subdirectory(lexer/test)
 file(GLOB PASCAL_S_PARSER_SOURCE_FILES parser/*.cpp parser/*.cc)
 #add_subdirectory(parser/test)
 
-# other pascal-s compiler layers
+# recursive parser source files
+file(GLOB PASCAL_S_RECURSIVE_PARSER_SOURCE_FILES recursive-parser/*.cpp recursive-parser/*.cc)
+add_subdirectory(recursive-parser/test)
+
+# ast to targets
 add_subdirectory(target-llvm)
 add_subdirectory(target-nothing)
 add_subdirectory(target-c)
 
-# compiler source files
+# compiler features
 file(GLOB PASCAL_S_COMPILER_FEATURES_SOURCE_FILES compiler-features/*.cpp compiler-features/*.cc)
+
+# compiler source files
 list(APPEND PASCAL_S_COMPILER_SOURCE_FILES
         ${PASCAL_S_LOCAL_LIBRARY_SOURCE_FILES}
         ${PASCAL_S_LEXER_SOURCE_FILES}
         #        ${PASCAL_S_PARSER_SOURCE_FILES}
+        ${PASCAL_S_COMPILER_FEATURES_SOURCE_FILES}
+        )
+
+# recursive parser compiler source files
+list(APPEND PASCAL_S_RECURSIVE_COMPILER_SOURCE_FILES
+        ${PASCAL_S_LOCAL_LIBRARY_SOURCE_FILES}
+        ${PASCAL_S_LEXER_SOURCE_FILES}
+        ${PASCAL_S_RECURSIVE_PARSER_SOURCE_FILES}
         ${PASCAL_S_COMPILER_FEATURES_SOURCE_FILES}
         )
 add_subdirectory(compiler)
