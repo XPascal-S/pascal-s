@@ -52,7 +52,7 @@ file(GLOB PASCAL_S_PARSER_SOURCE_FILES parser/*.cpp parser/*.cc)
 #add_subdirectory(parser/test)
 
 # recursive parser source files
-file(GLOB PASCAL_S_RECURSIVE_PARSER_SOURCE_FILES recursive-parser/*.cpp recursive-parser/*.cc)
+file(GLOB PASCAL_S_RECURSIVE_PARSER_SOURCE_FILES recursive-parser/*.cpp)
 add_subdirectory(recursive-parser/test)
 
 # ast to targets

@@ -10,9 +10,9 @@ struct Token;
 using token_type_underlying_type = uint32_t;
 enum class TokenType : token_type_underlying_type;
 
-//namespace ast {
-struct Node;
-//}
+namespace ast {
+    struct Node;
+}
 
 class RuntimeReinterpretTokenException : public std::exception {
     const Token *token;
@@ -24,13 +24,14 @@ public:
 };
 
 class RuntimeReinterpretASTException : public std::exception {
-    const Node *node;
+    const ast::Node *node;
     std::string msg;
 public:
-    explicit RuntimeReinterpretASTException(const Node *token);
+    explicit RuntimeReinterpretASTException(const ast::Node *token);
 
     [[nodiscard]] const char *what() const noexcept override;
 };
+
 
 struct PascalSError : public std::exception {
     std::string msg;
