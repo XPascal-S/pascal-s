@@ -2,7 +2,7 @@
 
 #include <pascal-s/exception.h>
 #include <pascal-s/token.h>
-#include <pascal-s/AST.h>
+#include <pascal-s/llvm-ast.h>
 #include <fmt/core.h>
 
 
@@ -14,7 +14,7 @@ const char *RuntimeReinterpretTokenException::what() const noexcept {
     return msg.c_str();
 }
 
-RuntimeReinterpretASTException::RuntimeReinterpretASTException(const Node *node)
+RuntimeReinterpretASTException::RuntimeReinterpretASTException(const ast::Node *node)
         : node(node), msg(fmt::format("runtime reinterpret node error: unknown type: {}", node->type)) {
 
 }
@@ -27,10 +27,11 @@ PascalSParseExpectTGotError::PascalSParseExpectTGotError(
         char *fn, TokenType expected, const Token *got, std::string msg) :
         PascalSParseError(fn,
                           fmt::format("{} parse failed:"
-                            "expected type: {}, "
-                            "got: {}", fn, expected, got != nullptr ? got->type : TokenType::Nullptr)), expected(static_cast<token_type_underlying_type>(expected)), got(got) {
+                                      "expected type: {}, "
+                                      "got: {}", fn, expected, got != nullptr ? got->type : TokenType::Nullptr)),
+        expected(static_cast<token_type_underlying_type>(expected)), got(got) {
     if (!msg.empty()) {
-        this-> msg += ":" + msg;
+        this->msg += ":" + msg;
     }
 }
 

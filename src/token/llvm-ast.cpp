@@ -2,7 +2,7 @@
 // Created by kamiyoru on 2020/5/8.
 //
 
-#include <pascal-s/ast.h>
+#include <pascal-s/llvm-ast.h>
 #include <pascal-s/exception.h>
 #include <cassert>
 
@@ -17,12 +17,18 @@ void ast::deleteAST(Node *node) {
         case Type::Program:
             delete reinterpret_cast<Program *>(node);
             break;
+        case Type::ProgramHead:
+            delete reinterpret_cast<ProgramHead *>(node);
+            break;
+        case Type::ProgramBody:
+            delete reinterpret_cast<ProgramBody *>(node);
+            break;
         case Type::Procedure:
             delete reinterpret_cast<Procedure *>(node);
             break;
-        case Type::ParamSpec:
-            delete reinterpret_cast<ParamSpec *>(node);
-            break;
+//        case Type::ParamSpec:
+//            delete reinterpret_cast<ParamSpec *>(node);
+//            break;
         case Type::Function:
             delete reinterpret_cast<Function *>(node);
             break;
@@ -32,9 +38,9 @@ void ast::deleteAST(Node *node) {
         case Type::ExpCall:
             delete reinterpret_cast<ExpCall *>(node);
             break;
-        case Type::ExecStatement:
-            delete reinterpret_cast<ExecStatement *>(node);
-            break;
+//        case Type::ExecStatement:
+//            delete reinterpret_cast<ExecStatement *>(node);
+//            break;
         case Type::IfElseStatement:
             delete reinterpret_cast<IfElseStatement *>(node);
             break;
@@ -79,6 +85,9 @@ void ast::deleteAST(Node *node) {
             break;
         case Type::ExpConstantBoolean:
             delete reinterpret_cast<ExpConstantBoolean *>(node);
+            break;
+        case Type::ExpKeyword:
+            delete reinterpret_cast<ExpKeyword *>(node);
             break;
         case Type::ExpConstantChar:
             delete reinterpret_cast<ExpConstantChar *>(node);
@@ -125,14 +134,14 @@ void ast::printAST(ast::Node *node, int dep) {
 
             put_tab(dep);
             printf("}\n");
-        case Type::ParamSpec:
-            put_tab(dep);
-            printf("{\n");
-            put_tab(dep + 1);
-            printf("type = ParamSpec\n");
-
-            put_tab(dep);
-            printf("}\n");
+//        case Type::ParamSpec:
+//            put_tab(dep);
+//            printf("{\n");
+//            put_tab(dep + 1);
+//            printf("type = ParamSpec\n");
+//
+//            put_tab(dep);
+//            printf("}\n");
         case Type::Procedure:
 #define cur_node (reinterpret_cast<ast::Procedure*>(node))
             put_tab(dep);
@@ -145,38 +154,40 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::Function:
-#define cur_node (reinterpret_cast<ast::Function*>(node))
-            put_tab(dep);
-            printf("{\n");
-            if (cur_node->fn_def->key_type == KeywordType::Program) {
-#undef  cur_node
-#define cur_node (reinterpret_cast<Program*>(node))
-                put_tab(dep + 1);
-                printf("type = Program\n");
-                put_tab(dep + 1);
-                printf("%s", convertToString(cur_node->name).c_str());
-                put_tab(dep + 1);
-                printf("body = \n");
-                printAST(cur_node->body, dep + 1);
-#undef  cur_node
-            } else {
-                assert(false);
-            }
-            put_tab(dep);
-            printf("}\n");
-            break;
+            throw std::exception("todo function block");
+//#define cur_node (reinterpret_cast<ast::Function*>(node))
+//            put_tab(dep);
+//            printf("{\n");
+//            if (cur_node->fn_def->key_type == KeywordType::Program) {
+//#undef  cur_node
+//#define cur_node (reinterpret_cast<Program*>(node))
+//                put_tab(dep + 1);
+//                printf("type = Program\n");
+//                put_tab(dep + 1);
+//                printf("%s", convertToString(cur_node->name).c_str());
+//                put_tab(dep + 1);
+//                printf("body = \n");
+//                printAST(cur_node->body, dep + 1);
+//#undef  cur_node
+//            } else {
+//                assert(false);
+//            }
+//            put_tab(dep);
+//            printf("}\n");
+//            break;
         case Type::StatementBlock:
-#define cur_node (reinterpret_cast<ast::StatementBlock*>(node))
-            put_tab(dep);
-            printf("{\n");
-            put_tab(dep + 1);
-            printf("type = StatementBlock\n");
-            for (auto &stmt: cur_node->stmts) {
-                printAST(stmt, dep + 1);
-            }
-            put_tab(dep);
-            printf("}\n");
-#undef  cur_node
+            throw std::exception("todo stmt block");
+//#define cur_node (reinterpret_cast<ast::StatementBlock*>(node))
+//            put_tab(dep);
+//            printf("{\n");
+//            put_tab(dep + 1);
+//            printf("type = StatementBlock\n");
+//            for (auto &stmt: cur_node->stmts) {
+//                printAST(stmt, dep + 1);
+//            }
+//            put_tab(dep);
+//            printf("}\n");
+//#undef  cur_node
             break;
         case Type::ExpCall:
 #define cur_node (reinterpret_cast<ast::ExpCall*>(node))
@@ -189,13 +200,13 @@ void ast::printAST(ast::Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
-        case Type::ExecStatement:
-#define cur_node (reinterpret_cast<ast::ExecStatement*>(node))
-//            printf("{\n");
-            printAST(cur_node->exp, dep);
-//            put_tab(dep);  printf("}\n");
-#undef  cur_node
-            break;
+//        case Type::ExecStatement:
+//#define cur_node (reinterpret_cast<ast::ExecStatement*>(node))
+////            printf("{\n");
+//            printAST(cur_node->exp, dep);
+////            put_tab(dep);  printf("}\n");
+//#undef  cur_node
+//            break;
         case Type::IfElseStatement:
 #define cur_node (reinterpret_cast<ast::IfElseStatement*>(node))
             put_tab(dep);
