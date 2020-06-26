@@ -52,9 +52,11 @@ enum class Type : uint16_t {
 
                             FormalParameter, // formal parameter
 
+                            ParamSpec,//child of parameter list
+
                             ParamList, // parameter list
 
-                            StatemnetList, // statement list
+                            StatementList, // statement list
 
                             Statement,
 
@@ -184,10 +186,23 @@ struct ArrayTypeSpec : public TypeSpec {
 };
 
 
+struct ParamSpec : public Node {
+
+    const Keyword* keyword_var;
+
+    IdentList* id_list;
+
+    TypeSpec* spec;
+
+    ParamSpec(const Keyword* keyword_var, IdentList* id_list, TypeSpec* spec) : Node(Type::ParamSpec),
+        keyword_var(keyword_var),
+        id_list(id_list), spec(spec) {}
+
+};
 
 struct ParamList : public Node {
 
-  std::vector<Exp*> params;
+  std::vector<ParamSpec*> params;
 
 
 
@@ -209,7 +224,7 @@ struct ParamList : public Node {
 
 
 
-struct VariableList : public Node {
+struct VariableList : public Node {  
 
   std::vector<Exp*> params;
 
@@ -249,9 +264,9 @@ struct ConstDecl : public Node {
 
   const Identifier* ident;
 
-  const Exp* rhs;
+  const Exp* rhs; 
 
-
+  
 
   ConstDecl(const Identifier* ident, Exp* rhs) : Node(Type::ConstDecl), ident(ident), rhs(rhs) {}
 
@@ -330,8 +345,9 @@ struct FunctionDecl : public Node {
 
   VarDecls* decls;
 
+  BasicTypeSpec* basic;
 
-  FunctionDecl(Identifier* name, VarDecls* decls) : Node(Type::FunctionDecl), name(name), decls(decls) {}
+  FunctionDecl(Identifier* name, VarDecls* decls, BasicTypeSpec* basic) : Node(Type::FunctionDecl), name(name), decls(decls), basic(basic) {}
 
 
 
@@ -344,7 +360,7 @@ struct FunctionDecl : public Node {
 
 
 
-struct FunctionDecls : public Node {
+struct FunctionDecls : public Node { 
 
   std::vector<FunctionDecl*> decls;
 
@@ -365,11 +381,13 @@ struct FunctionDecls : public Node {
 
 struct Procedure : public Function {
 
-  Node fn_type;
+  // Node fn_type;
 
+  const Identifier* name;
 
+  VarDecls* decls;
 
-  Procedure() : Function(Type::Procedure), fn_type(Type::Procedure) {}
+  Procedure(Identifier* name, VarDecls* decls) : Function(Type::Procedure), name(name), decls(decls) {}
 
 };
 
@@ -463,7 +481,13 @@ struct Statement : public Exp {
 
 };
 
+struct StatementList : public Node {
 
+    std::vector<Statement*>statement;
+
+    explicit StatementList() :Node(Type::StatementList) {}
+
+};
 
 struct StatementBlock : public Statement {
 
@@ -572,6 +596,51 @@ struct ExpVoid : public Exp {
 };
 
 
+struct SubprogramDecls : public Node { // subprogram declarations
+
+    std::vector<Subprogram*>subprogram;
+
+    explicit SubprogramDecls() : Node(Type::SubprogramDecls) {}
+};
+
+struct Subprogram : public Node { // subprogram
+
+    const SubprogramHead* subhead;
+
+    const SubprogramBody* subbody;
+
+    explicit Subprogram(SubprogramHead* subhead, SubprogramBody* subbody) : Node(Type::Subprogram), subhead(subhead), subbody(subbody) {}
+};
+   
+struct SubprogramHead : public Node { // subprogram head
+
+    const FunctionDecl* func;
+
+    const Procedure* proc;
+
+    explicit SubprogramHead() :Node(Type::SubprogramHead) {}
+};
+
+struct SubprogramBody : public Node { // subprogram body
+
+    const ConstDecls* constdecls;
+
+    const VarDecls* vardecls;
+
+    const CompoundStatement* compound;
+
+    explicit SubprogramBody(ConstDecls* constdecls, VarDecls* vardecls, CompoundStatement* compound) :
+        Node(Type::SubprogramBody), constdecls(constdecls), vardecls(vardecls), compound(compound) {}
+};
+
+struct CompoundStatement : public Node {
+
+    const StatementList* state;
+
+    explicit CompoundStatement(StatementList* state) : Node(Type::CompoundStatement), state(state) {}
+};
+
+
 struct ProgramHead : public Node{
 
   const ExpKeyword* programKeyword;
@@ -585,7 +654,16 @@ struct ProgramHead : public Node{
 
 struct ProgramBody : public Node {
 
-  explicit ProgramBody(): Node(Type::ProgramBody) {}
+    const ConstDecls* constdecls;
+
+    const VarDecls* vardecls;
+
+    const SubprogramDecls* subprogram;
+
+    const CompoundStatement* compound;
+
+  explicit ProgramBody(ConstDecls* constdecls, VarDecls* vardecls, SubprogramDecls* subprogram, CompoundStatement* compound): 
+      Node(Type::ProgramBody), constdecls(constdecls), vardecls(vardecls), subprogram(subprogram), compound(compound){}
 
 };
 
