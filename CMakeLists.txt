@@ -11,30 +11,14 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_definitions(-DYY_NO_UNISTD_H)
 endif ()
 
-# GTest Begin
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    set(LIBRARIES ${LIBRARIES} " " pthread)
-else ()
-    message("!!! warning: not using pthread " "(host: " ${CMAKE_SYSTEM_NAME} ")!!!")
-endif ()
-
-add_subdirectory(googletest)
-# GTest End
-
-#fmt
-add_subdirectory(fmt)
-include_directories(fmt/include)
-
-#flex
-include_directories(flex/src)
-
-#pybind11
-add_subdirectory(pybind11)
-include_directories(pybind11/include)
-include_directories(/usr/include/python3.6)
-
-# include files
+# include files (header, configuration, and others can include)
 include_directories(include)
 
-# source files
+# vendor files (external libraries)
+add_subdirectory(vendor)
+
+# lib files (internal libraries)
+add_subdirectory(lib)
+
+# source files (implementations)
 add_subdirectory(src)

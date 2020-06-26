@@ -9,11 +9,17 @@
 #include "logger.h"
 #include "token.h"
 
-
+using lexer_action_code_underlying_type = int;
+enum class LexerActionCode : lexer_action_code_underlying_type {
+    LexEnd = 0,
+    AppendToken = 1,
+    AuxFunctionCalled = 2,
+};
 
 class Lexer : public yyFlexLexer {
 public:
     using token_container = std::vector<Token *>;
+    using error_references = std::vector<ErrorToken *>;
 
     explicit Lexer(std::istream *in = nullptr, std::ostream *out = nullptr);
 
@@ -27,13 +33,21 @@ public:
 
     virtual const token_container &get_all_tokens() = 0;
 
+    virtual const error_references &get_all_errors() = 0;
+
+    virtual bool has_error() = 0;
+
 protected:
     int yylex() final;
 
     Logger logger;
+
+    // current_offset由gulp.h中的YY_USER_ACTION更新
     column_t current_offset = 0, line_offset = 0;
 
     virtual int addToken(Token *token) = 0;
+
+    virtual void addError(ErrorToken *token) = 0;
 
 private:
 
@@ -49,29 +63,40 @@ private:
 
     int addMarker();
 
+    int addASCIIChar();
+
     int addChar();
 
     int recordNewLine();
+
+    int skipErrorString(const char *hint = "occurs a lexical error here");
 };
 
 class FullInMemoryLexer : public Lexer {
     token_container tokens;
+    error_references errors;
     int64_t current_token_cursor;
 public:
     explicit FullInMemoryLexer(std::istream *in = nullptr, std::ostream *out = nullptr);
 
     ~FullInMemoryLexer() override;
 
-    void reset_cursor() final;
+    void reset_cursor() override;
 
-    const Token *next_token() final;
+    const Token *next_token() override;
 
-    const Token *peek_token() final;
+    const Token *peek_token() override;
 
-    const token_container &get_all_tokens() final;
+    const token_container &get_all_tokens() override;
+
+    const error_references &get_all_errors() override;
+
+    bool has_error() override;
 
 private:
-    int addToken(Token *token) final;
+    int addToken(Token *token) override;
+
+    void addError(ErrorToken *token) override;
 };
 
 #endif //PASCAL_S_LEXER_H

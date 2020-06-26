@@ -10,13 +10,15 @@
 #include "token.h"
 
 struct MockLexer {
-    const std::vector<Token*> &token_stream;
+    const std::vector<Token *> &token_stream;
+    const std::vector<ErrorToken *> nil_errors;
 
-    explicit MockLexer(const std::vector<Token*> &token_stream) : token_stream(token_stream) {}
+    explicit MockLexer(const std::vector<Token *> &token_stream) : token_stream(token_stream), nil_errors() {}
 
     // cursor控制peek_token的值
 
     using token_container = std::vector<Token *>;
+    using error_references = std::vector<ErrorToken *>;
 
     int current_token_cursor = 0;
 
@@ -43,6 +45,12 @@ struct MockLexer {
     [[maybe_unused]] const token_container &get_all_tokens() {
         return token_stream;
     }
+
+    // 获取所有的词法错误
+    [[maybe_unused]] const error_references &get_all_errors() { return nil_errors; }
+
+    // 判断是否存在词法错误
+    [[maybe_unused]] bool has_error() { return false; }
 };
 
 

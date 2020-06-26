@@ -10,4 +10,5 @@ endfunction()
 
 add_lexer_test(lexer_test)
 add_lexer_test(token_test)
+add_lexer_test(lexer_show_error_test)
 #add_gtest(lexer_interface_test)

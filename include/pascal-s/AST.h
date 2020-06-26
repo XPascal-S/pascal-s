@@ -211,8 +211,7 @@ struct IdentList : public Node {
 
 
 
-struct ConstDecl : public Node {ֵ
-
+struct ConstDecl : public Node {
     const Identifier* ident;
 
     const Exp* rhs;
