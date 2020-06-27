@@ -125,6 +125,7 @@ namespace ast {
     void printAST(Node *node, int dep = 0);
 
 
+
     struct Node {
 
         Type type;
@@ -138,6 +139,7 @@ namespace ast {
     };
 
 
+
     struct Exp : public Node {
 
         explicit Exp(Type type) : Node(type) {}
@@ -145,12 +147,15 @@ namespace ast {
     };
 
 
+
     struct Function : public Node {
+
 
 
         explicit Function(Type type) : Node(type) {}
 
     };
+
 
 
     struct TypeSpec : public Node {
@@ -160,6 +165,7 @@ namespace ast {
     };
 
 
+
     struct BasicTypeSpec : public TypeSpec {
 
         const Keyword *keyword;
@@ -167,6 +173,7 @@ namespace ast {
         explicit BasicTypeSpec(const Keyword *keyword) : TypeSpec(Type::BasicTypeSpec), keyword(keyword) {}
 
     };
+
 
 
     struct ArrayTypeSpec : public TypeSpec {
@@ -180,14 +187,17 @@ namespace ast {
     };
 
 
+
     struct IdentList : public Node {
 
         std::vector<const Identifier *> idents;
 
 
+
         IdentList() : Node(Type::IdentList) {}
 
     };
+
 
 
     struct ParamSpec : public Node {
@@ -209,7 +219,9 @@ namespace ast {
         std::vector<ParamSpec *> params;
 
 
+
         ParamList() : Node(Type::ParamList) {}
+
 
 
         ~ParamList() {
@@ -225,12 +237,15 @@ namespace ast {
     };
 
 
+
     struct VariableList : public Node {
 
         std::vector<Exp *> params;
 
 
+
         VariableList() : Node(Type::VariableList) {}
+
 
 
         ~VariableList() {
@@ -256,6 +271,7 @@ namespace ast {
         ConstDecl(const Identifier *ident, Exp *rhs) : Node(Type::ConstDecl), ident(ident), rhs(rhs) {}
 
     };
+
 
 
     struct ConstDecls : public Node {
@@ -298,11 +314,13 @@ namespace ast {
     };
 
 
+
     struct VarDecls : public Node {
 
         std::vector<VarDecl *> decls;
 
         VarDecls() : Node(Type::VarDecls) {}
+
 
 
         ~VarDecls() {
@@ -580,7 +598,6 @@ namespace ast {
                 Node(Type::SubprogramBody), constdecls(constdecls), vardecls(vardecls), compound(compound) {}
     };
 
-
     struct Subprogram : public Node { // subprogram
 
         const SubprogramHead *subhead;
@@ -590,6 +607,7 @@ namespace ast {
         explicit Subprogram(SubprogramHead *subhead, SubprogramBody *subbody) : Node(Type::Subprogram),
                                                                                 subhead(subhead), subbody(subbody) {}
     };
+
 
     struct SubprogramDecls : public Node { // subprogram declarations
 
@@ -605,9 +623,10 @@ namespace ast {
 
         const Ident *id;
 
-        explicit ProgramHead(const ExpKeyword *programKeyword, const Ident *id) : Node(Type::ProgramHead),
-                                                                                  programKeyword(programKeyword),
-                                                                                  id(id) {}
+        const IdentList *idlist;
+
+        explicit ProgramHead(const ExpKeyword *programKeyword, const Ident *id, const IdentList *idlist) : Node(
+                Type::ProgramHead), programKeyword(programKeyword), id(id), idlist(idlist) {}
 
     };
 
@@ -642,26 +661,31 @@ namespace ast {
 
         const Exp *dot;
 
-        const Keyword *program;
+        // const Keyword* program;
 
-        const Identifier *name;
+        //const Identifier* name;
 
-        ConstDecls *decls;
+        //ConstDecls* decls;
 
 
-        explicit Program(const Keyword *program, const Identifier *name, ConstDecls *decls)
 
-                : Function(Type::Program), fn_type(Type::Program), program(program), name(name), decls(decls) {}
+        explicit Program(const ProgramHead *programHead, const ProgramBody *programBody)
+
+                : Function(Type::Program), fn_type(Type::Program), programHead(programHead), programBody(programBody) {}
 
 
         ~Program() {
 
-            deleteAST(decls);
+            deleteAST((Node *) programHead);
+
+            deleteAST((Node *) semicolon);
+
+            deleteAST((Node *) programBody);
+
+            deleteAST((Node *) dot);
 
         }
-
     };
-
 }
 
 #endif //LLVM_PASCAL_S_AST_H

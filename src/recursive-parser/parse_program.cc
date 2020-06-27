@@ -6,7 +6,7 @@
 template<typename Lexer>
 ast::Program *Parser<Lexer>::parse_program() {
 
-    auto program = new ast::Program(nullptr, nullptr, nullptr);
+    auto program = new ast::Program(nullptr, nullptr);
 
     // program head
     program->programHead = parse_program_head();
