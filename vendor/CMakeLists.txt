@@ -14,14 +14,16 @@ add_subdirectory(googletest)
 
 # LLVM Begin
 # 需要提前build好，该目录为LLVMConfig.cmake所在目录
-set(LLVM_DIR C:/work/cpp/llvm-tutorial/lib/build-llvm/lib/cmake/llvm)
-find_package(LLVM REQUIRED CONFIG)
+function(add_llvm_dependency)
+    set(LLVM_DIR C:/work/cpp/llvm-tutorial/lib/build-llvm/lib/cmake/llvm)
+    find_package(LLVM REQUIRED CONFIG)
 
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+    message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-include_directories(${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
+    include_directories(${LLVM_INCLUDE_DIRS})
+    add_definitions(${LLVM_DEFINITIONS})
+endfunction()
 # LLVM End
 
 #fmt

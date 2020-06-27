@@ -2,6 +2,8 @@
 cmake_minimum_required(VERSION 3.15)
 project(pascal-s)
 
+#add_llvm_dependency()
+
 #LLVM_TARGET(AArch64)
 #LLVM_TARGET(AMDGPU)
 #LLVM_TARGET(ARM)
@@ -35,7 +37,7 @@ set(llvm_components support core irreader mc native)
 
 #x86asmparser x86codegen x86desc x86disassembler x86info
 
-llvm_map_components_to_libnames(LLVMLIBS ${llvm_components})
+#llvm_map_components_to_libnames(LLVMLIBS ${llvm_components})
 #message(${LLVM_DYLIB_COMPONENTS})
 
 add_definitions(${LLVM_DEFINITIONS})
