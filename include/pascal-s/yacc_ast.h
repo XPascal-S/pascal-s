@@ -647,7 +647,9 @@ struct ProgramHead : public Node{
 
   const Ident* id;
 
-  explicit ProgramHead(const ExpKeyword* programKeyword, const Ident* id): Node(Type::ProgramHead), programKeyword(programKeyword), id(id) {}
+  const IdentList* idlist;
+
+  explicit ProgramHead(const ExpKeyword* programKeyword, const Ident* id, const IdentList* idlist): Node(Type::ProgramHead), programKeyword(programKeyword), id(id), idlist(idlist) {}
 
 };
 
@@ -680,23 +682,29 @@ struct Program : public Function {
 
   const Exp* dot;
 
-  const Keyword* program;
+  // const Keyword* program;
 
-  const Identifier* name;
+  //const Identifier* name;
 
-  ConstDecls* decls;
+  //ConstDecls* decls;
 
 
 
-  explicit Program(const Keyword *program, const Identifier *name, ConstDecls *decls)
+  explicit Program(const ProgramHead* programHead, const ProgramBody* programBody)
 
-    : Function(Type::Program), fn_type(Type::Program), program(program), name(name), decls(decls) {}
+    : Function(Type::Program), fn_type(Type::Program), programHead(programHead), programBody(programBody) {}
 
 
 
   ~Program() {
 
-    deleteAST(decls);
+    deleteAST((Node*)programHead);
+
+    deleteAST((Node*)semicolon);
+
+    deleteAST((Node*)programBody);
+
+    deleteAST((Node*)dot);
 
   }
 
