@@ -64,7 +64,7 @@ enum class Type : uint16_t {
 
                             VariableList, // variable list
 
-                            Variabel, // variable
+                            Variabele, // variable
 
                             IdVarpart, // id varpart
 
@@ -78,7 +78,9 @@ enum class Type : uint16_t {
 
                             Function,
 
-                            StatementBlock,
+                            ExecStatement,
+
+                            //StatementBlock,
 
                             ExpCall,
 
@@ -223,10 +225,26 @@ struct ParamList : public Node {
 };
 
 
+struct ExpressionList :public Node {
+    std::vector<Exp* >explist;
+
+    explicit ExpressionList() : Node(Type::ExpressionList) {}
+};
+
+
+struct Variable : public Exp {
+
+    const Identifier* id;
+
+    const ExpressionList* id_var = nullptr;
+
+    explicit Variable() : Exp(Type::Variabele) {}
+};
+
 
 struct VariableList : public Node {  
 
-  std::vector<Exp*> params;
+  std::vector<Variable*> params;
 
 
 
@@ -407,7 +425,10 @@ struct Ident : public Exp {
 
 struct ExpAssign : public Exp {
 
-  ExpAssign() : Exp(Type::ExpAssign) {}
+    Exp* lhs, * rhs;
+
+
+  ExpAssign(Exp* lhs, Exp* rhs) : Exp(Type::ExpAssign), lhs(lhs), rhs(rhs) {}
 
 };
 
@@ -474,8 +495,20 @@ struct ExpCall : public Exp {
 };
 
 
+struct ExecStatement : public Statement {
+    Exp* exp;
+
+    explicit ExecStatement(Exp* exp) : Statement(Type::ExecStatement), exp(exp) {}
+
+    ~ExecStatement() {
+        deleteAST(exp);
+    }
+};
+
 
 struct Statement : public Exp {
+
+    const ConstantString* state;
 
   explicit Statement(Type type) : Exp(type) {}
 
@@ -489,15 +522,24 @@ struct StatementList : public Node {
 
 };
 
-struct StatementBlock : public Statement {
 
-  StatementBlock() : Statement(Type::StatementBlock) {}
-
-};
+//struct StatementBlock : public Statement {
+//
+//  StatementBlock() : Statement(Type::StatementBlock) {}
+//
+//};
 
 
 
 struct IfElseStatement : public Statement {
+
+    //Exp* expression = nullptr;
+
+    Statement* expression = nullptr;
+
+    StatementList* if_part = nullptr;
+
+    StatementList* else_part = nullptr;
 
   IfElseStatement() : Statement(Type::IfElseStatement) {}
 
@@ -506,6 +548,14 @@ struct IfElseStatement : public Statement {
 
 
 struct ForStatement : public Statement {
+
+    const Identifier* id = nullptr;
+
+    Statement* express1 = nullptr;
+
+    Statement* express2 = nullptr;
+
+    StatementList* for_stmt = nullptr;
 
   ForStatement() : Statement(Type::ForStatement) {}
 
@@ -596,21 +646,13 @@ struct ExpVoid : public Exp {
 };
 
 
-struct SubprogramDecls : public Node { // subprogram declarations
+struct CompoundStatement : public Node {
 
-    std::vector<Subprogram*>subprogram;
+    const StatementList* state;
 
-    explicit SubprogramDecls() : Node(Type::SubprogramDecls) {}
+    explicit CompoundStatement(StatementList* state) : Node(Type::CompoundStatement), state(state) {}
 };
 
-struct Subprogram : public Node { // subprogram
-
-    const SubprogramHead* subhead;
-
-    const SubprogramBody* subbody;
-
-    explicit Subprogram(SubprogramHead* subhead, SubprogramBody* subbody) : Node(Type::Subprogram), subhead(subhead), subbody(subbody) {}
-};
    
 struct SubprogramHead : public Node { // subprogram head
 
@@ -633,11 +675,22 @@ struct SubprogramBody : public Node { // subprogram body
         Node(Type::SubprogramBody), constdecls(constdecls), vardecls(vardecls), compound(compound) {}
 };
 
-struct CompoundStatement : public Node {
 
-    const StatementList* state;
+struct Subprogram : public Node { // subprogram
 
-    explicit CompoundStatement(StatementList* state) : Node(Type::CompoundStatement), state(state) {}
+    const SubprogramHead* subhead;
+
+    const SubprogramBody* subbody;
+
+    explicit Subprogram(SubprogramHead* subhead, SubprogramBody* subbody) : Node(Type::Subprogram), subhead(subhead), subbody(subbody) {}
+};
+
+
+struct SubprogramDecls : public Node { // subprogram declarations
+
+    std::vector<Subprogram*>subprogram;
+
+    explicit SubprogramDecls() : Node(Type::SubprogramDecls) {}
 };
 
 
@@ -676,11 +729,11 @@ struct Program : public Function {
 
   const ProgramHead* programHead;
 
-  const Exp* semicolon;
+  const Marker* semicolon;
 
   const ProgramBody* programBody;
 
-  const Exp* dot;
+  const Marker* dot;
 
   // const Keyword* program;
 
