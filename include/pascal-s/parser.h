@@ -35,13 +35,13 @@ public:
 
     ast::ParamList *parse_param_list_with_paren();
 
-    ast::VariableList *parse_variable_list_with_paren();
+    ast::ExpressionList *parse_expression_list_with_paren();
 
     ast::IdentList *parse_id_list();
 
     ast::ParamList *parse_param_list();
 
-    ast::VariableList *parse_variable_list();
+    ast::ExpressionList *parse_expression_list();
 
     ast::ParamSpec *parse_param();
 
@@ -65,7 +65,9 @@ public:
 
     ast::Statement *parse_statement(std::set<const Token *> *till = nullptr);
 
-    ast::Statement *parse_compound_statement(std::set<const Token *> *till = nullptr);
+    ast::CompoundStatement *parse_compound_statement(std::set<const Token *> *till = nullptr);
+
+    ast::CompoundStatement *_parse_compound_statement(std::set<const Token *> *till = nullptr);
 
     ast::Statement *parse_for_statement(std::set<const Token *> *till = nullptr);
 

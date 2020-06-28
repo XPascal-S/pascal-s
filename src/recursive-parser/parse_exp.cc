@@ -148,9 +148,9 @@ ast::Exp *Parser<Lexer>::parse_fac() {
             auto marker = reinterpret_cast<const Marker *>(current_token);
             if (marker->marker_type == MarkerType::LParen) {
 
-                // will not eat (, just parse ( variable list )
+                // will not eat (, just parse ( expression list )
                 return new ast::ExpCall(
-                        ident, parse_variable_list_with_paren());
+                        ident, parse_expression_list_with_paren());
                 // [
             } else if (marker->marker_type == MarkerType::LBracket) {
                 //todo

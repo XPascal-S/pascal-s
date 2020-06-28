@@ -2,8 +2,8 @@
 // Created by kamiyoru on 2020/5/8.
 //
 
-#include <pascal-s/llvm-ast.h>
 #include <pascal-s/exception.h>
+#include <pascal-s/llvm-ast.h>
 #include <cassert>
 
 void ast::deleteAST(Node *node) {
@@ -32,26 +32,35 @@ void ast::deleteAST(Node *node) {
         case Type::Function:
             delete reinterpret_cast<Function *>(node);
             break;
-        case Type::StatementBlock:
-            delete reinterpret_cast<StatementBlock *>(node);
-            break;
+//        case Type::StatementBlock:
+//            delete reinterpret_cast<StatementBlock *>(node);
+//            break;
         case Type::ExpCall:
             delete reinterpret_cast<ExpCall *>(node);
             break;
-//        case Type::ExecStatement:
-//            delete reinterpret_cast<ExecStatement *>(node);
-//            break;
+        case Type::ExecStatement:
+            delete reinterpret_cast<ExecStatement *>(node);
+            break;
         case Type::IfElseStatement:
             delete reinterpret_cast<IfElseStatement *>(node);
             break;
         case Type::ForStatement:
             delete reinterpret_cast<ForStatement *>(node);
             break;
+        case Type::CompoundStatement:
+            delete reinterpret_cast<CompoundStatement *>(node);
+            break;
         case Type::Ident:
             delete reinterpret_cast<Ident *>(node);
             break;
         case Type::ParamList:
             delete reinterpret_cast<ParamList *>(node);
+            break;
+        case Type::Variabele:
+            delete reinterpret_cast<Variable *>(node);
+            break;
+        case Type::ExpressionList:
+            delete reinterpret_cast<ExpressionList *>(node);
             break;
         case Type::VariableList:
             delete reinterpret_cast<VariableList *>(node);
@@ -175,19 +184,18 @@ void ast::printAST(ast::Node *node, int dep) {
 //            put_tab(dep);
 //            printf("}\n");
 //            break;
-        case Type::StatementBlock:
-            throw std::exception("todo stmt block");
-//#define cur_node (reinterpret_cast<ast::StatementBlock*>(node))
-//            put_tab(dep);
-//            printf("{\n");
-//            put_tab(dep + 1);
-//            printf("type = StatementBlock\n");
-//            for (auto &stmt: cur_node->stmts) {
-//                printAST(stmt, dep + 1);
-//            }
-//            put_tab(dep);
-//            printf("}\n");
-//#undef  cur_node
+        case Type::StatementList:
+#define cur_node (reinterpret_cast<ast::StatementList*>(node))
+            put_tab(dep);
+            printf("{\n");
+            put_tab(dep + 1);
+            printf("type = StatementBlock\n");
+            for (auto &stmt: cur_node->statement) {
+                printAST(stmt, dep + 1);
+            }
+            put_tab(dep);
+            printf("}\n");
+#undef  cur_node
             break;
         case Type::ExpCall:
 #define cur_node (reinterpret_cast<ast::ExpCall*>(node))

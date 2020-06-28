@@ -31,5 +31,5 @@ ast::ProgramBody *Parser<Lexer>::parse_program_body() {
 //            program, ident, ident_list,
 //            const_decls, var_decls, fn_decls, parse_statement(&till));
 
-    return new ast::ProgramBody(const_decls, nullptr, nullptr, nullptr);
+    return new ast::ProgramBody(const_decls, var_decls, nullptr, parse_compound_statement());
 }

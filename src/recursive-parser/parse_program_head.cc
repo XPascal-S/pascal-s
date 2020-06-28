@@ -16,7 +16,7 @@ ast::ProgramHead *Parser<Lexer>::parse_program_head() {
     ast::ProgramHead *hd = new ast::ProgramHead(new ast::ExpKeyword(program), new ast::Ident(ident), nullptr);
 
     // maybe ( id list )
-    if (!predicate::is_semicolon(current_token)) {
+    if (predicate::is_lparen(current_token)) {
         hd->idlist = parse_id_list_with_paren();
     }
 

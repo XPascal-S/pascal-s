@@ -4,32 +4,32 @@
 
 
 template<typename Lexer>
-ast::VariableList *Parser<Lexer>::parse_variable_list_with_paren() {
+ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_paren() {
 
     // (
     expected_enum_type(predicate::is_lparen, predicate::marker_lparen);
     next_token();
 
-    // variable list
-    auto var_list = parse_variable_list();
-    if (var_list == nullptr) {
+    // expression list
+    auto exp_list = parse_expression_list();
+    if (exp_list == nullptr) {
         return nullptr;
     }
 
     // )
     if (!predicate::is_rparen(current_token)) {
-        delete var_list;
+        delete exp_list;
         errors.push_back(new PascalSParseExpectGotError(__FUNCTION__, &predicate::marker_rparen, current_token));
         return nullptr;
     }
     next_token();
 
-    return var_list;
+    return exp_list;
 }
 
 template<typename Lexer>
-ast::VariableList *Parser<Lexer>::parse_variable_list() {
-    auto *ret = new ast::VariableList;
+ast::ExpressionList *Parser<Lexer>::parse_expression_list() {
+    auto *ret = new ast::ExpressionList;
     for (;;) {
 
         // look ahead
@@ -38,7 +38,7 @@ ast::VariableList *Parser<Lexer>::parse_variable_list() {
         }
 
         // extend production
-        ret->params.push_back(parse_exp(&predicate::predicateContainers.commaOrRParenContainer));
+        ret->explist.push_back(parse_exp(&predicate::predicateContainers.commaOrRParenContainer));
 
         // eat , if possible
         if (predicate::is_comma(current_token)) {

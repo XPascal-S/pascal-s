@@ -107,12 +107,12 @@ ast::Node *Parser<Lexer>::parse() {
 #include "parse_var_decls.cc"
 
 #include "parse_id_list.cc"
-#include "parse_var_list.cc"
+#include "parse_expression_list.cc"
 #include "parse_param_list.cc"
 #include "parse_type.cc"
 #include "parse_const_exp.cc"
 #include "parse_exp.cc"
-//#include "parse_statement.cc"
+#include "parse_statement.cc"
 
 #undef expected_keyword
 #undef expected_enum_type

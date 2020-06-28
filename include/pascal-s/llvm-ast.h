@@ -11,6 +11,7 @@
 #include "token.h"
 
 namespace ast {
+
     enum class Type : uint16_t {
 
         Unknown,
@@ -65,7 +66,7 @@ namespace ast {
 
         VariableList, // variable list
 
-        Variabel, // variable
+        Variabele, // variable
 
         IdVarpart, // id varpart
 
@@ -79,7 +80,9 @@ namespace ast {
 
         Function,
 
-        StatementBlock,
+        ExecStatement,
+
+        //StatementBlock,
 
         ExpCall,
 
@@ -186,8 +189,6 @@ namespace ast {
 
     };
 
-
-
     struct IdentList : public Node {
 
         std::vector<const Identifier *> idents;
@@ -197,7 +198,6 @@ namespace ast {
         IdentList() : Node(Type::IdentList) {}
 
     };
-
 
 
     struct ParamSpec : public Node {
@@ -237,11 +237,26 @@ namespace ast {
     };
 
 
+    struct ExpressionList : public Node {
+        std::vector<Exp *> explist;
+
+        explicit ExpressionList() : Node(Type::ExpressionList) {}
+    };
+
+
+    struct Variable : public Exp {
+
+        const Identifier *id;
+
+        const ExpressionList *id_var = nullptr;
+
+        explicit Variable() : Exp(Type::Variabele) {}
+    };
+
 
     struct VariableList : public Node {
 
-        std::vector<Exp *> params;
-
+        std::vector<Variable *> params;
 
 
         VariableList() : Node(Type::VariableList) {}
@@ -356,11 +371,13 @@ namespace ast {
     };
 
 
+
     struct FunctionDecls : public Node {
 
         std::vector<FunctionDecl *> decls;
 
         FunctionDecls() : Node(Type::FunctionDecls) {}
+
 
 
         ~FunctionDecls() {
@@ -397,16 +414,13 @@ namespace ast {
     };
 
 
+
     struct ExpAssign : public Exp {
 
-        ast::Exp *lhs, *rhs;
+        Exp *lhs, *rhs;
 
-        ExpAssign(ast::Exp *lhs, ast::Exp *rhs) : Exp(Type::ExpAssign), lhs(lhs), rhs(rhs) {}
 
-        ~ExpAssign() {
-            deleteAST(lhs);
-            deleteAST(rhs);
-        }
+        ExpAssign(Exp *lhs, Exp *rhs) : Exp(Type::ExpAssign), lhs(lhs), rhs(rhs) {}
 
     };
 
@@ -454,10 +468,10 @@ namespace ast {
 
         const Identifier *fn;
 
-        VariableList *params;
+        ExpressionList *params;
 
 
-        explicit ExpCall(const Identifier *fn, VariableList *params) : Exp(Type::ExpCall), fn(fn), params(params) {}
+        explicit ExpCall(const Identifier *fn, ExpressionList *params) : Exp(Type::ExpCall), fn(fn), params(params) {}
 
         ~ExpCall() {
 
@@ -470,9 +484,22 @@ namespace ast {
 
     struct Statement : public Exp {
 
+        const ConstantString *state;
+
         explicit Statement(Type type) : Exp(type) {}
 
     };
+
+    struct ExecStatement : public Statement {
+        Exp *exp;
+
+        explicit ExecStatement(Exp *exp) : Statement(Type::ExecStatement), exp(exp) {}
+
+        ~ExecStatement() {
+            deleteAST(exp);
+        }
+    };
+
 
     struct StatementList : public Node {
 
@@ -482,15 +509,24 @@ namespace ast {
 
     };
 
-    struct StatementBlock : public Statement {
 
-        StatementBlock() : Statement(Type::StatementBlock) {}
-
-    };
+//struct StatementBlock : public Statement {
+//
+//  StatementBlock() : Statement(Type::StatementBlock) {}
+//
+//};
 
 
 
     struct IfElseStatement : public Statement {
+
+        //Exp* expression = nullptr;
+
+        Exp *expression = nullptr;
+
+        Statement *if_part = nullptr;
+
+        Statement *else_part = nullptr;
 
         IfElseStatement() : Statement(Type::IfElseStatement) {}
 
@@ -498,6 +534,14 @@ namespace ast {
 
 
     struct ForStatement : public Statement {
+
+        const Identifier *id = nullptr;
+
+        Exp *express1 = nullptr;
+
+        Exp *express2 = nullptr;
+
+        Statement *for_stmt = nullptr;
 
         ForStatement() : Statement(Type::ForStatement) {}
 
@@ -577,12 +621,14 @@ namespace ast {
 
     };
 
-    struct CompoundStatement : public Node {
+
+    struct CompoundStatement : public Statement {
 
         const StatementList *state;
 
-        explicit CompoundStatement(StatementList *state) : Node(Type::CompoundStatement), state(state) {}
+        explicit CompoundStatement(StatementList *state) : Statement(Type::CompoundStatement), state(state) {}
     };
+
 
     struct SubprogramHead : public Node { // subprogram head
 
@@ -604,6 +650,7 @@ namespace ast {
         explicit SubprogramBody(ConstDecls *constdecls, VarDecls *vardecls, CompoundStatement *compound) :
                 Node(Type::SubprogramBody), constdecls(constdecls), vardecls(vardecls), compound(compound) {}
     };
+
 
     struct Subprogram : public Node { // subprogram
 
@@ -662,11 +709,11 @@ namespace ast {
 
         const ProgramHead *programHead;
 
-        const Exp *semicolon;
+        const Marker *semicolon;
 
         const ProgramBody *programBody;
 
-        const Exp *dot;
+        const Marker *dot = nullptr;
 
         // const Keyword* program;
 
@@ -685,13 +732,10 @@ namespace ast {
 
             deleteAST((Node *) programHead);
 
-            deleteAST((Node *) semicolon);
-
             deleteAST((Node *) programBody);
 
-            deleteAST((Node *) dot);
-
         }
+
     };
 }
 

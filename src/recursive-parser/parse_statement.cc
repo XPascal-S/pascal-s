@@ -25,7 +25,7 @@ ast::Statement *Parser<Lexer>::parse_statement(std::set<const Token *> *till) {
     if (current_token->type == TokenType::Keyword) {
         switch (reinterpret_cast<const Keyword *>(current_token)->key_type) {
             case KeywordType::Begin:
-                return parse_compound_statement();
+                return _parse_compound_statement();
             case KeywordType::For:
                 return parse_for_statement(till);
             case KeywordType::If:
@@ -42,13 +42,18 @@ ast::Statement *Parser<Lexer>::parse_statement(std::set<const Token *> *till) {
     return nullptr;
 }
 
+template<typename Lexer>
+ast::CompoundStatement *Parser<Lexer>::parse_compound_statement(std::set<const Token *> *till) {
+    expected_enum_type(predicate::is_begin, predicate::keyword_begin);
+    return _parse_compound_statement(till);
+}
 
 template<typename Lexer>
-ast::Statement *Parser<Lexer>::parse_compound_statement(std::set<const Token *> *till) {
+ast::CompoundStatement *Parser<Lexer>::_parse_compound_statement(std::set<const Token *> *till) {
     auto begin_tok = reinterpret_cast<const Keyword *>(current_token);
     next_token();
 
-    std::vector < ast::Statement * > stmts;
+    std::vector<ast::Statement *> stmts;
 
     // end
     ast::Statement *stmt;
@@ -96,14 +101,17 @@ ast::Statement *Parser<Lexer>::parse_compound_statement(std::set<const Token *> 
     // end
     auto end_tok = reinterpret_cast<const Keyword *>(current_token);
     next_token();
-
-    auto block = new ast::StatementBlock(begin_tok, end_tok);
-    block->stmts.swap(stmts);
+    auto sl = new ast::StatementList;
+    sl->statement.swap(stmts);
+    auto block = new ast::CompoundStatement(sl/*begin_tok, end_tok*/);
     return block;
 }
 
 template<typename Lexer>
 ast::Statement *Parser<Lexer>::parse_for_statement(std::set<const Token *> *till) {
+#define loop_var id
+#define from_exp express1
+#define to_exp express2
     auto *for_stmt = new ast::ForStatement();
 
     // for
@@ -165,10 +173,14 @@ ast::Statement *Parser<Lexer>::parse_for_statement(std::set<const Token *> *till
 
 
     return for_stmt;
+#undef loop_var
+#undef from_exp
+#undef to_exp
 }
 
 template<typename Lexer>
 ast::Statement *Parser<Lexer>::parse_if_else_statement(std::set<const Token *> *till) {
+#define cond expression
     auto *if_else = new ast::IfElseStatement();
 
     // if
@@ -199,13 +211,13 @@ ast::Statement *Parser<Lexer>::parse_if_else_statement(std::set<const Token *> *
     if (till == nullptr) {
         std::set<const Token *> m_till;
         m_till.insert(reinterpret_cast<const Token *>(&predicate::keyword_else));
-        if_else->if_stmt = parse_statement(&m_till);
+        if_else->if_part = parse_statement(&m_till);
     } else {
         bool no_else = !till->count(&predicate::keyword_else);
         if (no_else) {
             till->insert(&predicate::keyword_else);
         }
-        if_else->if_stmt = parse_statement(till);
+        if_else->if_part = parse_statement(till);
         if (no_else) {
             till->erase(&predicate::keyword_else);
         }
@@ -216,10 +228,11 @@ ast::Statement *Parser<Lexer>::parse_if_else_statement(std::set<const Token *> *
         next_token();
 
         // else stmt
-        if_else->else_stmt = parse_statement(till);
+        if_else->else_part = parse_statement(till);
     }
 
     return if_else;
+#undef cond
 }
 
 

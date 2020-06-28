@@ -35,6 +35,9 @@ ast::IdentList *Parser<Lexer>::parse_id_list() {
 
 template<typename Lexer>
 ast::IdentList *Parser<Lexer>::_parse_id_list(ast::IdentList *params) {
+    if (predicate::is_rparen(current_token)) {
+        return params;
+    }
 
     // id
     expected_type_r(TokenType::Identifier, params);

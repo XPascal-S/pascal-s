@@ -99,7 +99,7 @@ const Keyword keyword_## lower(KeywordType::upper);
     keyword_predicator(of, Of)
 
     bool token_equal(const Token *lhs, const std::vector<Token *> *rhs) {
-        if (rhs == nullptr) {
+        if (rhs == nullptr || lhs == nullptr) {
             return lhs == nullptr;
         }
 
@@ -112,7 +112,7 @@ const Keyword keyword_## lower(KeywordType::upper);
     }
 
     bool token_equal(const Token *lhs, const std::set<const Token *> *rhs) {
-        if (rhs == nullptr) {
+        if (rhs == nullptr || lhs == nullptr) {
             return lhs == nullptr;
         }
 

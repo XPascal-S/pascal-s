@@ -13,7 +13,7 @@ struct FacTest : public ParserTest {
 PARSER_SUB_BASIC_TEST_P(FacTest, parse_fac)
 
 
-INSTANTIATE_TEST_SUITE_P(Simple, FacTest, testing::Values( /* NOLINT */
+INSTANTIATE_TEST_SUITE_P(ConstFac, FacTest, testing::Values( /* NOLINT */
         ParserTestCase{
                 {
                         new Identifier("a"),
@@ -38,7 +38,10 @@ INSTANTIATE_TEST_SUITE_P(Simple, FacTest, testing::Values( /* NOLINT */
                 {
                         new ConstantChar('a'),
                 }
-        },
+        }
+));
+
+INSTANTIATE_TEST_SUITE_P(Simple, FacTest, testing::Values( /* NOLINT */
         ParserTestCase{
                 {
                         new Identifier("a"),
@@ -79,6 +82,35 @@ struct ExpTest : public ParserTest {
 
 PARSER_SUB_BASIC_TEST_P(ExpTest, parse_exp)
 
+INSTANTIATE_TEST_SUITE_P(Assign, ExpTest, testing::Values( /* NOLINT */
+        ParserTestCase{
+                {
+                        new Identifier("a"),
+                        new Marker(MarkerType::Assign),
+                        new Identifier("a"),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Identifier("a"),
+                        new Marker(MarkerType::Add),
+                        new Identifier("a"),
+                        new Marker(MarkerType::Assign),
+                        new Identifier("a"),
+                        new Marker(MarkerType::Add),
+                        new Identifier("a"),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Identifier("a"),
+                        new Marker(MarkerType::Assign),
+                        new Identifier("a"),
+                        new Marker(MarkerType::Add),
+                        new Identifier("a"),
+                }
+        }
+));
 
 INSTANTIATE_TEST_SUITE_P(Arithmetic, ExpTest, testing::Values( /* NOLINT */
         ParserTestCase{

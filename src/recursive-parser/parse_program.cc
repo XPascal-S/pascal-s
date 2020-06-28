@@ -16,6 +16,7 @@ ast::Program *Parser<Lexer>::parse_program() {
 
     // ;
     expected_enum_type_r(predicate::is_semicolon, predicate::marker_semicolon, program);
+    program->semicolon = reinterpret_cast<const Marker *>(current_token);
     next_token();
 
     // program body

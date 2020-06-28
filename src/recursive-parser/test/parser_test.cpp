@@ -12,8 +12,10 @@ INSTANTIATE_TEST_SUITE_P(Simple, ParserMainTest, testing::Values( /* NOLINT */
                         new Keyword(KeywordType::Program),
                         new Identifier("main"),
                         new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Begin),
                         new Identifier("a"),
-                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::End),
+//                        new Marker(MarkerType::Semicolon),
                 }
         }
 //        ,
