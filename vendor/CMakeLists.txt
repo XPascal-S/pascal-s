@@ -31,7 +31,9 @@ add_subdirectory(fmt)
 include_directories(fmt/include)
 
 #flex
-include_directories(flex/src)
+function(target_include_flex target_name)
+    target_include_directories(${target_name} PUBLIC BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/vendor/flex/src)
+endfunction()
 
 #pybind11
 add_subdirectory(pybind11)

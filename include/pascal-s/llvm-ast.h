@@ -399,7 +399,14 @@ namespace ast {
 
     struct ExpAssign : public Exp {
 
-        ExpAssign() : Exp(Type::ExpAssign) {}
+        ast::Exp *lhs, *rhs;
+
+        ExpAssign(ast::Exp *lhs, ast::Exp *rhs) : Exp(Type::ExpAssign), lhs(lhs), rhs(rhs) {}
+
+        ~ExpAssign() {
+            deleteAST(lhs);
+            deleteAST(rhs);
+        }
 
     };
 

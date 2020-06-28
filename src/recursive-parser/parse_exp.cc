@@ -83,35 +83,37 @@ ast::Exp *Parser<Lexer>::parse_fac() {
     }
 
     // const factors
-    if (current_token->type == TokenType::ConstantInteger) {
-        auto num = new ast::ExpConstantInteger(
-                reinterpret_cast<const ConstantInteger *>(current_token));
-        next_token();
-        return num;
-    } else if (current_token->type == TokenType::ConstantChar) {
-        auto ch = new ast::ExpConstantChar(
-                reinterpret_cast<const ConstantChar *>(current_token));
-        next_token();
-        return ch;
-    } else if (current_token->type == TokenType::ConstantReal) {
-        auto real = new ast::ExpConstantReal(
-                reinterpret_cast<const ConstantReal *>(current_token));
-        next_token();
-        return real;
-    } else if (current_token->type == TokenType::ConstantString) {
-        auto str = new ast::ExpConstantString(
-                reinterpret_cast<const ConstantString *>(current_token));
-        next_token();
-        return str;
-    } else if (current_token->type == TokenType::ConstantBoolean) {
-        auto bl = new ast::ExpConstantBoolean(
-                reinterpret_cast<const ConstantBoolean *>(current_token));
-        next_token();
-        return bl;
+    ast::Exp *e = nullptr;
+    switch (current_token->type) {
+        case TokenType::ConstantInteger:
+            e = new ast::ExpConstantInteger(
+                    reinterpret_cast<const ConstantInteger *>(current_token));
+            break;
+        case TokenType::ConstantChar:
+            e = new ast::ExpConstantChar(
+                    reinterpret_cast<const ConstantChar *>(current_token));
+            break;
+        case TokenType::ConstantReal:
+            e = new ast::ExpConstantReal(
+                    reinterpret_cast<const ConstantReal *>(current_token));
+            break;
+        case TokenType::ConstantString:
+            e = new ast::ExpConstantString(
+                    reinterpret_cast<const ConstantString *>(current_token));
+            break;
+        case TokenType::ConstantBoolean:
+            e = new ast::ExpConstantBoolean(
+                    reinterpret_cast<const ConstantBoolean *>(current_token));
+            break;
+    }
+
+    if (e != nullptr) {
+        return e;
+    }
 
 
-        // unary expression or paren
-    } else if (current_token->type == TokenType::Marker) {
+    // unary expression or paren
+    if (current_token->type == TokenType::Marker) {
         auto marker = reinterpret_cast<const Marker *>(current_token);
         switch (marker->marker_type) {
             default:
@@ -158,12 +160,8 @@ ast::Exp *Parser<Lexer>::parse_fac() {
 
         // otherwise just a identifier exp
         return new ast::Ident(ident);
-    } else if (current_token->type == TokenType::Keyword) {
-        //todo
-        throw std::runtime_error("todo");
-    } else {
-        throw std::runtime_error("expected fac");
     }
+    throw std::runtime_error("expected fac");
 }
 
 template<typename Lexer>

@@ -41,9 +41,11 @@ add_subdirectory(exception/test)
 # lexer source files -> compile to lib to reduce compile time
 file(GLOB PASCAL_S_LEXER_SOURCE_FILES lexer/*.cpp lexer/*.cc)
 add_library(pascal-s-lexer ${PASCAL_S_LEXER_SOURCE_FILES})
+target_include_flex(pascal-s-lexer)
 link_pascal_s_local(pascal-s-lexer)
 function(link_pascal_s_lexer target)
     target_link_libraries(${target} pascal-s-lexer)
+    target_include_flex(${target})
 endfunction()
 add_subdirectory(lexer/test)
 

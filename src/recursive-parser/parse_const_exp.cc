@@ -3,6 +3,8 @@
 //
 
 
+#include <pascal-s/parser.h>
+
 template<typename Lexer>
 ast::Exp *Parser<Lexer>::parse_const_exp(const std::set<const Token *> *till) {
 

@@ -57,7 +57,7 @@ struct ParserTest : public testing::TestWithParam<ParserTestCase> {
         << lexer.current_token_cursor << " " << lexer.token_stream.size(); \
     if (!parser.errors.empty()) { \
         std::cout << parser.errors[0]->what() << std::endl; \
-        \
+        ASSERT_TRUE(false) << "abort";\
     } \
  \
     deleteAST(ast); \

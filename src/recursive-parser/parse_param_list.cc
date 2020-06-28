@@ -30,7 +30,8 @@ ast::ParamList *Parser<Lexer>::parse_param_list_with_paren() {
 template<typename Lexer>
 ast::ParamList *Parser<Lexer>::parse_param_list() {
     //look ahead
-    if (current_token == nullptr || current_token->type != TokenType::Identifier) {
+    if (current_token == nullptr ||
+        (current_token->type != TokenType::Identifier && current_token->type != TokenType::Keyword)) {
         return nullptr;
     }
     return _parse_param_list(new ast::ParamList);

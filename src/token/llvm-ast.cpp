@@ -26,9 +26,9 @@ void ast::deleteAST(Node *node) {
         case Type::Procedure:
             delete reinterpret_cast<Procedure *>(node);
             break;
-//        case Type::ParamSpec:
-//            delete reinterpret_cast<ParamSpec *>(node);
-//            break;
+        case Type::ParamSpec:
+            delete reinterpret_cast<ParamSpec *>(node);
+            break;
         case Type::Function:
             delete reinterpret_cast<Function *>(node);
             break;
@@ -134,14 +134,14 @@ void ast::printAST(ast::Node *node, int dep) {
 
             put_tab(dep);
             printf("}\n");
-//        case Type::ParamSpec:
-//            put_tab(dep);
-//            printf("{\n");
-//            put_tab(dep + 1);
-//            printf("type = ParamSpec\n");
-//
-//            put_tab(dep);
-//            printf("}\n");
+        case Type::ParamSpec:
+            put_tab(dep);
+            printf("{\n");
+            put_tab(dep + 1);
+            printf("type = ParamSpec\n");
+
+            put_tab(dep);
+            printf("}\n");
         case Type::Procedure:
 #define cur_node (reinterpret_cast<ast::Procedure*>(node))
             put_tab(dep);
