@@ -480,7 +480,7 @@ struct ExpCall : public Exp {
 
   const Identifier* fn;
 
-  VariableList* params;
+  ExpressionList* params;
 
 
 
