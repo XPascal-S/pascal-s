@@ -67,8 +67,6 @@ public:
 
     ast::CompoundStatement *parse_compound_statement(std::set<const Token *> *till = nullptr);
 
-    ast::CompoundStatement *_parse_compound_statement(std::set<const Token *> *till = nullptr);
-
     ast::Statement *parse_for_statement(std::set<const Token *> *till = nullptr);
 
     ast::Statement *parse_if_else_statement(std::set<const Token *> *till = nullptr);
@@ -94,6 +92,8 @@ private:
     ast::VarDecls *_parse_var_decls(ast::VarDecls *);
 
     ast::FunctionDecls *_parse_function_decls(ast::FunctionDecls *decls);
+
+    ast::CompoundStatement *_parse_compound_statement(std::set<const Token *> *till = nullptr);
 };
 
 

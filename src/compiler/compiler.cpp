@@ -14,6 +14,7 @@
 #include <target/task.h>
 #include <functional>
 #include <utility>
+#include <pascal-s/parser.h>
 
 
 #define VERSION "v0.1.0"
@@ -93,20 +94,19 @@ struct CompilerOptions {
     }
 };
 
-template<typename Lexer //, typename Parser
->
+template<typename Lexer, typename Parser>
 struct Compiler {
     CompilerOptions &options;
     std::function<void(int code)> _exit;
     LexerProxy<Lexer> lexer;
-//    ParserProxy<Parser> parser;
+    ParserProxy<Parser> parser;
 
     Compiler(
             LexerProxy<Lexer> lexer,
-//            ParserProxy<Parser> parser,
+            ParserProxy<Parser> parser,
             CompilerOptions &options, std::function<void(int)> _exit)
             :
-            lexer(std::move(lexer)), // parser(std::move(parser)),
+            lexer(std::move(lexer)), parser(std::move(parser)),
             options(options), _exit(std::move(_exit)) {}
 
     void work(int &argc, const char *argv[]) {
@@ -155,8 +155,7 @@ private:
         CompilerTargetTask task;
 
         task.target = options.out_path;
-//        task.source = parser.parse();
-        lexer.get_all_tokens();
+        task.source = parser.parse();
 
         if (lexer.has_error()) {
 
@@ -189,12 +188,11 @@ int main(int argc, const char *argv[]) {
 
     FullInMemoryLexer lexer(&options.get_source(), &std::cout);
     LexerProxy<FullInMemoryLexer> lexer_proxy(lexer);
-//    Parser<FullInMemoryLexer> parser(lexer_proxy);
-//    ParserProxy<Parser<FullInMemoryLexer>> parser_proxy(parser);
+    Parser<FullInMemoryLexer> parser(lexer_proxy);
+    ParserProxy<Parser<FullInMemoryLexer>> parser_proxy(parser);
 
-    Compiler<FullInMemoryLexer //, Parser<FullInMemoryLexer>
-    > compiler(
-            lexer_proxy, //parser_proxy,
+    Compiler<FullInMemoryLexer, Parser<FullInMemoryLexer>> compiler(
+            lexer_proxy, parser_proxy,
             options, exit);
 
     compiler.work(argc, argv);
