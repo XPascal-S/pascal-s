@@ -55,7 +55,7 @@ public:
 
     ast::FunctionDecls *parse_function_decls();
 
-    ast::Procedure *parse_function_head();
+    ast::SubprogramHead * parse_subprogram_head();
 
     ast::Procedure *parse_function_body(ast::Procedure *);
 
