@@ -31,7 +31,9 @@ endfunction()
 
 #fmt
 add_subdirectory(fmt)
-include_directories(fmt/include)
+function(target_include_fmt target_name)
+    target_include_directories(${target_name} PUBLIC BEFORE ${CMAKE_SOURCE_DIR}/vendor/fmt/include)
+endfunction()
 
 #flex
 function(target_include_flex target_name)

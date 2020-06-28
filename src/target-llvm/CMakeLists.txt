@@ -39,8 +39,6 @@ llvm_map_components_to_libnames(LLVMLIBS ${llvm_components})
 
 add_definitions(${LLVM_DEFINITIONS})
 
-add_executable(target-llvm_test target_test.cpp)
-
 file(GLOB PASCAL_S_TARGET_LLVM_SOURCE_FILES **.cpp)
 
 add_library(target-llvm ${PASCAL_S_TARGET_LLVM_SOURCE_FILES})
