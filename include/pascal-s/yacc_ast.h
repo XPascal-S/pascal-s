@@ -646,7 +646,7 @@ struct ExpVoid : public Exp {
 };
 
 
-struct CompoundStatement : public Node {
+struct CompoundStatement : public Statement {
 
     const StatementList* state;
 
