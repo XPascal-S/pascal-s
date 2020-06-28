@@ -108,6 +108,7 @@ ast::Exp *Parser<Lexer>::parse_fac() {
     }
 
     if (e != nullptr) {
+        next_token();
         return e;
     }
 

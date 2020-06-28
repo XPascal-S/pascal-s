@@ -17,6 +17,16 @@ include_directories(include)
 # vendor files (external libraries)
 add_subdirectory(vendor)
 
+set(LLVM_DIR C:/work/cpp/llvm-tutorial/lib/build-llvm/lib/cmake/llvm)
+find_package(LLVM REQUIRED CONFIG)
+
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+message(STATUS "llvm include dir ${LLVM_INCLUDE_DIRS}")
+
+add_definitions(${LLVM_DEFINITIONS})
+set_property(GLOBAL PROPERTY _target_llvm_include_directory_property ${LLVM_INCLUDE_DIRS})
+
 # lib files (internal libraries)
 add_subdirectory(lib)
 

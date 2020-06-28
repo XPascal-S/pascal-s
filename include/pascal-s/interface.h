@@ -148,6 +148,9 @@ struct ParserProxy {
 
     // 重置cursor
     [[maybe_unused]] ast::Node *parse() { return parser.parse(); }
+
+    // 判断是否存在语法错误
+    [[maybe_unused]] bool has_error() { return parser.has_error(); }
 };
 
 #endif //PASCAL_S_INTERFACE_H

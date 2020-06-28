@@ -41,6 +41,7 @@ struct CompilerOptions {
     std::string source_path;
     std::string out_path;
     std::string out_with_ir;
+    std::string out_with_ast;
     std::string out_with_token;
 
     explicit CompilerOptions(dep::OptParser &parser) {
@@ -61,6 +62,9 @@ struct CompilerOptions {
         parser.addOpts("out-token", &out_with_token,
                        "Output tokens, enum of {, json, yml, fmt, binary, console}",
                        cat_compile_options, "", "tf");
+        parser.addOpts("out-ast", &out_with_ast,
+                       "Output asts, enum of {, json, yml, fmt, binary, console}",
+                       cat_compile_options, "", "af");
     }
 
     ~CompilerOptions() {
@@ -109,12 +113,15 @@ struct Compiler {
             lexer(std::move(lexer)), parser(std::move(parser)),
             options(options), _exit(std::move(_exit)) {}
 
-    void work(int &argc, const char *argv[]) {
+    int work(int &argc, const char *argv[]) {
         reset();
         work_help(argc, argv);
         work_version(argc, argv);
         work_out_tokens(argc, argv);
+        work_out_ast(argc, argv);
         work_compile(argc, argv);
+
+        return _code;
     }
 
     void reset() {
@@ -146,6 +153,15 @@ private:
             WriterProxy<std::ostream> os(std::cout);
             feature::output_tokens(lexer.get_all_tokens(), os);
             lexer.reset_cursor();
+            fflush(stdout);
+        }
+    }
+
+    void work_out_ast(int, const char *[]) {
+        if (exited) return;
+        if (!options.out_with_ast.empty()) {
+            ast::printAST(get_ast());
+            fflush(stdout);
         }
     }
 
@@ -155,7 +171,27 @@ private:
         CompilerTargetTask task;
 
         task.target = options.out_path;
-        task.source = parser.parse();
+        task.source = get_ast();
+
+        if (lexer.has_error() || parser.has_error()) {
+            exit(1);
+        }
+
+        task.out_ir = !options.out_with_ir.empty();
+
+        exit(target_compile(argc, argv, &task));
+    }
+
+
+    ast::Node *_cached_ast = nullptr;
+
+    ast::Node *get_ast() {
+        if (lexer.has_error() || parser.has_error()) {
+            return nullptr;
+        }
+        if (_cached_ast) return _cached_ast;
+
+        _cached_ast = parser.parse();
 
         if (lexer.has_error()) {
 
@@ -167,26 +203,32 @@ private:
                 feature::format_line_column_error(fp, ErrorProxy<ErrorToken>(*e), os, options.source_path.c_str());
             }
         }
+        if (lexer.has_error() || parser.has_error()) {
+            return nullptr;
+        }
 
-        task.out_ir = !options.out_with_ir.empty();
-
-        _exit(target_compile(argc, argv, &task));
+        return _cached_ast;
     }
 
     void exit(int code) {
         exited = true;
-        _exit(code);
+        _exit(_code = code);
     }
 
     bool exited = false;
+    int _code = 0;
 };
 
 int main(int argc, const char *argv[]) {
 
     CompilerOptions options(dep::_global);
     dep::parseOpts(argc, argv);
+    std::istream *is = nullptr;
 
-    FullInMemoryLexer lexer(&options.get_source(), &std::cout);
+    if (!options.help) {
+        is = &options.get_source();
+    }
+    FullInMemoryLexer lexer(is, &std::cout);
     LexerProxy<FullInMemoryLexer> lexer_proxy(lexer);
     Parser<FullInMemoryLexer> parser(lexer_proxy);
     ParserProxy<Parser<FullInMemoryLexer>> parser_proxy(parser);
@@ -195,6 +237,5 @@ int main(int argc, const char *argv[]) {
             lexer_proxy, parser_proxy,
             options, exit);
 
-    compiler.work(argc, argv);
-    return 0;
+    return compiler.work(argc, argv);
 }

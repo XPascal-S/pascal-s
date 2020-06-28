@@ -75,3 +75,8 @@ ast::Exp *Parser<Lexer>::parse_const_fac(const std::set<const Token *> *till) {
     next_token();
     return fac;
 }
+
+template<typename Lexer>
+bool Parser<Lexer>::has_error() {
+    return !errors.empty();
+}

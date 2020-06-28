@@ -82,6 +82,8 @@ public:
 
     ast::Exp *parse_fac();
 
+    virtual bool has_error();
+
 private:
     ast::IdentList *_parse_id_list(ast::IdentList *);
 

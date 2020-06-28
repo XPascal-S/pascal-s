@@ -74,6 +74,26 @@ INSTANTIATE_TEST_SUITE_P(Simple, ParserMainTest, testing::Values( /* NOLINT */
 //        }
 ));
 
+INSTANTIATE_TEST_SUITE_P(HelloWorld, ParserMainTest, testing::Values( /* NOLINT */
+        ParserTestCase{
+                {
+                        new Keyword(KeywordType::Program),
+                        new Identifier("main"),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Begin),
+                        new Identifier("write_char"),
+                        new Marker(MarkerType::LParen),
+                        new ConstantChar('h'),
+                        new Marker(MarkerType::RParen),
+                        new Marker(MarkerType::Semicolon),
+                        new Identifier("main"),
+                        new Marker(MarkerType::Assign),
+                        new ConstantInteger(0),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::End),
+                }
+        }
+));
 
 //struct ParserConstDeclsTest : public ParserTest {
 //};
