@@ -19,7 +19,7 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_paren() {
     // )
     if (!predicate::is_rparen(current_token)) {
         delete exp_list;
-        errors.push_back(new PascalSParseExpectGotError(__FUNCTION__, &predicate::marker_rparen, current_token));
+        errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, &predicate::marker_rparen, current_token));
         return nullptr;
     }
     next_token();

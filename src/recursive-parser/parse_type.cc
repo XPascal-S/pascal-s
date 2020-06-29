@@ -1,16 +1,34 @@
 //
 // Created by kamiyoru on 2020/6/27.
 //
-
+//maybe_fall_eof
 
 template<typename Lexer>
 ast::TypeSpec *Parser<Lexer>::parse_type() {
     // next token == array | basic_type, all belong to keyword
     if (current_token == nullptr || current_token->type != TokenType::Keyword) {
-        errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "type spec", current_token));
-        return nullptr;
+        for (;;) {
+            if (current_token == nullptr) {
+                return fall_expect_t(TokenType::Keyword);
+            }
+            if (predicate::is_rparen(current_token)) {
+                return fall_expect_t(TokenType::Keyword);
+            }
+            if (predicate::is_semicolon(current_token)) {
+                return fall_expect_t(TokenType::Keyword);
+            }
+            if (predicate::is_end(current_token)) {
+                return fall_expect_t(TokenType::Keyword);
+            }
+            maybe_recover_keyword(KeywordType::Array)
+            maybe_recover_keyword(KeywordType::Boolean)
+            maybe_recover_keyword(KeywordType::Integer)
+            maybe_recover_keyword(KeywordType::Char)
+            maybe_recover_keyword(KeywordType::Real)
+            skip_error_token_t(TokenType::Keyword)
+            return fall_expect_t(TokenType::Keyword);
+        }
     }
-
 
     auto array_or_basic = reinterpret_cast<const Keyword *>(current_token);
 
@@ -45,7 +63,37 @@ ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array
     for (;;) {
 
         // digit
-        expected_type_r(TokenType::ConstantInteger, arr_type_spec);
+        if (current_token == nullptr || current_token->type != TokenType::ConstantInteger) {
+            for (;;) {
+                if (current_token == nullptr) {
+                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                }
+                if (predicate::is_semicolon(current_token)) {
+                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                }
+                if (predicate::is_end(current_token)) {
+                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                }
+                if (current_token->type == TokenType::ConstantReal) {
+                    errors.push_back(
+                            new PascalSParseExpectTGotError(__FUNCTION__, TokenType::ConstantInteger, current_token));
+                    update_guess(new ConstantInteger(static_cast<pascal_s::pascal_s_integer_t>(
+                                                             reinterpret_cast<const ConstantReal *>(current_token)->attr)));
+                    break;
+                }
+                if (current_token->type == TokenType::Identifier) {
+                    errors.push_back(
+                            new PascalSParseExpectTGotError(__FUNCTION__, TokenType::ConstantInteger, current_token));
+                    update_guess(new ConstantInteger(0));
+                    break;
+                }
+                skip_error_token_t(TokenType::ConstantInteger)
+                errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "left_range", current_token));
+                return arr_type_spec;
+            }
+        }
+
+
         auto l_range = reinterpret_cast<const ConstantInteger *>(current_token);
         next_token();
 
@@ -54,7 +102,35 @@ ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array
         next_token();
 
         // digit
-        expected_type_r(TokenType::ConstantInteger, arr_type_spec);
+        if (current_token == nullptr || current_token->type != TokenType::ConstantInteger) {
+            for (;;) {
+                if (current_token == nullptr) {
+                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                }
+                if (predicate::is_semicolon(current_token)) {
+                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                }
+                if (predicate::is_end(current_token)) {
+                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                }
+                if (current_token->type == TokenType::ConstantReal) {
+                    errors.push_back(
+                            new PascalSParseExpectTGotError(__FUNCTION__, TokenType::ConstantInteger, current_token));
+                    update_guess(new ConstantInteger(static_cast<pascal_s::pascal_s_integer_t>(
+                                                             reinterpret_cast<const ConstantReal *>(current_token)->attr)));
+                    break;
+                }
+                if (current_token->type == TokenType::Identifier) {
+                    errors.push_back(
+                            new PascalSParseExpectTGotError(__FUNCTION__, TokenType::ConstantInteger, current_token));
+                    update_guess(new ConstantInteger(0));
+                    break;
+                }
+                skip_error_token_t(TokenType::ConstantInteger)
+                errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "right_range", current_token));
+                return arr_type_spec;
+            }
+        }
         arr_type_spec->periods.emplace_back(
                 int64_t(l_range->attr),
                 int64_t(reinterpret_cast<const ConstantInteger *>(current_token)->attr));
@@ -74,6 +150,29 @@ ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array
     // of
     expected_enum_type_r(predicate::is_of, predicate::keyword_of, arr_type_spec);
     next_token();
+
+    if (current_token == nullptr || current_token->type != TokenType::Keyword) {
+        for (;;) {
+            if (current_token == nullptr) {
+                return fall_expect_t(TokenType::Keyword), arr_type_spec;
+            }
+            if (predicate::is_rparen(current_token)) {
+                return fall_expect_t(TokenType::Keyword), arr_type_spec;
+            }
+            if (predicate::is_semicolon(current_token)) {
+                return fall_expect_t(TokenType::Keyword), arr_type_spec;
+            }
+            if (predicate::is_end(current_token)) {
+                return fall_expect_t(TokenType::Keyword), arr_type_spec;
+            }
+            maybe_recover_keyword(KeywordType::Boolean)
+            maybe_recover_keyword(KeywordType::Integer)
+            maybe_recover_keyword(KeywordType::Char)
+            maybe_recover_keyword(KeywordType::Real)
+            skip_error_token_t(TokenType::Keyword)
+            return fall_expect_t(TokenType::Keyword), arr_type_spec;
+        }
+    }
 
     // basic_type
     auto basic = reinterpret_cast<const Keyword *>(current_token);

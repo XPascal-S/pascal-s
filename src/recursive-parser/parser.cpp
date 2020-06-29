@@ -13,20 +13,66 @@ struct Parser<MockLexer>;
 #endif
 
 #ifdef WITH_PASCAL_LEXER_FILES
+
 #include <pascal-s/lexer.h>
+
 template
 struct Parser<FullInMemoryLexer>;
 #endif
 
-#define expected_enum_type(predicator, indicate) do {if (!predicator(current_token)) {\
-    errors.push_back(new PascalSParseExpectGotError(__FUNCTION__, &indicate, current_token));\
-    return nullptr;\
+#define maybe_recover_keyword(K) if (guess_keyword(K)) {\
+        break;\
+    }
+
+#define fall_expect_t(T) (errors.push_back(new PascalSParseExpectTGotError(__FUNCTION__, T, current_token)), nullptr)
+#define fall_expect_v(T) (errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, T, current_token)), nullptr)
+
+#define skip_error_token(T, Tok) if (current_token != nullptr && current_token->type == TokenType::ErrorToken) {\
+        errors.push_back(new PascalSParseExpect ## T ## GotError(__FUNCTION__, Tok, current_token));\
+        next_token();\
+        continue;\
+    }
+
+#define skip_error_token_t(Tok) skip_error_token(T, Tok)
+#define skip_error_token_s(Tok) skip_error_token(S, Tok)
+#define skip_error_token_v(Tok) skip_error_token(V, Tok)
+
+#define skip_any_but_eof_token(T, Tok) if (current_token != nullptr) {\
+        errors.push_back(new PascalSParseExpect ## T ## GotError(__FUNCTION__, Tok, current_token));\
+        next_token();\
+        continue;\
+    }
+
+#define skip_any_but_eof_token_t(Tok) skip_any_but_eof_token(T, Tok)
+#define skip_any_but_eof_token_s(Tok) skip_any_but_eof_token(S, Tok)
+#define skip_any_but_eof_token_v(Tok) skip_any_but_eof_token(V, Tok)
+//
+//if (current_token == nullptr) {
+//return fall_expect_t(TokenType::Keyword);
+//}
+//if (predicate::is_rparen(current_token)) {
+//return fall_expect_t(TokenType::Keyword);
+//}
+//if (predicate::is_semicolon(current_token)) {
+//return fall_expect_t(TokenType::Keyword);
+//}
+//if (predicate::is_end(current_token)) {
+//return fall_expect_t(TokenType::Keyword);
+//}
+#define expected_enum_type_r(predicator, indicate, rvalue) do {if (!predicator(current_token)) {\
+    for(;;) {\
+        if (predicator(current_token)) {\
+            break;\
+        }\
+        if (!(predicate::is_end(current_token) || predicate::is_semicolon(current_token))) {\
+            skip_any_but_eof_token_v(&indicate)\
+        }\
+        errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, &indicate, current_token));\
+        return rvalue;\
+    }\
 }}while(0)
 
-#define expected_enum_type_r(predicator, indicate, rvalue) do {if (!predicator(current_token)) {\
-    errors.push_back(new PascalSParseExpectGotError(__FUNCTION__, &indicate, current_token));\
-    return rvalue;\
-}}while(0)
+#define expected_enum_type(predicator, indicate) expected_enum_type_r(predicator, indicate, nullptr)
 
 #define expected_type_r(tok_type, rvalue) do {if (current_token == nullptr || current_token->type != tok_type) {\
     errors.push_back(new PascalSParseExpectTGotError(__FUNCTION__, tok_type, current_token));\
@@ -84,7 +130,7 @@ namespace predicate {
 }
 
 template<typename Lexer>
-Parser<Lexer>::Parser(LexerProxy <Lexer> lexer) : lexer(std::move(lexer)) {}
+Parser<Lexer>::Parser(LexerProxy<Lexer> lexer) : lexer(std::move(lexer)) {}
 
 template<typename Lexer>
 const Token *Parser<Lexer>::next_token() {
@@ -96,6 +142,50 @@ template<typename Lexer>
 ast::Node *Parser<Lexer>::parse() {
     next_token();
     return parse_program();
+}
+
+void copy_pos_info(Token *dst, const Token *src) {
+    dst->length = src->length;
+    dst->offset = src->offset;
+    dst->line = src->line;
+    dst->column = src->column;
+}
+
+template<typename Lexer>
+bool Parser<Lexer>::guess_keyword(KeywordType k) {
+
+    if (current_token == nullptr) {
+        return false;
+    }
+
+    if (current_token->type == TokenType::Keyword && reinterpret_cast<const Keyword *>(current_token)->key_type == k) {
+        return true;
+    }
+
+    if (errors.size() > 50) {
+        return false;
+    }
+    const std::string &k_str = get_keyword_type_reversed(k);
+
+    if ((current_token->type == TokenType::Identifier &&
+         guesser.near(k_str.c_str(), k_str.length(),
+                      reinterpret_cast<const Identifier *>(current_token)->content,
+                      current_token->length)) ||
+        (current_token->type == TokenType::ErrorToken &&
+         guesser.near(k_str.c_str(), k_str.length(), reinterpret_cast<const ErrorToken *>(current_token)->content,
+                      current_token->length))) {
+        errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "type spec", current_token));
+        update_guess(new Keyword(k));
+        return true;
+    }
+    return false;
+}
+
+template<typename Lexer>
+void Parser<Lexer>::update_guess(Token *new_tok) {
+    copy_pos_info(new_tok, current_token);
+    current_token = new_tok;
+    this->guessing_token.push_back(new_tok);
 }
 
 
@@ -123,3 +213,15 @@ ast::Node *Parser<Lexer>::parse() {
 #undef expected_enum_type_r
 #undef expected_type_r
 #undef expected_type
+#undef maybe_recover_keyword
+#undef fall_expect_t
+#undef fall_expect_v
+#undef skip_error_token
+#undef skip_any_but_eof_token
+
+#undef skip_error_token_t
+#undef skip_error_token_s
+#undef skip_error_token_v
+#undef skip_any_but_eof_token_t
+#undef skip_any_but_eof_token_s
+#undef skip_any_but_eof_token_v

@@ -7,6 +7,7 @@
 
 #include "token.h"
 #include <vector>
+#include "lib/stdtype.h"
 
 // reserve lvalue reference semantics
 // ProxyTarget
@@ -118,19 +119,19 @@ template<typename Error>
 struct ErrorProxy {
     DefaultProxyConstructor(ErrorProxy, Error, err)
 
-    [[maybe_unused]] line_t visit_line() {
+    [[maybe_unused]] pascal_s::line_t visit_line() {
         return err.line;
     }
 
-    [[maybe_unused]] column_t visit_column() {
+    [[maybe_unused]] pascal_s::column_t visit_column() {
         return err.column;
     }
 
-    [[maybe_unused]] length_t visit_length() {
+    [[maybe_unused]] pascal_s::length_t visit_length() {
         return err.length;
     }
 
-    [[maybe_unused]] offset_t visit_offset() {
+    [[maybe_unused]] pascal_s::offset_t visit_offset() {
         return err.offset;
     }
 

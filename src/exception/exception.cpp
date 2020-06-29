@@ -28,8 +28,9 @@ PascalSParseExpectTGotError::PascalSParseExpectTGotError(
         PascalSParseError(fn,
                           fmt::format("{} parse failed:"
                                       "expected type: {}, "
-                                      "got: {}", fn, expected, got != nullptr ? got->type : TokenType::Nullptr)),
-        expected(static_cast<token_type_underlying_type>(expected)), got(got) {
+                                      "got: {}", fn, expected, got != nullptr ? got->type : TokenType::Nullptr),
+                          PascalSErrno::ParseExpectTGotError),
+        expected(static_cast<pascal_s::token_type_underlying_type>(expected)), got(got) {
     if (!msg.empty()) {
         this->msg += ":" + msg;
     }
@@ -37,11 +38,12 @@ PascalSParseExpectTGotError::PascalSParseExpectTGotError(
 
 PascalSParseExpectSGotError::PascalSParseExpectSGotError(
         char *fn, const char *expected, const Token *got, std::string msg) :
-        PascalSParseError(fn,""), expected(expected), got(got) {
+        PascalSParseError(fn, "",
+                          PascalSErrno::ParseExpectSGotError), expected(expected), got(got) {
     this->msg = fmt::format("{} parse failed:"
                             "expected: {}, "
                             "got: {}", fn, expected, got != nullptr ? got->type : TokenType::Nullptr);
     if (!msg.empty()) {
-        this-> msg += ":" + msg;
+        this->msg += ":" + msg;
     }
 }

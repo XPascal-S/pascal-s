@@ -70,6 +70,14 @@ ErrorToken::ErrorToken(const char *content, const char *hint)
     this->hint = hint;
 }
 
+ErrorToken::ErrorToken(const char *content, int len, const char *hint)
+        : Token() {
+    this->type = TokenType::ErrorToken;
+    this->length = len;
+    this->content = copy_string(content);
+    this->hint = hint;
+}
+
 ErrorToken::~ErrorToken() {
     delete[] this->content;
     this->content = nullptr;
@@ -92,7 +100,7 @@ ConstantReal::~ConstantReal() {
     this->content = nullptr;
 }
 
-ConstantInteger::ConstantInteger(pascal_s_integer_t attr) : Token() {
+ConstantInteger::ConstantInteger(pascal_s::pascal_s_integer_t attr) : Token() {
     this->type = TokenType::ConstantInteger;
     this->attr = attr;
 }

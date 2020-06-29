@@ -80,3 +80,14 @@ template<typename Lexer>
 bool Parser<Lexer>::has_error() {
     return !errors.empty();
 }
+
+template<typename Lexer>
+Parser<Lexer>::~Parser() {
+    for (auto e: errors) {
+        delete e;
+    }
+
+    for (auto t: guessing_token) {
+        deleteToken(t);
+    }
+}

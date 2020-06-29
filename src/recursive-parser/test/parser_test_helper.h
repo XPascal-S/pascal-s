@@ -33,7 +33,6 @@ struct ParserTest : public testing::TestWithParam<ParserTestCase> {
     LexerProxy <MockLexer> lexer_proxy(lexer); \
     Parser parser(lexer_proxy); \
     auto ast = parser.ParseRespFunc(); \
-    ASSERT_NE(ast, nullptr); \
     ASSERT_EQ(lexer.current_token_cursor, lexer.token_stream.size()) <<  "not consumed " \
         << lexer.current_token_cursor << " " << lexer.token_stream.size(); \
     if (!parser.errors.empty()) { \
@@ -41,6 +40,7 @@ struct ParserTest : public testing::TestWithParam<ParserTestCase> {
         ASSERT_TRUE(false) << "abort";\
         \
     } \
+    ASSERT_NE(ast, nullptr); \
  \
     deleteAST(ast); \
 }
@@ -53,16 +53,36 @@ struct ParserTest : public testing::TestWithParam<ParserTestCase> {
     Parser parser(lexer_proxy); \
     parser.next_token();\
     auto ast = parser.ParseRespFunc(); \
-    ASSERT_NE(ast, nullptr); \
     ASSERT_EQ(lexer.current_token_cursor, lexer.token_stream.size()) <<  "not consumed " \
         << lexer.current_token_cursor << " " << lexer.token_stream.size(); \
     if (!parser.errors.empty()) { \
         std::cout << parser.errors[0]->what() << std::endl; \
         ASSERT_TRUE(false) << "abort";\
     } \
+    ASSERT_NE(ast, nullptr); \
  \
     deleteAST(ast); \
 }
 
+#define PARSER_GUESS_SUB_BASIC_TEST_P(ParserTestName, ParseRespFunc) TEST_P(ParserTestName, BasicWillNotThrowException) /* NOLINT */ \
+{ \
+    auto &&param = GetParam(); \
+    MockLexer lexer(param.token_stream); \
+    LexerProxy <MockLexer> lexer_proxy(lexer); \
+    Parser parser(lexer_proxy); \
+    parser.next_token();\
+    auto ast = parser.ParseRespFunc(); \
+    ASSERT_EQ(lexer.current_token_cursor, lexer.token_stream.size()) <<  "not consumed " \
+        << lexer.current_token_cursor << " " << lexer.token_stream.size(); \
+    if (parser.errors.empty()) { \
+        ASSERT_TRUE(false) << "abort";\
+    } \
+    ASSERT_NE(ast, nullptr); \
+ \
+    deleteAST(ast); \
+}
+
+
+#define raw_length_of(rs) (sizeof(rs) - 1)
 
 #endif

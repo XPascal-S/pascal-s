@@ -10,16 +10,20 @@
 #include "llvm-ast.h"
 #include "exception.h"
 #include <set>
+#include <pascal-s/lib/guess.h>
 
 template<typename Lexer>
 class Parser {
     LexerProxy<Lexer> lexer;
     const Token *current_token;
+    std::vector<Token *> guessing_token;
 
 public:
     std::vector<PascalSError *> errors;
 
     explicit Parser(LexerProxy<Lexer> lexer);
+
+    virtual ~Parser();
 
     ast::Node *parse();
 
@@ -77,14 +81,18 @@ public:
 
     ast::Exp *parse_exp(const std::set<const Token *> *till = nullptr);
 
-    ast::Exp *parse_binary_exp(ast::Exp *lhs, const Marker *marker, marker_type_underlying_type current_marker_pri,
-                               const std::set<const Token *> *till = nullptr);
+    ast::Exp *
+    parse_binary_exp(ast::Exp *lhs, const Marker *marker, pascal_s::marker_type_underlying_type current_marker_pri,
+                     const std::set<const Token *> *till = nullptr);
 
     ast::Exp *parse_fac();
 
     virtual bool has_error();
 
 private:
+
+    pascal_s::MinStrDist guesser;
+
     ast::IdentList *_parse_id_list(ast::IdentList *);
 
     ast::ParamList *_parse_param_list(ast::ParamList *params);
@@ -96,6 +104,10 @@ private:
     ast::FunctionDecls *_parse_function_decls(ast::FunctionDecls *decls);
 
     ast::CompoundStatement *_parse_compound_statement(std::set<const Token *> *till = nullptr);
+
+    bool guess_keyword(KeywordType k);
+
+    void update_guess(Token *new_tok);
 };
 
 

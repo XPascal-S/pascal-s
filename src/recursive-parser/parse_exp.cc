@@ -167,7 +167,8 @@ ast::Exp *Parser<Lexer>::parse_fac() {
 
 template<typename Lexer>
 ast::Exp *
-Parser<Lexer>::parse_binary_exp(ast::Exp *lhs, const Marker *marker, marker_type_underlying_type current_marker_pri,
+Parser<Lexer>::parse_binary_exp(ast::Exp *lhs, const Marker *marker,
+                                pascal_s::marker_type_underlying_type current_marker_pri,
                                 const std::set<const Token *> *till) {
 
     auto rhs = parse_fac();
