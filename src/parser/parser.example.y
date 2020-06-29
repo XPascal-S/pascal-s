@@ -84,7 +84,13 @@
 %%
 
 programstruct:  program_head semicolon program_body dot {
-  ast_reduce_nodes(4, Type::Program);
+  Program *node = reinterpret_cast<Program*> (ast_reduce_nodes(4, Type::Program));
+  node->programHead = (ProgramHead*)(node->children.front());
+  node->children.pop_front();
+  node->children.pop_front();//pop semicolon
+  node->programBody = (ProgramBody*)(node->children.front());
+  node->children.pop_front();
+  node->children.pop_front();//pop dot
  }
 |  program_head semicolon program_body error{ printf("\n\n\n\n Missing dot\n"); yyerrok; }
 |  program_head error program_body { printf("\n\n\n\nMissing semicolon\n"); yyerrok; }
@@ -99,7 +105,15 @@ dot: MARKER_DOT{
 
 program_head:
   program id lparen idlist rparen {
-    ast_reduce_nodes(5, Type::ProgramHead);
+    ProgramHead *node = reinterpret_cast<ProgramHead *>(ast_reduce_nodes(5, Type::ProgramHead));
+    node->programKeyword = (const ExpKeyword*)(node->children.front());
+    node->children.pop_front();
+    node->id = (const Ident*)(node->children.front());
+    node->children.pop_front();   
+    node->children.pop_front(); //pop lparen
+    node->idlist = (const IdentList*)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();//pop rparen
   }
 | program id{
   ProgramHead *node = reinterpret_cast<ProgramHead *>(ast_reduce_nodes(2, Type::ProgramHead));
@@ -108,7 +122,6 @@ program_head:
   node->id = (const Ident*)(node->children.front());
   node->children.pop_front();
   }
-;
 
 program:KEYWORD_PROGRAM{
   $$ = new ExpKeyword((const Keyword *)($1));
@@ -117,17 +130,48 @@ program:KEYWORD_PROGRAM{
 ;
 
 program_body : const_declarations var_declarations subprogram_declarations compound_statement {
-  ast_reduce_nodes(4, Type::Program);
+  ProgramBody *node = reinterpret_cast<ProgramBody*> (ast_reduce_nodes(4, Type::ProgramBody));
+
+  node->constdecls = (ConstDecls*)(node->children.front());
+  node->children.pop_front();
+
+  node->vardecls = (VarDecls*)(node->children.front());
+  node->children.pop_front();
+
+  node->subprogram = (SubprogramDecls*)(node->children.front());
+  node->children.pop_front();
+
+  node->compound = (CompoundStatement*)(node->children.front());
+  node->children.pop_front();
 }
 ;
 
 idlist:
-  idlist comma id  {ast_reduce_nodes(3, Type::IdentList);}
-| id             {$$ = $1;}
+  idlist comma id  {
+    IdentList* node = reinterpret_cast<IdentList*> (ast_reduce_nodes(3, Type::IdentList));
+    node->idents = (std::vector<const Identifier*>)(node->children.front()->idents);
+    node->children.pop_front();
+    node->children.pop_front();// pop comma
+    Identifier* id = (Identifier*)(node->children.front());
+    node->idents.push_back(id);
+    node->children.pop_front();
+  }
+| id      {
+    IdentList* node = reinterpret_cast<IdentList*> (ast_reduce_nodes(1, Type::IdentList));
+    Identifier* id = (Identifier*)(node->children.front());
+    node->idents.push_back(id);
+    node->children.pop_front();
+  }
 ;
 
 const_declarations:
-  const const_declaration semicolon {ast_reduce_nodes(3, Type::ConstDecls);}
+  const const_declaration semicolon {
+    ConstDecls* node = reinterpret_cast<ConstDecls*> (ast_reduce_nodes(3, Type::ConstDecls));
+    node->children.pop_front();// pop const
+    node->decls = node->children.front()->decls;
+    node->children.pop_front();
+    node->children.pop_front();// pop semicolon
+  }
 |                                       { $$ = new ExpVoid();  access_ast($$); }
 ;
 
@@ -138,8 +182,33 @@ const:KEYWORD_CONST{
 ;
 
 const_declaration:
-  const_declaration semicolon id eq const_value {ast_reduce_nodes(5, Type::ConstDecls);}
-|id eq const_value           {ast_reduce_nodes(3, Type::ConstDecl);}
+  const_declaration semicolon id eq const_value {
+    ConstDecls* node = reinterpret_cast<ConstDecls*> (ast_reduce_nodes(5, Type::ConstDecls));
+
+    node->decls = (std::vector<ConstDecl*>)(node->children.front()->decls);
+    node->children.pop_front();
+    node->children.pop_front();// pop semicolon
+
+    ConstDecl* const = new ConstDecl();
+    const->ident = (Identifier*)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();// pop eq
+    const->rhs = (Exp*)(node->children.front());
+    node->decls.push_back(const);
+    node->children.pop_front();
+  }
+|id eq const_value  {
+    ConstDecls* node = reinterpret_cast<ConstDecl*> (ast_reduce_nodes(3, Type::ConstDecls));
+
+    ConstDecl* const = new ConstDecl();
+    const->ident = (Identifier*)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();// pop eq
+    const->rhs = (Exp*)(node->children.front());
+    node->children.pop_front();
+
+    node->decls.push_back(const);
+}
 ;
 
 eq:MARKER_EQ {
@@ -151,14 +220,9 @@ eq:MARKER_EQ {
 const_value:add num          {ast_reduce_nodes(2, Type::Statement);}
     |sub num             {ast_reduce_nodes(2, Type::Statement);}
     |num                {$$ = $1;}
-    |quo char quo        {ast_reduce_nodes(3, Type::Statement);}
+    |char        {$$ = $1;}
     ;
 
-quo:MARKER_QUO {                   // to do!!!!!!
-  $$ = new ExpMarker((const Marker *)($1));
-  access_ast($$);
-}
-;
 
 num:INT {
   $$ = new ExpConstantInteger(((const ConstantInteger*)($1)));
@@ -185,12 +249,43 @@ sub:MARKER_SUB {
 ;
 
 var_declarations:              { $$ = new ExpVoid();  access_ast($$); }
-|var var_declaration semicolon {ast_reduce_nodes(3, Type::VarDecls);}
+|var var_declaration semicolon {
+    VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(3, Type::VarDecls));
+    node->children.pop_front();// pop var
+    node->decls = node->children.front()->decls;
+    node->children.pop_front();
+    node->children.pop_front();// pop semicolon
+}
 ;
 
 var_declaration:
-  var_declaration semicolon idlist colon type   {ast_reduce_nodes(5, Type::VarDecls);}
-| idlist colon type                             {ast_reduce_nodes(3, Type::VarDecls);}
+  var_declaration semicolon idlist colon type   {
+    VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(5, Type::VarDecls));
+
+    node->decls = (std::vector<VarDecl*>)(node->children.front()->decls);
+    node->children.pop_front();
+    node->children.pop_front();// pop semicolon
+
+    VarDecl* const = new VarDecl();
+    const->idents = (IdentList*)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();// pop colon
+    const->type_spec = (TypeSpec*)(node->children.front());
+    node->children.pop_front();
+
+}
+| idlist colon type                             {
+    VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(3, Type::VarDecls));
+
+    VarDecl* const = new VarDecl();
+    const->idents = (IdentList*)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();// pop colon
+    const->type_spec = (TypeSpec*)(node->children.front());
+    node->children.pop_front();
+
+    node->decls.push_back(const);
+}
 ;
 
 type:
@@ -241,7 +336,7 @@ boolean:KEYWORD_BOOLEAN{
 }
 ;
 
-period:
+period: // TODO
   period comma num range num        {ast_reduce_nodes(5, Type::ArrayTypeSpec);}
 | num range num                    {ast_reduce_nodes(3, Type::ArrayTypeSpec);}
 ;
@@ -252,16 +347,61 @@ range: MARKER_RANGE{
 }
 
 subprogram_declarations:                    { $$ = new ExpVoid();  access_ast($$); }
-| subprogram_declarations subprogram semicolon  {ast_reduce_nodes(3, Type::Program);}
+| subprogram_declarations subprogram semicolon  {
+    SubprogramDecls* node = reinterpret_cast<SubprogramDecls*> (ast_reduce_nodes(3, Type::SubprogramDecls));
+
+    node->subprogram = (std::vector<Subprogram*>)(node->children.front()->subprogram);
+    node->children.pop_front();
+    
+    Subprogram* sub = (Subprogram*)(node->children.front());
+    node->subprogram.push_back(sub);
+    node->children.pop_front();
+    node->children.pop_front();// pop semicolon
+
+    //ast_reduce_nodes(3, Type::SubprogramDecls);
+}
 ;
 
 subprogram:
-  subprogram_head semicolon subprogram_body {ast_reduce_nodes(3, Type::Program);}
+  subprogram_head semicolon subprogram_body {
+    
+    Subprogram* node = reinterpret_cast<Subprogram*> (ast_reduce_nodes(3, Type::Subprogram));
+    node->subhead = (SubprogramHead*)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();// pop semicolon
+    node->subbody = (SubprogramBody*)(node->children.front());
+    node->children.pop_front();
+}
 ;
 
 subprogram_head:
-  procedure id formal_parameter   {ast_reduce_nodes(3, Type::Procedure );}
-| function id formal_parameter colon basic_type  {ast_reduce_nodes(5, Type::FunctionDecl);}
+  procedure id formal_parameter   {
+  SubprogramHead* node = reinterpret_cast<SubprogramHead*> (ast_reduce_nodes(3, Type::SubprogramHead));
+
+   Procedure* pro = new Procedure();
+   node->children.pop_front();// pop procedure
+   pro->name = (Identifier*)(node->children.front());
+   node->children.pop_front();
+   pro->decls = (ParamList*)(node->children.front());
+   node->children.pop_front();
+
+   node->proc = pro;
+}
+| function id formal_parameter colon basic_type  {
+    SubprogramHead* node = reinterpret_cast<SubprogramHead*> (ast_reduce_nodes(5, Type::SubprogramHead));
+
+    FunctionDecl* func = new FunctionDecl();
+    node->children.pop_front();// pop function
+    func->name = (Identifier*)(node->children.front());
+    node->children.pop_front();
+    func->decls = (ParamList*)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();//pop colon
+    func->basic = (BasicTypeSpec*)(node->children.front());
+    node->children.pop_front();
+
+    node->func = func;
+}
 ;
 
 procedure:KEYWORD_PROCEDURE{
@@ -277,24 +417,61 @@ function:KEYWORD_FUNCTION{
 ;
 
 formal_parameter:               { $$ = new ExpVoid();  access_ast($$);  }
-|lparen parameter_list rparen       {ast_reduce_nodes(3, Type::ParamList);}
+|lparen parameter_list rparen       {
+    ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(3, Type::ParamList));
+    node->children.pop_front();//pop lparen
+    node->params = (std::vector<ParamSpec*>)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();//pop rparen
+    //ast_reduce_nodes(3, Type::ParamList);
+}
 ;
 
 parameter_list:
-  parameter_list semicolon parameter   {ast_reduce_nodes(2, Type::ParamList);}
-| parameter                     {$$ = $1;}
-;
+  parameter_list semicolon parameter   {
+    ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(3, Type::ParamList));
+    node->params = (std::vector<ParamSpec*>)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();// pop semicolon
+    
+    ParamSpec* param = (ParamSpec*)(node->children.front());
+    node->children.pop_front();
+    node->params.push_back(param);
 
-parameter:
-  var_parameter         {$$ = $1;}
-| value_parameter       {$$ = $1;}
-;
-
-var_parameter:
-  var value_parameter  {
-   ast_reduce_nodes(2, Type::VarDecl);
+  }
+| parameter                     {
+    ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(1, Type::ParamList));
+    ParamSpec* param = (ParamSpec*)(node->children.front());
+    node->children.pop_front();
+    node->params.push_back(param);
+    //$$ = $1;
 }
 ;
+
+
+parameter:
+  var idlist colon basic_type         {
+    ParamSpec* node = reinterpret_cast<ParamSpec*> (ast_reduce_nodes(4, Type::ParamSpec));
+
+    node->keyword_var = (const Keyword*)(node->children.front());
+    node->children.pop_front();
+    node->id_list = (IdentList*)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();// pop colon
+    node->spec = (TypeSpec*)(node->children.front());
+    node->children.pop_front();
+}
+| idlist colon basic_type       {
+    ParamSpec* node = reinterpret_cast<ParamSpec*> (ast_reduce_nodes(3, Type::ParamSpec));
+
+    node->id_list = (IdentList*)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();// pop colon
+    node->spec = (TypeSpec*)(node->children.front());
+    node->children.pop_front();
+}
+;
+
 
 var:KEYWORD_VAR{
   $$ = new ExpKeyword((const Keyword *)($1));
@@ -302,11 +479,6 @@ var:KEYWORD_VAR{
 }
 ;
 
-value_parameter:
-  idlist colon basic_type       {
-    ast_reduce_nodes(3, Type::VarDecl);
-}
-;
 
 colon: MARKER_COLON{
   $$ = new ExpMarker((const Marker *)($1));
@@ -314,11 +486,34 @@ colon: MARKER_COLON{
 }
 
 subprogram_body:
-const_declarations var_declarations compound_statement  {ast_reduce_nodes(3, Type::Statement);}
+const_declarations var_declarations compound_statement  {
+    SubprogramBody* node = reinterpret_cast<SubprogramBody*> (ast_reduce_nodes(3, Type::SubprogramBody));
+
+    node->constdecls = (ConstDecls*)(node->children.front());
+    node->children.pop_front();
+
+    node->vardecls = (VarDecls*)(node->children.front());
+    node->children.pop_front();
+
+    node->compound = (CompoundStatement*)(node->children.front());
+    node->children.pop_front();
+
+    //ast_reduce_nodes(3, Type::Statement);
+}
 ;
 
-compound_statement:
-begin statement_list end         {ast_reduce_nodes(3, Type::Statement);}
+compound_statement:             { $$ = new ExpVoid();  access_ast($$);  }
+begin statement_list end         {
+    CompoundStatement* node = reinterpret_cast<CompoundStatement*> (ast_reduce_nodes(3, Type::CompoundStatement));
+    node->children.pop_front();//pop begin
+
+    StatementList* state = (StatementList*)(node->children.front());
+    node->state = state;
+
+    node->children.pop_front();
+    node->children.pop_front();//pop end
+    //ast_reduce_nodes(3, Type::Statement);
+}
 ;
 
 begin:KEYWORD_BEGIN{
@@ -334,8 +529,27 @@ end:KEYWORD_END{
 ;
 
 statement_list:
-  statement_list semicolon statement     {ast_reduce_nodes(3, Type::Statement);}
-| statement                              {$$ = $1;}
+  statement_list semicolon statement     {
+    StatementList* node = reinterpret_cast<StatementList*> (ast_reduce_nodes(3, Type::StatementList));
+
+    node->statement = (std::vector<Statement*>)(node->children.front()->statement);
+    node->children.pop_front();
+    
+    node->children.pop_front();// pop semicolon
+
+    Statement* sta = (Statement*)(node->children.front());
+    node->statement.push_back(sta);
+    node->children.pop_front();
+    
+    //ast_reduce_nodes(3, Type::Statement);
+}
+| statement                              {
+    StatementList* node = reinterpret_cast<StatementList*> (ast_reduce_nodes(1, Type::StatementList));
+
+    Statement* sta = (Statement*)(node->children.front());
+    node->statement.push_back(sta);
+    node->children.pop_front();
+}
 ;
 
 semicolon: MARKER_SEMICOLON{
@@ -343,11 +557,11 @@ semicolon: MARKER_SEMICOLON{
   access_ast($$);
 }
 
-statement:                                          {$$ = new ExpVoid();  access_ast($$);}
+statement:                                          {$$ = new ExpVoid();  access_ast($$);} //TODO
 | variable assign expression                        {ast_reduce_nodes(3, Type::Statement);}
 | procedure_call                                    {$$ = $1;}
 | compound_statement                                {$$ = $1;}
-  if expression then statement else_part            {ast_reduce_nodes(5, Type::IfElseStatement);}
+| if expression then statement else_part            {ast_reduce_nodes(5, Type::IfElseStatement);}
 // if expression then statement else statement            {ast_reduce_nodes(5, Type::IfElseStatement);}
 | for id assign expression to expression do statement {ast_reduce_nodes(8, Type::ForStatement);}
 | READ lparen variable_list rparen                   {}
@@ -377,8 +591,8 @@ assign: MARKER_ASSIGN{
   access_ast($$);
 }
 
-else_part:           /*empty*/
-  else statement    {
+else_part:           { $$ = new ExpVoid();  access_ast($$);  }/*empty*/
+  else statement    { //TODO
   ast_reduce_nodes(2, Type::IfElseStatement);
 }
 ;
@@ -401,19 +615,51 @@ else : KEYWORD_ELSE {
 }
 ;
 
-variable_list: variable_list comma variable  {printf("variable_list\n"); ast_reduce_nodes(3, Type::Statement);}
-| variable                                {$$ = $1;}
+variable_list:
+  variable_list comma variable  {
+    VariableList* node = reinterpret_cast<VariableList*> (ast_reduce_nodes(3, Type::VariableList));
+
+    node->params = (std::vector<Variable*>)(node->children.front()->params);
+    node->children.pop_front();
+    
+    node->children.pop_front();// pop comma
+
+    Variable* var = (Variable*)(node->children.front());
+    node->params.push_back(var);
+    node->children.pop_front();
+
+    printf("variable_list\n"); 
+}
+| variable      {
+    VariableList* node = reinterpret_cast<VariableList*> (ast_reduce_nodes(1, Type::VariableList));
+
+    Variable* var = (Variable*)(node->children.front());
+    node->params.push_back(var);
+    node->children.pop_front();
+
+}
 ;
 
 variable:
   id id_varpart  {
-  printf("access ID attribute value: %s\n", ((const Identifier*)($1))->attr);
-  ast_reduce_nodes(2,Type::Statement);
+    Variable* node = reinterpret_cast<Variable*> (ast_reduce_nodes(2, Type::Variable));
+    node->id = (Identifier*)(node->children.front());
+    node->children.pop_front();
+    node->id_var = (ExpressionList*)(node->children.front());
+    node->children.pop_front();
+    printf("access ID attribute value: %s\n", ((const Identifier*)($1))->attr);
 }
 ;
 
-id_varpart:                 /*empty*/
+id_varpart:           { $$ = new ExpVoid();  access_ast($$);  }      /*empty*/
 | lbracket expression_list rbracket {
+    ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(3, Type::ExpressionList));
+    node->children.pop_front();//pop lbracket
+
+    node->explist = (std::vector<Exp*>)(node->children.front()->explist);
+    node->children.pop_front();
+
+    node->children.pop_front();//pop rbracket
     ast_reduce_nodes(3,Type::Statement);
   }
 ;
@@ -428,8 +674,8 @@ rbracket: MARKER_RBRACKET{
   access_ast($$);
 }
 
-procedure_call:
-  id          {
+procedure_call:    //TODO
+ id          {
     printf("access ID attribute value: %s\n", ((const Identifier*)($1))->attr);
     ast_reduce_nodes(1,Type::ExpCall);
   }
@@ -456,10 +702,26 @@ id: IDENT{
 
 expression_list:
   expression_list comma expression {
+    ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(3, Type::ExpressionList));
+
+    node->explist = (std::vector<Exp*>)(node->children.front()->explist);
+    node->children.pop_front();
+    
+    node->children.pop_front();// pop comma
+
+    Exp* exp = (Exp*)(node->children.front());
+    node->params.push_back(exp);
+    node->children.pop_front();
+
     printf("expression list , expression\n");
-    ast_reduce_nodes(3, Type::Exp);
 }
-| expression                   {$$ = $1;}
+| expression        {
+    ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(1, Type::ExpressionList));
+
+    Exp* exp = (Exp*)(node->children.front());
+    node->explist.push_back(exp);
+    node->children.pop_front();
+}
 ;
 
 comma : MARKER_COMMA {
@@ -531,27 +793,27 @@ mulop : MARKER_MUL {
   }
 
 relop : MARKER_EQ {
-  $$ = new ExpMarker((const Marker *)($1));
-  access_ast($$);
-}
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
+  }
 | MARKER_NEQ {
-  $$ = new ExpMarker((const Marker *)($1));
-  access_ast($$);
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
   }
 | MARKER_LT {
-  $$ = new ExpMarker((const Marker *)($1));
-  access_ast($$);
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
   }
 | MARKER_GT {
-  $$ = new ExpMarker((const Marker *)($1));
-  access_ast($$);
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
   }
 | MARKER_LE {
-  $$ = new ExpMarker((const Marker *)($1));
-  access_ast($$);
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
   }
 | MARKER_GE {
-  $$ = new ExpMarker((const Marker *)($1));
-  access_ast($$);
+    $$ = new ExpMarker((const Marker *)($1));
+    access_ast($$);
   }
 %%
