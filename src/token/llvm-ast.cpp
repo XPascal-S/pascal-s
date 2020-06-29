@@ -2,6 +2,7 @@
 // Created by kamiyoru on 2020/5/8.
 //
 
+/*
 #include <pascal-s/ast.h>
 #include <pascal-s/exception.h>
 #include <cassert>
@@ -429,3 +430,5 @@ void ast::printAST(ast::Node *node, int dep) {
             break;
     }
 }
+
+ */

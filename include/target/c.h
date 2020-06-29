@@ -5,14 +5,20 @@
 #ifndef PASCAL_S_TARGET_C_H
 #define PASCAL_S_TARGET_C_H
 
+#define ISCONSTANT 1
+#define ISBASIC 2
+#define ISARRAY 3
+
 #include <pascal-s/AST.h>
 #include <fmt/core.h>
 #include <vector>
 #include <string>
+#include <deque>
+#include <pascal-s/token.h>
+
 
 namespace target_c {
     class Buffer {
-
         std::ostream &os;
     public:
         Buffer(std::ostream &s) : os(s) {
@@ -29,9 +35,30 @@ namespace target_c {
         }
     };
 
-    struct LinkedContext {
-        LinkedContext *last;
-        std::map<std::string, std::string> *content;
+    //符号表表项
+    struct SymbolEntry{
+        std::string typeDecl; //变量类型
+        std::string newName; //变量名称 (符号表层级+原始名称)
+        std::string value; //变量值 在常数定义语境下是常量值。
+        const struct ArrayTypeSpec *arrayInfo; // 数组信息.
+        char varType; //变量类型 (常数定义，基本类型定义，数组定义。)
+    };
+
+    //符号表
+    struct SymbolTable{
+        std::string tableName;  //表示当前符号表的作用域。（以函数名称作为区分）
+        SymbolTable *prev; //指向上层符号表
+        std::map<std::string, struct SymbolTable *> nextTable; //Hash。函数名->符号表的映射
+        std::map<std::string, struct SymbolEntry> content; //Hash。原始变量名->变量属性的映射
+        //original_string --> new_string
+    };
+
+    struct FuncInfo{
+        std::string funcName;
+        std::string returnType;
+        std::string formalPara;
+        std::string additionPara;
+        std::string funcBody;
     };
 
     struct CBuilder {
@@ -40,17 +67,38 @@ namespace target_c {
             OK,
             TranslateFailed,
         };
+
         std::vector<std::string> include_files;
-        Buffer &buf;
-        LinkedContext *current_linkedCtx;
+        Buffer &outputBuff; //输出buffer
+        std::map<std::string, struct FuncInfo> functionBuff; //函数定义字符串
+        std::string mainBuff; // 主函数字符串
+        std::vector<std::string> callRecordBuff; //记录函数调用顺序，用于debug
+        struct SymbolTable *startST_pointer; //符号表入口指针
+        struct SymbolTable *nowST_pointer; //当前符号表指针
 
         CBuilder(std::vector<std::string> &include_files,
-                 Buffer &buf) : include_files(std::move(include_files)), buf(buf) {}
+                 Buffer &buf) : include_files(std::move(include_files)), outputBuff(outputBuff){
+            this->startST_pointer = new SymbolTable;
+            this->nowST_pointer = this->startST_pointer;
+            this->nowST_pointer->prev = NULL;
+            this->nowST_pointer->tableName = "main";
+        }
 
+        ~CBuilder(){
+            std::deque<struct SymbolTable *> st_deque;
+            st_deque.push_back(this->startST_pointer);
+            while(!st_deque.empty()){
+                struct SymbolTable *now_pointer = st_deque.front();
+                for(auto x : now_pointer->nextTable){
+                    st_deque.push_back(x.second);
+                }
+                delete now_pointer;
+            }
+        }
 
         int code_gen(const Node *node){
             for (const auto &f : include_files) {
-                buf.writeln(fmt::format("#include <{}>", f));
+                outputBuff.writeln(fmt::format("#include <{}>", f));
             }
 
             if (node->type != Type::Program) {
@@ -59,11 +107,135 @@ namespace target_c {
             }
 
             int code = code_gen_node(node);
-            buf
+
+            //输出全局变量定义
+            /*
+            for(auto const& x : startST_pointer->content){
+                if(x.second.varType == ISCONSTANT){
+                    outputBuff.writeln(fmt::format("const {0} {1} = {2};",
+                            x.second.typeDecl, x.first, x.second.value));
+                }else if(x.second.varType == ISBASIC){
+                    outputBuff.writeln(fmt::format("{0} {1};",
+                            x.second.typeDecl, x.first));
+                }else if(x.second.varType == ISARRAY){
+                    std::string tempArray = "";
+                    tempArray += x.second.typeDecl + " ";
+                    tempArray += x.first;
+                    for(auto x : x.second.arrayInfo->periods){
+                        tempArray += "[" + std::to_string(x.second) + "]";
+                    }
+                    outputBuff.writeln(tempArray);
+                }else{
+                    assert(false);
+                    return TranslateFailed;
+                }
+            }
+             */
+
+            //输出函数定义
+            for(auto x : this->functionBuff){
+                x.second.formalPara.pop_back();
+                x.second.formalPara.pop_back();
+                this->outputBuff.writeln(
+                        x.second.returnType + " " + x.second.funcName + "("
+                        + x.second.formalPara + "){\n"
+                        );
+                this->outputBuff.write(x.second.funcBody);
+                this->outputBuff.write("}");
+            }
+
+            //输出主函数内容
+            outputBuff
                     .writeln("int main(){")
-                    .writeln(fmt::format("return {}();", (reinterpret_cast<const Program *>(node))->name->content))
+                    .writeln(fmt::format("{}", this->mainBuff))
+                    .writeln("return 0;")
                     .writeln("}");
             return code;
+        }
+
+        int keyword2str(const KeywordType kt, std::string &result){
+            switch(kt){
+                case KeywordType::Boolean:
+                    result = "bool";
+                    return 1;
+                case KeywordType::Integer:
+                    result = "int";
+                    return 1;
+                case KeywordType::Char:
+                    result = "char";
+                    return 1;
+                case KeywordType::Real:
+                    result = "double";
+                    return 1;
+                default:
+                    assert(false);
+                    return 0;
+            }
+        }
+
+        int marker2str(const MarkerType mt, std::string &result){
+            switch(mt){
+                case MarkerType::NEQ:
+                    result = "!=";
+                    return OK;
+                case MarkerType::LE:
+                    result = "<=";
+                    return OK;
+                case MarkerType::GE:
+                    result = ">=";
+                    return OK;
+                case MarkerType::LT:
+                    result = "<";
+                    return OK;
+                case MarkerType::EQ:
+                    result = "==";
+                    return OK;
+                case MarkerType::GT:
+                    result = ">";
+                    return OK;
+                case MarkerType::Add:
+                    result = "+";
+                    return OK;
+                case MarkerType::Sub:
+                    result = "-";
+                    return OK;
+                case MarkerType::Mul:
+                    result = "*";
+                    return OK;
+                case MarkerType::Div:
+                    result = "/";
+                    return OK;
+                case MarkerType::LParen:
+                    result = "(";
+                    return OK;
+                case MarkerType::RParen:
+                    result = ")";
+                    return OK;
+                case MarkerType::LBracket:
+                    result = "[";
+                    return OK;
+                case MarkerType::RBracket:
+                    result = "]";
+                    return OK;
+                case MarkerType::Assign:
+                    result = "=";
+                    return OK;
+                case MarkerType::Comma:
+                    result = ",";
+                    return OK;
+                case MarkerType::Dot:
+                    result = ".";
+                    return OK;
+                case MarkerType::Semicolon:
+                    result = ";";
+                    return OK;
+                case MarkerType::Colon:
+                    result = ":";
+                    return OK;
+                default:
+                    assert(false);
+                    return TranslateFailed;
+            }
         }
 
         int code_gen_node(const Node *node){
@@ -77,6 +249,30 @@ namespace target_c {
                 case Type::Program:
                     return code_gen_program(
                             reinterpret_cast<const Program *>(node));
+                case Type::ProgramHead:
+                    return code_gen_programHead(
+                            reinterpret_cast<const ProgramHead *>(node));
+                case Type::ProgramBody:
+                    return code_gen_programBody(
+                            reinterpret_cast<const ProgramBody *>(node));
+                case Type::SubprogramDecls:
+                    return code_gen_SubprogramDecls(
+                            reinterpret_cast<const SubprogramDecls *>(node));
+                case Type::Subprogram:
+                    return code_gen_Subprogram(
+                            reinterpret_cast<const Subprogram *>(node));
+                case Type::SubprogramHead:
+                    return code_gen_SubprogramHead(
+                            reinterpret_cast<const SubprogramHead *>(node));
+                case Type::FunctionDecl:
+                    return code_gen_FunctionDecl(
+                            reinterpret_cast<const FunctionDecl *>(node));
+                case Type::Procedure:
+                    return code_gen_Procedure(
+                            reinterpret_cast<const Procedure *>(node));
+                case Type::SubprogramBody:
+                    return code_gen_SubprogramBody(
+                            reinterpret_cast<const SubprogramBody *>(node));
 //                case Type::Procedure:
 //                    return code_gen_procedure(
 //                            reinterpret_cast<const Procedure *>(node));
@@ -158,19 +354,346 @@ namespace target_c {
             }
         }
 
-        int code_gen_program(const Program *node){
-            // in fmt::format {{ = {, }} = }
-            buf.writeln(fmt::format("int {}(){{", node->name->content));
-            buf.writeln("printf(\"hello world\");");
-            buf.writeln("}");
+        int code_gen_programHead(const ProgramHead *node){
+            // Currently there has no corresponding relation
+            // from pascal head to C head
             return OK;
         }
 
-        int code_gen_ArrayTypeSpec(const ArrayTypeSpec *node);
+        int code_gen_programBody(const ProgramBody *node){
+            code_gen_ConstDecls(node->constdecls, this->mainBuff);
+            code_gen_VarDecls(node->vardecls, this->mainBuff);
+            code_gen_node(node->subprogram); //SubprogramDecls
+            code_gen_CompoundStatement(node->compound, this->mainBuff); //CompoundStatement
+        }
 
-        int code_gen_exp_assign(const ExpAssign *node);
+        int code_gen_program(const Program *node){
+            // in fmt::format {{ = {, }} = }
+            //
+            code_gen(node->programHead);
+            code_gen(node->programBody);
+            //buf.writeln(fmt::format("int {}(){{", node->name->content));
+            //buf.writeln("printf(\"hello world\");");
+            //buf.writeln("}");
+            return OK;
+        }
 
-        int search_for_symbol(const std::string &symbol, std::string &value){
+        int code_gen_ConstDecls(const ConstDecls *node, std::string &buffer){
+            for(auto x : node->decls){
+                code_gen_ConstDecl(x, buffer);
+            }
+            return OK;
+        }
+
+        int code_gen_ConstDecl(const ConstDecl *node, std::string &buffer){
+            std::string lhs = node->ident->content;
+            struct SymbolEntry se;
+            se.varType = ISCONSTANT;
+            //se.newName = lhs + "_" + this->nowST_pointer->tableName;
+            switch(node->rhs->type){
+                case Type::ExpConstantInteger:
+                    se.typeDecl = "int";
+                    se.value = std::to_string(reinterpret_cast<const ExpConstantInteger *>(node)->value->attr);
+                    break;
+                case Type::ExpConstantString:
+                    se.typeDecl = "char*";
+                    se.value = std::string(reinterpret_cast<const ExpConstantString *>(node)->value->attr);
+                    break;
+                case Type::ExpConstantReal:
+                    se.typeDecl = "double";
+                    se.value = std::to_string(reinterpret_cast<const ExpConstantReal *>(node)->value->attr);
+                    break;
+                case Type::ExpConstantChar:
+                    se.typeDecl = "char";
+                    se.value = ("'" + std::string(1, reinterpret_cast<const ExpConstantChar *>(node)->value->attr) + "'");
+                    break;
+                case Type::ExpConstantBoolean:
+                    se.typeDecl = "bool";
+                    se.value = std::to_string(reinterpret_cast<const ExpConstantBoolean *>(node)->value->attr);
+                    break;
+                default:
+                    assert(false);
+                    return TranslateFailed;
+            }
+            this->nowST_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(lhs, se));
+            buffer += fmt::format("const {0} {1} = {2};\n", se.typeDecl, lhs, se.value) ;
+            return OK;
+        }
+
+        int code_gen_VarDecls(const VarDecls *node, std::string &buffer){
+            for(auto x : node->decls){
+                code_gen_VarDecl(x, buffer);
+            }
+            return OK;
+        }
+
+        int code_gen_VarDecl(const VarDecl *node, std::string &buffer){
+            for(auto x : node->idents->idents){
+                std::string name = x->content;
+                struct SymbolEntry se;
+                //se.newName = name + "_" + this->nowST_pointer->tableName;
+                if(node->type_spec->type == Type::BasicTypeSpec){
+                    keyword2str(reinterpret_cast<const BasicTypeSpec *>(node)->keyword->key_type, se.typeDecl);
+                    se.varType = ISBASIC;
+                    buffer += fmt::format("{0} {1};\n", se.typeDecl, name);
+                }else if(node->type_spec->type == Type::ArrayTypeSpec){
+                    se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(node);
+                    se.varType = ISARRAY;
+                    keyword2str(se.arrayInfo->keyword->key_type, se.typeDecl);
+                    buffer += fmt::format("{0} {1}", se.typeDecl, name);
+                    for(auto x : se.arrayInfo->periods){
+                        buffer += "[" + std::to_string(x.second) + "]";
+                    }
+                    buffer += ";\n";
+                }else{
+                    assert(false);
+                    return TranslateFailed;
+                }
+                this->nowST_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(name, se));
+            }
+            return OK;
+        }
+
+        int code_gen_SubprogramDecls(const SubprogramDecls *node){
+            for(auto x : node->subprogram){
+                code_gen_node(x);
+            }
+            return OK;
+        }
+
+        int code_gen_Subprogram(const Subprogram *node){
+            //符号表的初始化，在subprogram_head中完成
+            code_gen_node(node->subhead);
+            code_gen_node(node->subbody);
+            this->nowST_pointer = this->nowST_pointer->prev; // 回到上层符号表，subprogram生成完毕
+            return OK;
+        }
+
+        int code_gen_SubprogramHead(const SubprogramHead *node){
+            struct SymbolTable *st_pointer = new struct SymbolTable;
+            st_pointer->prev = this->nowST_pointer;
+            struct FuncInfo functionInfo;
+            functionInfo.funcBody = "";
+            functionInfo.formalPara = "";
+            functionInfo.additionPara = "";
+            if (node->func != NULL){
+                std::string funcName = node->func->name->content;
+                st_pointer->tableName = funcName;
+                functionInfo.funcName = funcName;
+                this->functionBuff.insert(std::pair<std::string, struct FuncInfo>(funcName, functionInfo));
+                this->nowST_pointer->nextTable.insert(std::pair<std::string, struct SymbolTable *>(funcName, st_pointer));
+                this->nowST_pointer = st_pointer;
+                code_gen_node(node->func);
+            }else if (node->proc != NULL){
+                std::string procName = node->proc->name->content;
+                st_pointer->tableName = procName;
+                functionInfo.funcName = procName;
+                this->functionBuff.insert(std::pair<std::string, struct FuncInfo>(procName, functionInfo));
+                this->nowST_pointer->nextTable.insert(std::pair<std::string, struct SymbolTable *>(procName, st_pointer));
+                this->nowST_pointer = st_pointer;
+                code_gen_node(node->proc);
+            }else{
+                assert(false);
+                return TranslateFailed;
+            }
+            return OK;
+        }
+
+        int code_gen_headerDecl_helper(const std::vector<VarDecl*> &decls, struct FuncInfo &nowFuncInfo){
+            for(const auto x : decls){
+                //本来函数形参表的node表示，应该是文法里的formal_parameter
+                //但是实际ast实现里，形参还是用varDecls表示的
+                //形参的varDecls，和变量定义的varDecls需要区分开来。
+                //故这里不调用code_gen_node
+                for(const auto y : x->idents->idents){
+                    struct SymbolEntry se;
+                    if(x->type_spec->type == Type::BasicTypeSpec){
+                        keyword2str(reinterpret_cast<const BasicTypeSpec *>(x)->keyword->key_type, se.typeDecl);
+                        se.varType = ISBASIC;
+                    }else if(x->type_spec->type == Type::ArrayTypeSpec){
+                        keyword2str(reinterpret_cast<const ArrayTypeSpec *>(x)->keyword->key_type, se.typeDecl);
+                        se.varType = ISARRAY;
+                        se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(x->type_spec);
+                    }else{
+                        assert(false);
+                        return TranslateFailed;
+                    }
+
+                    this->nowST_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(y->content, se));
+                    nowFuncInfo.formalPara += se.typeDecl + " " + y->content + ", ";
+                }
+            }
+            return OK;
+        };
+
+        int code_gen_FunctionDecl(const FunctionDecl *node){
+            std::string funcReturn;
+            keyword2str(node->basic->keyword->key_type, funcReturn);
+            auto iter = this->functionBuff.find(this->nowST_pointer->tableName);
+            if(iter == this->functionBuff.end()){
+                assert(false); //未找到函数
+                return TranslateFailed;
+            }
+            struct FuncInfo &nowFuncInfo = iter->second;
+            nowFuncInfo.returnType = funcReturn;
+            code_gen_headerDecl_helper(node->decls->decls, nowFuncInfo);
+            return OK;
+        }
+
+        int code_gen_Procedure(const Procedure *node){
+            auto iter = this->functionBuff.find(this->nowST_pointer->tableName);
+            if(iter == this->functionBuff.end()){
+                assert(false); //未找到函数
+                return TranslateFailed;
+            }
+            struct FuncInfo &nowFuncInfo = iter->second;
+            nowFuncInfo.returnType = "void";
+            code_gen_headerDecl_helper(node->decls->decls, nowFuncInfo);
+            return OK;
+        }
+
+        int code_gen_SubprogramBody(const SubprogramBody *node){
+            auto iter = this->functionBuff.find(this->nowST_pointer->tableName);
+            if(iter == this->functionBuff.end()){
+                assert(false); //未找到函数
+                return TranslateFailed;
+            }
+            struct FuncInfo &nowFuncInfo = iter->second;
+            code_gen_ConstDecls(node->constdecls, nowFuncInfo.funcBody);
+            code_gen_VarDecls(node->vardecls, nowFuncInfo.funcBody);
+            code_gen_CompoundStatement(node->compound, nowFuncInfo.funcBody);
+        }
+
+        int code_gen_CompoundStatement(const CompoundStatement *node, std::string &buffer){
+            for(auto x : node->state->statement){
+                code_gen_Statement(x, buffer);
+                //buffer += ";\n";
+            }
+            return OK;
+        }
+
+        int code_gen_exp(const Exp *node, std::string &buffer){
+            switch(node->type){
+                case Type::BiExp:
+                    return code_gen_BiExp(reinterpret_cast<const BiExp *>(node), buffer);
+                case Type::UnExp:
+                    return code_gen_UnExp(reinterpret_cast<const UnExp*>(node), buffer);
+                case Type::ExpCall:
+                    return code_gen_ExpCall(reinterpret_cast<const ExpCall *>(node), buffer);
+                case Type::ExpAssign:
+                    return code_gen_ExpAssign(reinterpret_cast<const ExpAssign*>(node), buffer);
+                case Type::Variabele: // AST里的Variabele有拼写错误
+                    return code_gen_Variable(reinterpret_cast<const Variable*>(node), buffer);
+                default:
+                    assert(false);
+                    return TranslateFailed;
+            }
+        }
+
+        int code_gen_Statement(const Statement *node, std::string &buffer){
+            // 该函数负责statement的生成。
+            switch(node->type){
+                case Type::ExecStatement:
+                    return code_gen_exp(reinterpret_cast<const ExecStatement *>(node)->exp, buffer);
+                case Type::IfElseStatement:
+                    return code_gen_IfElseStatement(reinterpret_cast<const IfElseStatement*>(node), buffer);
+                case Type::ForStatement:
+                    return code_gen_ForStatement(reinterpret_cast<const ForStatement*>(node), buffer);
+                default:
+                    assert(false);
+                    return TranslateFailed;
+            }
+        }
+
+        int code_gen_BiExp(const BiExp *node, std::string &buffer){
+            code_gen_exp(node->lhs, buffer);
+            std::string markerStr;
+            marker2str(node->marker->marker_type, markerStr);
+            buffer += " " + markerStr + " ";
+            code_gen_exp(node->rhs, buffer);
+            buffer += ";\n";
+            return OK;
+        }
+
+        int code_gen_ExpCall(const ExpCall *node, std::string &buffer){
+            auto iter = this->functionBuff.find(node->fn->content);
+            if(iter == this->functionBuff.end()){
+                assert(false); //未找到函数
+                return TranslateFailed;
+            }
+            const struct FuncInfo callInfo = iter->second;
+            buffer += node->fn->content;
+            buffer += "(";
+            for(auto x : node->params->params){
+                code_gen_Variable(x, buffer);
+                buffer += ", ";
+            }
+            std::string otherPara = callInfo.additionPara;
+            otherPara.pop_back();
+            otherPara.pop_back();
+            buffer += otherPara;
+            buffer += ");\n";
+            return OK;
+        }
+
+        int code_gen_Variable(const Variable *node, std::string &buffer){
+            bool varFind = false;
+            struct SymbolTable *theTable = this->nowST_pointer;
+            auto iterTable = theTable->content.find(node->id->content);
+            if(iterTable != theTable->content.end())
+                varFind = true;
+            else{
+                while(theTable->prev != NULL){ //在当前符号表找不到变量。向上层符号表寻找。
+                    auto iterTable = theTable->content.find(node->id->content);
+                    if(iterTable != theTable->content.end()) {
+                        varFind = true;
+                        //对在上层符号表找到的变量，追加函数调用参数。
+                        std::string funcName = this->nowST_pointer->tableName; //符号表名称即当前函数名称
+                        auto iterFunc = this->functionBuff.find(funcName);
+                        if(iterFunc == this->functionBuff.end()){
+                            //没找到函数定义
+                            assert(false);
+                            return TranslateFailed;
+                        }
+                        iterFunc->second.additionPara += fmt::format("{0}, ", node->id->content);
+                        //在函数形参表添加完变量之后，在当前符号表内加上该变量的定义。
+                        this->nowST_pointer->content.insert(
+                                std::pair<std::string, struct SymbolEntry>(iterTable->first, iterTable->second));
+                        break;
+                    }
+                }
+            }
+            if(varFind) {
+                buffer += fmt::format("{0}", node->id->content);
+                return OK;
+            }else{
+                assert(false);
+                return TranslateFailed;
+            }
+        }
+
+        int code_gen_ExpAssign(const ExpAssign *node, std::string &buffer){
+            code_gen_exp(node->lhs, buffer);
+            buffer += " " + std::string("=") + " ";
+            code_gen_exp(node->rhs, buffer);
+            buffer += ";\n";
+            return OK;
+        }
+
+        int code_gen_UnExp(const UnExp *node, std::string &buffer){
+
+        }
+
+        int code_gen_IfElseStatement(const IfElseStatement *node, std::string &buffer){
+
+        }
+
+        int code_gen_ForStatement(const ForStatement *node, std::string &buffer){
+
+        }
+
+        int search_for_symbol(const std::string &symbol, std::string &value)
+        {
             LinkedContext *now_ctx = current_linkedCtx;
             while(now_ctx != NULL){
                 if(now_ctx->content->count(symbol) > 0){
@@ -184,14 +707,16 @@ namespace target_c {
             return TranslateFailed;
         }
 
-        void insert_const_decls(std::map<std::string, std::string> &map, ConstDecls *pDecls){
+        void insert_const_decls(std::map<std::string, std::string> &map, ConstDecls *pDecls)
+        {
             if (pDecls != nullptr){
                 for (auto decl : pDecls->decls){
                 }
             }
         }
 
-        int convert_exp_to_str(const Exp *expression, std::string &result){
+        int convert_exp_to_str(const Exp *expression, std::string &result)
+        {
             switch(expression->type) {
                 case Type::UnExp:
                     result +=  reinterpret_cast<const UnExp *>(expression)->marker->content;

@@ -12,73 +12,111 @@
 
 enum class Type : uint16_t {
 
-  Unknown,
+    Unknown,
 
-  Program,
+    Program, // program struct
 
-  Procedure,
+    ProgramHead, // program head
 
-  Function,
+    ProgramBody, // program body
 
-  StatementBlock,
+    IdentList, // id list
 
-  Statement,
+    ConstDecls, // const declarations
 
-  ExpCall,
+    ConstDecl, // const declaration
 
-  IfElseStatement,
+    ExpConst, // const value
 
-  ForStatement,
+    VarDecl, // var declarations
 
-  ExpConstantInteger,
+    VarDecls, // var declaration
 
-  ExpConstantChar,
+    TypeSpec, // type
 
-  ExpConstantBoolean,
+    BasicTypeSpec, // basic type
 
-  ExpConstantString,
+    ArrayTypeSpec, // array type
 
-  ExpConstantReal,
+    Period, // Period
 
-  Ident,
+    SubprogramDecls, // subprogram declarations
 
-  ParamList,
+    Subprogram, // subprogram
 
-  VariableList,
+    SubprogramHead, // subprogram head
 
-  IdentList,
+    SubprogramBody, // subprogram body
 
-  ConstDecl,
+    CompoundStatement, // compound_statement
 
-  ConstDecls,
+    FormalParameter, // formal parameter
 
-  VarDecl,
+    ParamSpec,//child of parameter list
 
-  VarDecls,
+    ParamList, // parameter list
 
-  FunctionDecl,
+    StatementList, // statement list
 
-  FunctionDecls,
+    Statement,
 
-  ExpAssign,
+    ElsePart, // else part
 
-  Exp,
+    VariableList, // variable list
 
-  TypeSpec,
+    Variabele, // variable
 
-  UnExp,
+    IdVarpart, // id varpart
 
-  BiExp,
+    ExpressionList, // expression list
 
-  BasicTypeSpec,
+    Expression, // expression
 
-  ArrayTypeSpec,
+    SimpleExpression, // simple expression
 
-  ExpMarker,
+    Procedure,
 
-  ExpKeyword,
+    Function,
 
-  ExpVoid,
+    ExecStatement,
+
+    //StatementBlock,
+
+    ExpCall,
+
+    IfElseStatement,
+
+    ForStatement,
+
+    ExpConstantInteger,
+
+    ExpConstantChar,
+
+    ExpConstantBoolean,
+
+    ExpConstantString,
+
+    ExpConstantReal,
+
+    Ident,
+
+    FunctionDecl,
+
+    FunctionDecls,
+
+    ExpAssign,
+
+    Exp,
+
+    UnExp,
+
+    BiExp,
+
+    ExpMarker,
+
+    ExpKeyword,
+
+    ExpVoid,
 };
 
 struct Node;
@@ -150,10 +188,23 @@ struct ArrayTypeSpec : public TypeSpec {
 };
 
 
+struct ParamSpec : public Node {
+
+    const Keyword* keyword_var;
+
+    IdentList* id_list;
+
+    TypeSpec* spec;
+
+    ParamSpec(const Keyword* keyword_var, IdentList* id_list, TypeSpec* spec) : Node(Type::ParamSpec),
+                                                                                keyword_var(keyword_var),
+                                                                                id_list(id_list), spec(spec) {}
+
+};
 
 struct ParamList : public Node {
 
-    std::vector<Exp*> params;
+    std::vector<ParamSpec*> params;
 
 
 
@@ -174,10 +225,26 @@ struct ParamList : public Node {
 };
 
 
+struct ExpressionList :public Node {
+    std::vector<Exp* >explist;
+
+    explicit ExpressionList() : Node(Type::ExpressionList) {}
+};
+
+
+struct Variable : public Exp {
+
+    const Identifier* id;
+
+    const ExpressionList* id_var = nullptr;
+
+    explicit Variable() : Exp(Type::Variabele) {}
+};
+
 
 struct VariableList : public Node {
 
-    std::vector<Exp*> params;
+    std::vector<Variable*> params;
 
 
 
@@ -212,11 +279,12 @@ struct IdentList : public Node {
 
 
 struct ConstDecl : public Node {
+
     const Identifier* ident;
 
     const Exp* rhs;
 
-  // ConstDecl(const Identifier* ident, Exp* rhs) : Node(Type::ConstDecl) {}
+
 
     ConstDecl(const Identifier* ident, Exp* rhs) : Node(Type::ConstDecl), ident(ident), rhs(rhs) {}
 
@@ -229,7 +297,6 @@ struct ConstDecls : public Node {
     std::vector<ConstDecl*> decls;
 
     ConstDecls() : Node(Type::ConstDecls) {}
-
 
 
     ~ConstDecls() {
@@ -252,11 +319,11 @@ struct VarDecl : public Node {
 
     IdentList* idents;
 
-    // VarDecl(IdentList* idents, TypeSpec* type_spec) : Node(Type::VarDecl) {}
+
 
     VarDecl(IdentList* idents, TypeSpec* type_spec) : Node(Type::VarDecl),
 
-        type_spec(type_spec), idents(idents) {}
+                                                      type_spec(type_spec), idents(idents) {}
 
     ~VarDecl() {
 
@@ -296,9 +363,9 @@ struct FunctionDecl : public Node {
 
     VarDecls* decls;
 
-    // FunctionDecl(Identifier* name, VarDecls* decls) : Node(Type::FunctionDecl), name(name) {}
+    BasicTypeSpec* basic;
 
-    FunctionDecl(Identifier* name, VarDecls* decls) : Node(Type::FunctionDecl), name(name), decls(decls) {}
+    FunctionDecl(Identifier* name, VarDecls* decls, BasicTypeSpec* basic) : Node(Type::FunctionDecl), name(name), decls(decls), basic(basic) {}
 
 
 
@@ -307,7 +374,6 @@ struct FunctionDecl : public Node {
         deleteAST(decls);
 
     }
-
 };
 
 
@@ -329,46 +395,17 @@ struct FunctionDecls : public Node {
         }
 
     }
-
 };
-
-
-
-struct Program : public Function {
-
-    Node fn_type;
-
-    const Keyword* program;
-
-    const Identifier* name;
-
-    ConstDecls* decls;
-
-
-
-    explicit Program(const Keyword *program, const Identifier *name, ConstDecls *decls)
-
-            : Function(Type::Program), fn_type(Type::Program), program(program), name(name), decls(decls) {}
-
-
-
-    ~Program() {
-
-        deleteAST(decls);
-
-    }
-
-};
-
-
 
 struct Procedure : public Function {
 
-    Node fn_type;
+    // Node fn_type;
 
+    const Identifier* name;
 
+    VarDecls* decls;
 
-    Procedure() : Function(Type::Procedure), fn_type(Type::Procedure) {}
+    Procedure(Identifier* name, VarDecls* decls) : Function(Type::Procedure), name(name), decls(decls) {}
 
 };
 
@@ -386,15 +423,18 @@ struct Ident : public Exp {
 
 
 
-struct ExpAssign : public Exp {   //:=
+struct ExpAssign : public Exp {
 
-    ExpAssign() : Exp(Type::ExpAssign) {}
+    Exp* lhs, * rhs;
+
+
+    ExpAssign(Exp* lhs, Exp* rhs) : Exp(Type::ExpAssign), lhs(lhs), rhs(rhs) {}
 
 };
 
 
 
-struct UnExp : public Exp {    
+struct UnExp : public Exp {
 
     Exp* lhs;
 
@@ -414,7 +454,7 @@ struct UnExp : public Exp {
 
 
 
-struct BiExp : public Exp { 
+struct BiExp : public Exp {
 
     Exp* lhs, * rhs;
 
@@ -454,25 +494,53 @@ struct ExpCall : public Exp {
 
 };
 
-
-
 struct Statement : public Exp {
+
+    const ConstantString* state;
 
     explicit Statement(Type type) : Exp(type) {}
 
 };
 
+struct ExecStatement : public Statement {
+    Exp* exp;
 
+    explicit ExecStatement(Exp* exp) : Statement(Type::ExecStatement), exp(exp) {}
 
-struct StatementBlock : public Statement {
-
-    StatementBlock() : Statement(Type::StatementBlock) {}
-
+    ~ExecStatement() {
+        deleteAST(exp);
+    }
 };
 
 
 
+
+struct StatementList : public Node {
+
+    std::vector<Statement*>statement;
+
+    explicit StatementList() :Node(Type::StatementList) {}
+
+};
+
+
+//struct StatementBlock : public Statement {
+//
+//  StatementBlock() : Statement(Type::StatementBlock) {}
+//
+//};
+
+
+
 struct IfElseStatement : public Statement {
+
+    //Exp* expression = nullptr;
+
+    Statement* expression = nullptr;
+
+    StatementList* if_part = nullptr;
+
+    StatementList* else_part = nullptr;
 
     IfElseStatement() : Statement(Type::IfElseStatement) {}
 
@@ -481,6 +549,14 @@ struct IfElseStatement : public Statement {
 
 
 struct ForStatement : public Statement {
+
+    const Identifier* id = nullptr;
+
+    Statement* express1 = nullptr;
+
+    Statement* express2 = nullptr;
+
+    StatementList* for_stmt = nullptr;
 
     ForStatement() : Statement(Type::ForStatement) {}
 
@@ -548,24 +624,146 @@ struct ExpConstantReal : public Exp {
 
 
 struct ExpMarker : public Exp {
-  const Marker* value;
+    const Marker* value;
 
 
-  explicit ExpMarker(const Marker* value) : Exp(Type::ExpMarker), value(value) {}
+    explicit ExpMarker(const Marker* value) : Exp(Type::ExpMarker), value(value) {}
+
 };
 
 struct ExpKeyword : public Exp {
-  const Keyword *value;
+    const Keyword *value;
 
-  explicit ExpKeyword(const Keyword *value)
-      : Exp(Type::ExpKeyword), value(value) {}
+    explicit ExpKeyword(const Keyword *value)
+            : Exp(Type::ExpKeyword), value(value) {}
+
 };
 
 
 struct ExpVoid : public Exp {
 
-  explicit ExpVoid(): Exp(Type::ExpVoid) {}
+    explicit ExpVoid(): Exp(Type::ExpVoid) {}
+
 };
+
+
+struct CompoundStatement : public Node {
+
+    const StatementList* state;
+
+    explicit CompoundStatement(StatementList* state) : Node(Type::CompoundStatement), state(state) {}
+};
+
+
+struct SubprogramHead : public Node { // subprogram head
+
+    const FunctionDecl* func;
+
+    const Procedure* proc;
+
+    explicit SubprogramHead() :Node(Type::SubprogramHead) {}
+};
+
+struct SubprogramBody : public Node { // subprogram body
+
+    const ConstDecls* constdecls;
+
+    const VarDecls* vardecls;
+
+    const CompoundStatement* compound;
+
+    explicit SubprogramBody(ConstDecls* constdecls, VarDecls* vardecls, CompoundStatement* compound) :
+            Node(Type::SubprogramBody), constdecls(constdecls), vardecls(vardecls), compound(compound) {}
+};
+
+
+struct Subprogram : public Node { // subprogram
+
+    const SubprogramHead* subhead;
+
+    const SubprogramBody* subbody;
+
+    explicit Subprogram(SubprogramHead* subhead, SubprogramBody* subbody) : Node(Type::Subprogram), subhead(subhead), subbody(subbody) {}
+};
+
+
+struct SubprogramDecls : public Node { // subprogram declarations
+
+    std::vector<Subprogram*>subprogram;
+
+    explicit SubprogramDecls() : Node(Type::SubprogramDecls) {}
+};
+
+
+struct ProgramHead : public Node{
+
+    const ExpKeyword* programKeyword;
+
+    const Ident* id;
+
+    const IdentList* idlist;
+
+    explicit ProgramHead(const ExpKeyword* programKeyword, const Ident* id, const IdentList* idlist): Node(Type::ProgramHead), programKeyword(programKeyword), id(id), idlist(idlist) {}
+
+};
+
+
+struct ProgramBody : public Node {
+
+    const ConstDecls* constdecls;
+
+    const VarDecls* vardecls;
+
+    const SubprogramDecls* subprogram;
+
+    const CompoundStatement* compound;
+
+    explicit ProgramBody(ConstDecls* constdecls, VarDecls* vardecls, SubprogramDecls* subprogram, CompoundStatement* compound):
+            Node(Type::ProgramBody), constdecls(constdecls), vardecls(vardecls), subprogram(subprogram), compound(compound){}
+
+};
+
+
+struct Program : public Function {
+
+    Node fn_type;
+
+    const ProgramHead* programHead;
+
+    const Marker* semicolon;
+
+    const ProgramBody* programBody;
+
+    const Marker* dot;
+
+    // const Keyword* program;
+
+    //const Identifier* name;
+
+    //ConstDecls* decls;
+
+
+
+    explicit Program(const ProgramHead* programHead, const ProgramBody* programBody)
+
+            : Function(Type::Program), fn_type(Type::Program), programHead(programHead), programBody(programBody) {}
+
+
+
+    ~Program() {
+
+        deleteAST((Node*)programHead);
+
+        deleteAST((Node*)semicolon);
+
+        deleteAST((Node*)programBody);
+
+        deleteAST((Node*)dot);
+
+    }
+
+};
+
 
 
 #endif
