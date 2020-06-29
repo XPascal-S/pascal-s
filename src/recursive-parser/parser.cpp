@@ -174,7 +174,8 @@ bool Parser<Lexer>::guess_keyword(KeywordType k) {
         (current_token->type == TokenType::ErrorToken &&
          guesser.near(k_str.c_str(), k_str.length(), reinterpret_cast<const ErrorToken *>(current_token)->content,
                       current_token->length))) {
-        errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "type spec", current_token));
+        errors.push_back(new PascalSParseExpectTGotError(__FUNCTION__, TokenType::Keyword, current_token,
+                                                         " it may be keyword '" + k_str + "'"));
         update_guess(new Keyword(k));
         return true;
     }

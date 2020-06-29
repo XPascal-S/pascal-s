@@ -180,6 +180,8 @@ void deleteToken(Token *pToken);
 
 std::string convertToString(const Token *pToken);
 
+const char *convertToString(TokenType tt);
+
 KeywordType get_keyword_type(const std::string &kt);
 
 const std::string &get_keyword_type_reversed(KeywordType kt);

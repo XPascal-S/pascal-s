@@ -15,8 +15,42 @@ char *copy_string(const char *content) {
     return copy_string(content, strlen(content));
 }
 
+const char *convertToString(TokenType tt) {
+    switch (tt) {
+        case TokenType::Keyword:
+            return "TokenType::Keyword";
+        case TokenType::Unknown:
+            return "TokenType::Unknown";
+        case TokenType::ConstantString:
+            return "TokenType::ConstantString";
+        case TokenType::ConstantChar:
+            return "TokenType::ConstantChar";
+        case TokenType::ConstantReal:
+            return "TokenType::ConstantReal";
+        case TokenType::ConstantInteger:
+            return "TokenType::ConstantInteger";
+        case TokenType::ConstantBoolean:
+            return "TokenType::ConstantBoolean";
+        case TokenType::Identifier:
+            return "TokenType::Identifier";
+        case TokenType::Marker:
+            return "TokenType::Marker";
+        case TokenType::Nullptr:
+            return "TokenType::Nullptr";
+        case TokenType::ErrorToken:
+            return "TokenType::ErrorToken";
+        case TokenType::Length:
+            return "TokenType::Length";
+        default:
+            assert(false);
+    }
+}
 
 std::string convertToString(const Token *pToken) {
+    if (pToken == nullptr) {
+        return "nullptr";
+    }
+
     switch (pToken->type) {
         case TokenType::Keyword:
             return fmt::format("{{ .type = Keyword .key_type = {} }}",

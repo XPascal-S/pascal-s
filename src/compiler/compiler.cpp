@@ -15,6 +15,7 @@
 #include <functional>
 #include <utility>
 #include <pascal-s/parser.h>
+#include <pascal-s/exception.h>
 
 
 #define VERSION "v0.1.0"
@@ -95,6 +96,32 @@ struct CompilerOptions {
             source_file = fs;
             return *fs;
         }
+    }
+};
+
+template<>
+struct ErrorProxy<const PascalSError *> {
+    DefaultProxyConstructor(ErrorProxy, PascalSError*, err)
+
+    [[maybe_unused]] [[nodiscard]] pascal_s::line_t visit_line() const {
+        return err->line;
+    }
+
+    [[maybe_unused]] [[nodiscard]] pascal_s::column_t visit_column() const {
+        return err->column;
+    }
+
+    [[maybe_unused]] [[nodiscard]] pascal_s::length_t visit_length() const {
+        return err->length;
+    }
+
+    [[maybe_unused]] [[nodiscard]] pascal_s::offset_t visit_offset() const {
+        return err->offset;
+    }
+
+    // 如果没有hint，为nullptr
+    [[maybe_unused]] [[nodiscard]] const char *visit_hint() const {
+        return err->msg.c_str();
     }
 };
 
@@ -186,9 +213,6 @@ private:
     ast::Node *_cached_ast = nullptr;
 
     ast::Node *get_ast() {
-        if (lexer.has_error() || parser.has_error()) {
-            return nullptr;
-        }
         if (_cached_ast) return _cached_ast;
 
         _cached_ast = parser.parse();
@@ -203,8 +227,17 @@ private:
                 feature::format_line_column_error(fp, ErrorProxy<ErrorToken>(*e), os, options.source_path.c_str());
             }
         }
-        if (lexer.has_error() || parser.has_error()) {
-            return nullptr;
+
+        if (parser.has_error()) {
+
+            pascal_s::CPPStreamFile fin(options.get_source());
+            FileProxy<pascal_s::CPPStreamFile> fp(fin);
+            WriterProxy<std::ostream> os(std::cout);
+
+            for (auto e : parser.get_all_errors()) {
+                feature::format_line_column_error(fp, ErrorProxy<const PascalSError *>(e), os,
+                                                  options.source_path.c_str());
+            }
         }
 
         return _cached_ast;

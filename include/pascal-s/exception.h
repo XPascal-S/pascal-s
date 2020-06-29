@@ -35,7 +35,7 @@ public:
 enum class PascalSErrno : pascal_s::errno_t {
     NoError,
     ParseError,
-    ParseExpectGotError,
+    ParseExpectVGotError,
     ParseExpectTGotError,
     ParseExpectSGotError,
 };
@@ -73,8 +73,7 @@ struct PascalSParseExpectVGotError : public PascalSParseError {
     const Token *expected, *got;
 
     PascalSParseExpectVGotError(
-            char *fn, const Token *expected, const Token *got, std::string msg = "") :
-            PascalSParseError(fn, std::move(msg), PascalSErrno::ParseExpectGotError), expected(expected), got(got) {}
+            char *fn, const Token *expected, const Token *got, std::string msg = "");
 
     ~PascalSParseExpectVGotError() override = default;
 };

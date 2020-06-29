@@ -89,6 +89,10 @@ public:
 
     virtual bool has_error();
 
+    const std::vector<PascalSError *> &get_all_errors() {
+        return errors;
+    }
+
 private:
 
     pascal_s::MinStrDist guesser;
