@@ -13,7 +13,7 @@ endif ()
 
 # include files (header, configuration, and others can include)
 include_directories(include)
-
+include_directories(vendor)
 # vendor files (external libraries)
 add_subdirectory(vendor)
 
