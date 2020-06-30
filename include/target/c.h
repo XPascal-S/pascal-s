@@ -10,7 +10,7 @@
 #define ISARRAY 3
 
 #include <pascal-s/AST.h>
-#include <fmt/core.h>
+#include <fmt/include/fmt/core.h>
 #include <vector>
 #include <string>
 #include <deque>
@@ -30,7 +30,7 @@ namespace target_c {
         }
 
         Buffer &writeln(const std::string &s) {
-            os << s << '\n';
+            os << s + '\n';
             return *this;
         }
     };
@@ -469,6 +469,9 @@ namespace target_c {
                     se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(node);
                     se.varType = ISARRAY;
                     keyword2str(se.arrayInfo->keyword->key_type, se.typeDecl);
+                    for(int i=0; i<se.arrayInfo->periods.size(); i++){
+                        se.typeDecl += "*"; //数组类型 example：char**
+                    }
                     buffer += fmt::format("{0} {1}", se.typeDecl, name);
                     for (auto x : se.arrayInfo->periods) {
                         buffer += "[" + std::to_string(x.second) + "]";
@@ -544,6 +547,9 @@ namespace target_c {
                         se.varType = ISBASIC;
                     } else if (x->type_spec->type == Type::ArrayTypeSpec) {
                         keyword2str(reinterpret_cast<const ArrayTypeSpec *>(x)->keyword->key_type, se.typeDecl);
+                        for(int i=0; i<reinterpret_cast<const ArrayTypeSpec *>(x)->periods.size(); i++){
+                            se.typeDecl += "*"; //数组类型
+                        }
                         nowFuncInfo.paraType.push_back(se.typeDecl);
                         se.varType = ISARRAY;
                         se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(x->type_spec);
@@ -671,8 +677,8 @@ namespace target_c {
             const struct FuncInfo callInfo = iter->second;
             buffer += node->fn->content;
             buffer += "(";
-            for (auto x : node->params->params) {
-                code_gen_Variable(x, buffer, expType);
+            for (auto x : node->params->explist) {
+                code_gen_exp(x, buffer, expType);
 
                 buffer += ", ";
             }
@@ -688,8 +694,10 @@ namespace target_c {
             bool varFind = false;
             struct SymbolTable *theTable = this->nowST_pointer;
             auto iterTable = theTable->content.find(node->id->content);
-            if (iterTable != theTable->content.end())
+            if (iterTable != theTable->content.end()) {
+                expType = iterTable->second.typeDecl;
                 varFind = true;
+            }
             else {
                 while (theTable->prev != NULL) { //在当前符号表找不到变量。向上层符号表寻找。
                     auto iterTable = theTable->content.find(node->id->content);
@@ -703,12 +711,11 @@ namespace target_c {
                             assert(false);
                             return TranslateFailed;
                         }
-                        if (iterTable->second.varType == ISARRAY) {
-
-                        } else {
-                            iterFunc->second.additionPara += fmt::format("{0}, ", node->id->content);
-                            iterFunc->second.paraType.push_back(iterTable->second.typeDecl);
-                        }
+                        expType = iterTable->second.typeDecl;
+                        iterFunc->second.formalPara += fmt::format(
+                                "{0} {1}, ", iterTable->second.typeDecl, iterTable->first);
+                        iterFunc->second.additionPara += fmt::format("{0}, ", iterTable->first);
+                        iterFunc->second.paraType.push_back(iterTable->second.typeDecl);
                         //在函数形参表添加完变量之后，在当前符号表内加上该变量的定义。
                         this->nowST_pointer->content.insert(
                                 std::pair<std::string, struct SymbolEntry>(iterTable->first, iterTable->second));
@@ -748,7 +755,7 @@ namespace target_c {
 
         int code_gen_IfElseStatement(const IfElseStatement *node, std::string &buffer) {
             buffer += "if (";
-            code_gen_Statement(node->experssion, buffer);
+            code_gen_Statement(node->expression, buffer);
             buffer += "){\n";
             for (auto x: node->if_part->statement) {
                 code_gen_Statement(x, buffer);
@@ -784,31 +791,31 @@ namespace target_c {
 
         int code_gen_ExpConstantBoolean(const ExpConstantBoolean *node, std::string &buffer, std::string &expType) {
             buffer += std::to_string(node->value->attr);
-            constType2str(node->type, expType)
+            constType2str(node->type, expType);
             return OK;
         }
 
         int code_gen_ExpConstantChar(const ExpConstantChar *node, std::string &buffer, std::string &expType) {
             buffer += node->value->attr;
-            constType2str(node->type, expType)
+            constType2str(node->type, expType);
             return OK;
         }
 
         int code_gen_ExpConstantReal(const ExpConstantReal *node, std::string &buffer, std::string &expType) {
             buffer += node->value->content;
-            constType2str(node->type, expType)
+            constType2str(node->type, expType);
             return OK;
         }
 
         int code_gen_ExpConstantInteger(const ExpConstantInteger *node, std::string &buffer, std::string &expType) {
             buffer += std::to_string(node->value->attr);
-            constType2str(node->type, expType)
+            constType2str(node->type, expType);
             return OK;
         }
 
         int code_gen_ExpConstantString(const ExpConstantString *node, std::string &buffer, std::string &expType) {
             buffer += node->value->attr;
-            constType2str(node->type, expType)
+            constType2str(node->type, expType);
             return OK;
         }
 

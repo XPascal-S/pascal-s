@@ -477,11 +477,11 @@ struct ExpCall : public Exp {
 
     const Identifier* fn;
 
-    VariableList* params;
+    ExpressionList* params;
 
 
 
-    explicit ExpCall(const Identifier* fn, VariableList* params) : Exp(Type::ExpCall), fn(fn), params(params) {}
+    explicit ExpCall(const Identifier* fn, ExpressionList* params) : Exp(Type::ExpCall), fn(fn), params(params) {}
 
     ~ExpCall() {
 
