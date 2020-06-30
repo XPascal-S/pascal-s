@@ -77,10 +77,11 @@ namespace predicate {
         const std::set<const Token *> rParenContainer;
         const std::set<const Token *> semicolonContainer;
         const std::set<const Token *> semicolonOrVarContainer;
+        const std::set<const Token *> commaOrRParenContainer;
+        const std::set<const Token *> commaOrRBracketContainer;
         const std::vector<Token *> thenContainer;
         const std::vector<Token *> elseContainer;
         const std::vector<Token *> endOrSemicolonContainer;
-        const std::set<const Token *> commaOrRParenContainer;
         const std::vector<Token *> endOrSemicolonOrElseContainer;
 
 
@@ -116,6 +117,10 @@ namespace predicate {
                                 const_cast<Token *>(reinterpret_cast<const Token *>(&predicate::marker_comma)),
                                 const_cast<Token *>(reinterpret_cast<const Token *>(&predicate::marker_rparen)),
                         }),
+                commaOrRBracketContainer({
+                                                 const_cast<Token *>(reinterpret_cast<const Token *>(&predicate::marker_comma)),
+                                                 const_cast<Token *>(reinterpret_cast<const Token *>(&predicate::marker_rbracket)),
+                                         }),
                 endOrSemicolonOrElseContainer(
                         {
                                 const_cast<Token *>(reinterpret_cast<const Token *>(&predicate::marker_comma)),

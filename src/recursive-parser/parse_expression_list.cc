@@ -11,7 +11,7 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_paren() {
     next_token();
 
     // expression list
-    auto exp_list = parse_expression_list();
+    auto exp_list = parse_expression_list(predicate::is_rparen, &predicate::predicateContainers.commaOrRParenContainer);
     if (exp_list == nullptr) {
         return nullptr;
     }
@@ -35,7 +35,8 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_bracket() {
     next_token();
 
     // expression list
-    auto exp_list = parse_expression_list();
+    auto exp_list = parse_expression_list(predicate::is_rbracket,
+                                          &predicate::predicateContainers.commaOrRBracketContainer);
     if (exp_list == nullptr) {
         return nullptr;
     }
@@ -52,27 +53,26 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_bracket() {
 }
 
 template<typename Lexer>
-ast::ExpressionList *Parser<Lexer>::parse_expression_list() {
+template<typename F>
+ast::ExpressionList *Parser<Lexer>::parse_expression_list(const F &is_follow, const std::set<const Token *> *till) {
     auto *ret = new ast::ExpressionList;
     for (;;) {
 
         // look ahead
-        if (predicate::is_rparen(current_token)) {
+        if (is_follow(current_token)) {
             return ret;
         }
 
         // extend production
-        ret->explist.push_back(parse_exp(&predicate::predicateContainers.commaOrRParenContainer));
+        ret->explist.push_back(parse_exp(till));
 
         // eat , if possible
         if (predicate::is_comma(current_token)) {
             next_token();
 
             // want FOLLOW(variable) = {)}
-        } else if (!predicate::is_rparen(current_token)) {
-            delete ret;
-            throw std::runtime_error("expected ,/)");
-            return nullptr;
+        } else if (!is_follow(current_token)) {
+            return ret;
         }
     }
     return nullptr;

@@ -47,7 +47,8 @@ public:
 
     ast::ParamList *parse_param_list();
 
-    ast::ExpressionList *parse_expression_list();
+    template<typename F>
+    ast::ExpressionList *parse_expression_list(const F &is_follow, const std::set<const Token *> *till = nullptr);
 
     ast::ParamSpec *parse_param();
 

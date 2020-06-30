@@ -20,5 +20,25 @@ INSTANTIATE_TEST_SUITE_P(Simple, ExpressionListWithParenTest, testing::Values( /
                         new ConstantChar('h'),
                         new Marker(MarkerType::RParen),
                 }
+        },
+        ParserTestCase{
+                {
+                        new Marker(MarkerType::LParen),
+                        new ConstantChar('h'),
+                        new Marker(MarkerType::Comma),
+                        new ConstantChar('h'),
+                        new Marker(MarkerType::RParen),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Marker(MarkerType::LParen),
+                        new ConstantChar('h'),
+                        new Marker(MarkerType::Add),
+                        new ConstantChar('h'),
+                        new Marker(MarkerType::Comma),
+                        new ConstantChar('h'),
+                        new Marker(MarkerType::RParen),
+                }
         }
 ));

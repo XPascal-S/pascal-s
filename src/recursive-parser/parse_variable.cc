@@ -42,9 +42,6 @@ ast::Variable *Parser<Lexer>::parse_variable(const std::set<const Token *> *till
 
     if (!predicate::is_lbracket(current_token)) {
         for (;;) {
-            if (current_token == nullptr) {
-                return fall_expect_v(&predicate::marker_lbracket), variable;
-            }
             if (predicate::token_equal(current_token, till)) {
                 return variable;
             }
