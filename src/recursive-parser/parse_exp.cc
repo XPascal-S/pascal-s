@@ -8,56 +8,64 @@ ast::Exp *Parser<Lexer>::parse_exp(const std::set<const Token *> *till) {
 
     // lhs
     auto maybe_lhs = parse_fac();
-    if (predicate::token_equal(current_token, till)) {
-        return maybe_lhs;
+
+    for (;;) {
+        if (predicate::token_equal(current_token, till)) {
+            return maybe_lhs;
+        }
+        if (predicate::is_rparen(current_token)) {
+            break;
+        }
+        if (predicate::is_binary_sign(current_token)) {
+            break;
+        }
+        if (predicate::is_dot(current_token)) {
+            break;
+        }
+        if (current_token->type == TokenType::Identifier) {
+            break;
+        }
+        skip_any_but_eof_token_s("expression fac")
+        return fall_expect_s("expression fac");
     }
 
     if (current_token->type == TokenType::Marker) {
         auto marker = reinterpret_cast<const Marker *>(current_token);
         switch (marker->marker_type) {
 
-            // a + b
-            case MarkerType::Add:
-
-                // a - b
-            case MarkerType::Sub:
-
-                // a * b
-            case MarkerType::Mul:
-
-                // a / b
-            case MarkerType::Div:
-
-                // a % b
-            case MarkerType::Mod:
-
-                // a < b
-            case MarkerType::LT:
-
-                // a <= b
-            case MarkerType::LE:
-
-                // a > b
-            case MarkerType::GT:
-
-                // a >= b
-            case MarkerType::GE:
-
-                // a = b
-            case MarkerType::EQ:
-
-                // a <> b
-            case MarkerType::NEQ:
-
-                // todo: a % b
-//            case MarkerType::Mod:
-                next_token();
-                return parse_binary_exp(maybe_lhs, marker, get_marker_pri(marker->marker_type), till);
-
-                // fix follow markers
+            // fix follow markers
             case MarkerType::Dot:
             case MarkerType::RParen:
                 return maybe_lhs;
+
+                // a + b
+            case MarkerType::Add:
+                // a - b
+            case MarkerType::Sub:
+                // a * b
+            case MarkerType::Mul:
+                // a / b
+            case MarkerType::Div:
+                // a % b
+            case MarkerType::Mod:
+                // a and b
+            case MarkerType::LogicAnd:
+                // a or b
+            case MarkerType::LogicOr:
+                // a < b
+            case MarkerType::LT:
+                // a <= b
+            case MarkerType::LE:
+                // a > b
+            case MarkerType::GT:
+                // a >= b
+            case MarkerType::GE:
+                // a = b
+            case MarkerType::EQ:
+                // a <> b
+            case MarkerType::NEQ:
+                next_token();
+                return parse_binary_exp(maybe_lhs, marker, get_marker_pri(marker->marker_type), till);
 
                 // a := b
             case MarkerType::Assign:
@@ -79,7 +87,30 @@ ast::Exp *Parser<Lexer>::parse_exp(const std::set<const Token *> *till) {
 template<typename Lexer>
 ast::Exp *Parser<Lexer>::parse_fac() {
     if (current_token == nullptr) {
-        throw std::runtime_error("expected fac, got nullptr");
+        return fall_expect_s("expression fac");
+    }
+
+    for (;;) {
+        if (predicate::is_add(current_token)) {
+            break;
+        }
+        if (predicate::is_sub(current_token)) {
+            break;
+        }
+        if (predicate::is_logic_not(current_token)) {
+            break;
+        }
+        if (predicate::is_lparen(current_token)) {
+            break;
+        }
+        if (predicate::is_const_token(current_token->type)) {
+            break;
+        }
+        if (current_token->type == TokenType::Identifier) {
+            break;
+        }
+        skip_any_but_eof_token_s("expression fac")
+        return fall_expect_s("expression fac");
     }
 
     // const factors
@@ -118,7 +149,11 @@ ast::Exp *Parser<Lexer>::parse_fac() {
         auto marker = reinterpret_cast<const Marker *>(current_token);
         switch (marker->marker_type) {
             default:
-                throw std::runtime_error("expected +/-/(");
+                assert(false);
+                throw std::runtime_error("expected not/+/-/(");
+
+                // not exp
+            case MarkerType::LogicNot:
 
                 // + exp
             case MarkerType::Add:
@@ -144,6 +179,11 @@ ast::Exp *Parser<Lexer>::parse_fac() {
         auto ident = reinterpret_cast<const Identifier *>(current_token);
         next_token();
 
+        for (;;) {
+            skip_error_token_s("expression fac or [/(")
+            break;
+        }
+
         // ( or [
         if (current_token != nullptr && current_token->type == TokenType::Marker) {
             auto marker = reinterpret_cast<const Marker *>(current_token);
@@ -165,7 +205,9 @@ ast::Exp *Parser<Lexer>::parse_fac() {
         // otherwise just a identifier exp
         return new ast::Ident(ident);
     }
-    throw std::runtime_error("expected fac");
+
+    assert(false);
+    throw std::runtime_error("expected expression fac");
 }
 
 template<typename Lexer>
@@ -175,12 +217,18 @@ Parser<Lexer>::parse_binary_exp(ast::Exp *lhs, const Marker *marker,
                                 const std::set<const Token *> *till) {
 
     auto rhs = parse_fac();
-    if (predicate::token_equal(current_token, till)) {
-        return new ast::BiExp(lhs, marker, rhs);
+
+    for (;;) {
+        if (predicate::token_equal(current_token, till)) {
+            return new ast::BiExp(lhs, marker, rhs);
+        }
+        if (current_token->type == TokenType::Marker) {
+            break;
+        }
+        skip_error_token_t(TokenType::Marker);
+        return fall_expect_t(TokenType::Marker), new ast::BiExp(lhs, marker, rhs);
     }
-    if (current_token->type != TokenType::Marker) {
-        throw std::runtime_error("expected marker");
-    }
+
     auto pri = get_marker_pri(reinterpret_cast<const Marker *>(current_token)->marker_type);
     auto next_marker = reinterpret_cast<const Marker *>(current_token);
     next_token();

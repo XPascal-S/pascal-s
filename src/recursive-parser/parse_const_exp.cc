@@ -25,9 +25,9 @@ ast::Exp *Parser<Lexer>::parse_const_exp(const std::set<const Token *> *till) {
 template<typename Lexer>
 ast::Exp *Parser<Lexer>::parse_const_fac(const std::set<const Token *> *till) {
     if (current_token == nullptr) {
-        errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "const value", current_token));
-        return nullptr;
+        return fall_expect_s("const value");
     }
+
     if (!predicate::is_const_token(current_token->type)) {
         for (;;) {
             if (predicate::token_equal(current_token, till)) {

@@ -17,11 +17,7 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_paren() {
     }
 
     // )
-    if (!predicate::is_rparen(current_token)) {
-        delete exp_list;
-        errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, &predicate::marker_rparen, current_token));
-        return nullptr;
-    }
+    expected_enum_type(predicate::is_rparen, predicate::marker_rparen);
     next_token();
 
     return exp_list;
@@ -42,11 +38,7 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_bracket() {
     }
 
     // ]
-    if (!predicate::is_rbracket(current_token)) {
-        delete exp_list;
-        errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, &predicate::marker_rbracket, current_token));
-        return nullptr;
-    }
+    expected_enum_type(predicate::is_rbracket, predicate::marker_rbracket);
     next_token();
 
     return exp_list;

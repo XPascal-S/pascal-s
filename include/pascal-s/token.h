@@ -197,8 +197,18 @@ const std::string &get_marker_type_reversed(MarkerType mt);
 namespace predicate {
     bool is_const_token(TokenType tt);
 
+    bool is_binary_sign(MarkerType mt);
+
+    bool is_binary_sign(const Token *t);
+
 #define pascal_s_predicator(cls, cls_lower, lower, upper) bool is_ ## lower(const Token *tok);\
 extern const cls cls_lower ##_## lower;
+
+    pascal_s_predicator(Marker, marker, logic_not, LogicNot)
+
+    pascal_s_predicator(Marker, marker, logic_and, LogicAnd)
+
+    pascal_s_predicator(Marker, marker, logic_or, LogicOr)
 
     pascal_s_predicator(Marker, marker, neq, NEQ)
 
