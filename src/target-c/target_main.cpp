@@ -1,8 +1,10 @@
 //
 // Created by kamiyoru on 2020/5/12.
 //
+#include <pascal-s/AST.h>
+#include <pascal-s/token.h>
 #include <target/c.h>
-
+#include <iostream>
 
 char testChar[6] = "hello";
 
@@ -32,5 +34,10 @@ int main()
 
     Program *mainProgram = new Program(promHead, mainBody);
 
+    target_c::Buffer tempBuffer(std::cout);
+    std::vector<std::string> include_files;
+    target_c::CBuilder theBuilder(include_files, tempBuffer);
+    theBuilder.code_gen(mainProgram);
 
 }
+

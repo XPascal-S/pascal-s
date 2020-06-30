@@ -267,6 +267,8 @@ namespace target_c {
         }
 
         int code_gen_node(const Node *node) {
+            if(node == NULL)
+                return OK;
             switch (node->type) {
                 default:
                     assert(false);
@@ -407,6 +409,8 @@ namespace target_c {
         }
 
         int code_gen_ConstDecls(const ConstDecls *node, std::string &buffer) {
+            if (node == NULL)
+                return OK;
             for (auto x : node->decls) {
                 code_gen_ConstDecl(x, buffer);
             }
@@ -450,6 +454,8 @@ namespace target_c {
         }
 
         int code_gen_VarDecls(const VarDecls *node, std::string &buffer) {
+            if(node == NULL)
+                return OK;
             for (auto x : node->decls) {
                 code_gen_VarDecl(x, buffer);
             }
@@ -692,6 +698,7 @@ namespace target_c {
 
         int code_gen_Variable(const Variable *node, std::string &buffer, std::string &expType) {
             bool varFind = false;
+
             struct SymbolTable *theTable = this->nowST_pointer;
             auto iterTable = theTable->content.find(node->id->content);
             if (iterTable != theTable->content.end()) {
@@ -738,6 +745,22 @@ namespace target_c {
             //类型检查
             std::string lhsType;
             std::string rhsType;
+            if(node->lhs->type == Type::Variabele){
+                //处理函数返回值的问题
+                std::string varName = reinterpret_cast<const Variable *>(node)->id->content;
+                if(varName == this->nowST_pointer->tableName){
+                    buffer += "return ";
+                    code_gen_exp(node->rhs, buffer, rhsType);
+                    auto funcIter = this->functionBuff.find(this->nowST_pointer->tableName);
+                    if(funcIter->second.returnType != rhsType){
+                        //函数返回值类型不符
+                        assert(false);
+                        return TranslateFailed;
+                    }
+                    return OK;
+                }
+            }
+            // 处理正常的表达式赋值
             code_gen_exp(node->lhs, buffer, lhsType);
             buffer += " " + std::string("=") + " ";
             code_gen_exp(node->rhs, buffer, rhsType);
