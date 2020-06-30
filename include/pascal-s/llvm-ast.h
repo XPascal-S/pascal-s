@@ -80,9 +80,7 @@ namespace ast {
 
         Function,
 
-        ExecStatement,
-
-        //StatementBlock,
+        ExecStatement, StatementBlock,
 
         ExpCall,
 
