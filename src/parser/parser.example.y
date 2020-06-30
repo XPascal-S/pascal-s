@@ -122,6 +122,9 @@ program_head:
   node->id = (const Ident*)(node->children.front());
   node->children.pop_front();
   }
+| program id error idlist {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
+| program id lparen idlist error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
+;
 
 program:KEYWORD_PROGRAM{
   $$ = new ExpKeyword((const Keyword *)($1));
@@ -162,6 +165,7 @@ idlist:
     node->idents.push_back(id);
     node->children.pop_front();
   }
+| idlist error id {printf("\n\n\n\nMissing comma\n"); yyerrok;}
 ;
 
 const_declarations:
@@ -173,6 +177,8 @@ const_declarations:
     node->children.pop_front();// pop semicolon
   }
 |                                       { $$ = new ExpVoid();  access_ast($$); }
+| error const_declaration semicolon {printf("\n\n\n\nMissing const\n"); yyerrok;}
+| const const_declaration error {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 const:KEYWORD_CONST{
@@ -209,6 +215,7 @@ const_declaration:
 
     node->decls.push_back(const);
 }
+| const_declaration error id eq const_value {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 eq:MARKER_EQ {
@@ -256,6 +263,7 @@ var_declarations:              { $$ = new ExpVoid();  access_ast($$); }
     node->children.pop_front();
     node->children.pop_front();// pop semicolon
 }
+| var var_declaration error {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 var_declaration:
@@ -286,9 +294,10 @@ var_declaration:
 
     node->decls.push_back(const);
 }
+| var_declaration error idlist colon type {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
-type:
+type://TODO
   basic_type                               {$$ = $1;}
 | array lbracket period rbracket of basic_type         {ast_reduce_nodes(6, Type::TypeSpec);}
 ;
@@ -360,6 +369,7 @@ subprogram_declarations:                    { $$ = new ExpVoid();  access_ast($$
 
     //ast_reduce_nodes(3, Type::SubprogramDecls);
 }
+| subprogram_declarations subprogram error  {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 subprogram:
@@ -372,6 +382,7 @@ subprogram:
     node->subbody = (SubprogramBody*)(node->children.front());
     node->children.pop_front();
 }
+| subprogram_head error subprogram_body {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 subprogram_head:
@@ -425,6 +436,9 @@ formal_parameter:               { $$ = new ExpVoid();  access_ast($$);  }
     node->children.pop_front();//pop rparen
     //ast_reduce_nodes(3, Type::ParamList);
 }
+| error parameter_list rparen {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
+| lparen parameter_list error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
+| error parameter_list error {printf("\n\n\n\nMissing lparen and rparen\n"); yyerrok;}
 ;
 
 parameter_list:
@@ -446,6 +460,7 @@ parameter_list:
     node->params.push_back(param);
     //$$ = $1;
 }
+| parameter_list error parameter {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 
@@ -514,6 +529,9 @@ begin statement_list end         {
     node->children.pop_front();//pop end
     //ast_reduce_nodes(3, Type::Statement);
 }
+| error statement_list end   {printf("\n\n\n\nMissing begin\n"); yyerrok;}
+| begin statement_list error {printf("\n\n\n\nMissing end\n"); yyerrok;}
+| error statement_list error {printf("\n\n\n\nMissing begin and end\n"); yyerrok;}
 ;
 
 begin:KEYWORD_BEGIN{
@@ -550,6 +568,7 @@ statement_list:
     node->statement.push_back(sta);
     node->children.pop_front();
 }
+| statement_list error statement {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 semicolon: MARKER_SEMICOLON{
@@ -592,8 +611,10 @@ assign: MARKER_ASSIGN{
 }
 
 else_part:           { $$ = new ExpVoid();  access_ast($$);  }/*empty*/
-  else statement    { //TODO
-  ast_reduce_nodes(2, Type::IfElseStatement);
+  else statement    {
+    StatementList* node = reinterpret_cast<StatementList*> (ast_reduce_nodes(2, Type::StatementList));
+    node->children.pop_front();//pop else
+    node->statement = (std::vector<Statement*>) (node->children.front()->statement);
 }
 ;
 
@@ -636,8 +657,8 @@ variable_list:
     Variable* var = (Variable*)(node->children.front());
     node->params.push_back(var);
     node->children.pop_front();
-
 }
+| variable_list error variable {printf("\n\n\n\nMissing comma\n"); yyerrok;}
 ;
 
 variable:
@@ -674,15 +695,28 @@ rbracket: MARKER_RBRACKET{
   access_ast($$);
 }
 
-procedure_call:    //TODO
+procedure_call:    
  id          {
+    ExpCall* node = reinterpret_cast<ExpCall*> (ast_reduce_nodes(1, Type::ExpCall));
+    node->fn = (Identifier*)(node->children.front());
+    node->children.pop_front();
     printf("access ID attribute value: %s\n", ((const Identifier*)($1))->attr);
-    ast_reduce_nodes(1,Type::ExpCall);
+    //ast_reduce_nodes(1,Type::ExpCall);
   }
 | id lparen expression_list rparen    {
+    ExpCall* node = reinterpret_cast<ExpCall*> (ast_reduce_nodes(4, Type::ExpCall));
+    node->fn = (Identifier*)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();//pop lparen
+    node->params = (ExpressionList*)(node->children.front());
+    node->children.pop_front();
+    node->children.pop_front();//pop rparen
     printf("access ID attribute value: %s\n", ((const Identifier*)($1))->attr);
-    ast_reduce_nodes(4,Type::ExpCall);
+    //ast_reduce_nodes(4,Type::ExpCall);
   }
+| id error expression_list rparen {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
+| id lparen expression_list error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
+| id error expression_list error  {printf("\n\n\n\nMissing lparen and rparen\n"); yyerrok;}
 ;
 
 lparen: MARKER_LPAREN{
@@ -722,6 +756,7 @@ expression_list:
     node->explist.push_back(exp);
     node->children.pop_front();
 }
+| expression_list error expression {printf("\n\n\n\nMissing comma\n"); yyerrok;}
 ;
 
 comma : MARKER_COMMA {
