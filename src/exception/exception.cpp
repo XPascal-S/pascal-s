@@ -33,10 +33,17 @@ PascalSParseExpectVGotError::PascalSParseExpectVGotError(char *fn, const Token *
     if (!msg.empty()) {
         this->msg += ":" + msg;
     }
-    this->length = got->length;
-    this->offset = got->offset;
-    this->line = got->line;
-    this->column = got->column;
+    if (got) {
+        this->length = got->length;
+        this->offset = got->offset;
+        this->line = got->line;
+        this->column = got->column;
+    } else {
+        this->length = 0;
+        this->offset = 0;
+        this->line = 0;
+        this->column = 0;
+    }
 }
 
 PascalSParseExpectTGotError::PascalSParseExpectTGotError(
@@ -50,10 +57,17 @@ PascalSParseExpectTGotError::PascalSParseExpectTGotError(
     if (!msg.empty()) {
         this->msg += ":" + msg;
     }
-    this->length = got->length;
-    this->offset = got->offset;
-    this->line = got->line;
-    this->column = got->column;
+    if (got) {
+        this->length = got->length;
+        this->offset = got->offset;
+        this->line = got->line;
+        this->column = got->column;
+    } else {
+        this->length = 0;
+        this->offset = 0;
+        this->line = 0;
+        this->column = 0;
+    }
 }
 
 PascalSParseExpectSGotError::PascalSParseExpectSGotError(
@@ -66,8 +80,15 @@ PascalSParseExpectSGotError::PascalSParseExpectSGotError(
     if (!msg.empty()) {
         this->msg += ":" + msg;
     }
-    this->length = got->length;
-    this->offset = got->offset;
-    this->line = got->line;
-    this->column = got->column;
+    if (got) {
+        this->length = got->length;
+        this->offset = got->offset;
+        this->line = got->line;
+        this->column = got->column;
+    } else {
+        this->length = 0;
+        this->offset = 0;
+        this->line = 0;
+        this->column = 0;
+    }
 }

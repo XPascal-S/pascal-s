@@ -23,6 +23,8 @@ enum class TokenType : pascal_s::token_type_underlying_type {
     Nullptr = 9,
     ErrorToken = 10,
     Length = 11,
+    ConstRangeL = ConstantString,
+    ConstRangeR = ConstantBoolean,
 };
 
 
@@ -192,8 +194,9 @@ MarkerType get_marker_type(const std::string &mt);
 
 const std::string &get_marker_type_reversed(MarkerType mt);
 
-
 namespace predicate {
+    bool is_const_token(TokenType tt);
+
 #define pascal_s_predicator(cls, cls_lower, lower, upper) bool is_ ## lower(const Token *tok);\
 extern const cls cls_lower ##_## lower;
 

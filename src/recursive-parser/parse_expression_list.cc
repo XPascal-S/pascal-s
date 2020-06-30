@@ -28,6 +28,30 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_paren() {
 }
 
 template<typename Lexer>
+ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_bracket() {
+
+    // [
+    expected_enum_type(predicate::is_lbracket, predicate::marker_lbracket);
+    next_token();
+
+    // expression list
+    auto exp_list = parse_expression_list();
+    if (exp_list == nullptr) {
+        return nullptr;
+    }
+
+    // ]
+    if (!predicate::is_rbracket(current_token)) {
+        delete exp_list;
+        errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, &predicate::marker_rbracket, current_token));
+        return nullptr;
+    }
+    next_token();
+
+    return exp_list;
+}
+
+template<typename Lexer>
 ast::ExpressionList *Parser<Lexer>::parse_expression_list() {
     auto *ret = new ast::ExpressionList;
     for (;;) {

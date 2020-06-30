@@ -25,6 +25,7 @@ struct Parser<FullInMemoryLexer>;
     }
 
 #define fall_expect_t(T) (errors.push_back(new PascalSParseExpectTGotError(__FUNCTION__, T, current_token)), nullptr)
+#define fall_expect_s(T) (errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, T, current_token)), nullptr)
 #define fall_expect_v(T) (errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, T, current_token)), nullptr)
 
 #define skip_error_token(T, Tok) if (current_token != nullptr && current_token->type == TokenType::ErrorToken) {\
@@ -46,31 +47,21 @@ struct Parser<FullInMemoryLexer>;
 #define skip_any_but_eof_token_t(Tok) skip_any_but_eof_token(T, Tok)
 #define skip_any_but_eof_token_s(Tok) skip_any_but_eof_token(S, Tok)
 #define skip_any_but_eof_token_v(Tok) skip_any_but_eof_token(V, Tok)
-//
-//if (current_token == nullptr) {
-//return fall_expect_t(TokenType::Keyword);
-//}
-//if (predicate::is_rparen(current_token)) {
-//return fall_expect_t(TokenType::Keyword);
-//}
-//if (predicate::is_semicolon(current_token)) {
-//return fall_expect_t(TokenType::Keyword);
-//}
-//if (predicate::is_end(current_token)) {
-//return fall_expect_t(TokenType::Keyword);
-//}
-#define expected_enum_type_r(predicator, indicate, rvalue) do {if (!predicator(current_token)) {\
+
+#define expected_enum_type_r_e(predicator, indicate, rvalue, ext) do {if (!predicator(current_token)) {\
     for(;;) {\
         if (predicator(current_token)) {\
             break;\
         }\
-        if (!(predicate::is_end(current_token) || predicate::is_semicolon(current_token))) {\
+        if (!(predicate::is_end(current_token) || predicate::is_semicolon(current_token) ext)) {\
             skip_any_but_eof_token_v(&indicate)\
         }\
         errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, &indicate, current_token));\
         return rvalue;\
     }\
 }}while(0)
+
+#define expected_enum_type_r(predicator, indicate, rvalue) expected_enum_type_r_e(predicator, indicate, rvalue, )
 
 #define expected_enum_type(predicator, indicate) expected_enum_type_r(predicator, indicate, nullptr)
 
@@ -85,6 +76,7 @@ namespace predicate {
     struct _parserPredicateContainer {
         const std::set<const Token *> rParenContainer;
         const std::set<const Token *> semicolonContainer;
+        const std::set<const Token *> semicolonOrVarContainer;
         const std::vector<Token *> thenContainer;
         const std::vector<Token *> elseContainer;
         const std::vector<Token *> endOrSemicolonContainer;
@@ -100,6 +92,11 @@ namespace predicate {
                 semicolonContainer(
                         {
                                 reinterpret_cast<const Token *>(&predicate::marker_semicolon)
+                        }),
+                semicolonOrVarContainer(
+                        {
+                                reinterpret_cast<const Token *>(&predicate::marker_semicolon),
+                                reinterpret_cast<const Token *>(&predicate::keyword_var)
                         }),
                 thenContainer(
                         {
@@ -189,6 +186,21 @@ void Parser<Lexer>::update_guess(Token *new_tok) {
     this->guessing_token.push_back(new_tok);
 }
 
+template<typename Lexer>
+bool Parser<Lexer>::has_error() {
+    return !errors.empty();
+}
+
+template<typename Lexer>
+Parser<Lexer>::~Parser() {
+    for (auto e: errors) {
+        delete e;
+    }
+
+    for (auto t: guessing_token) {
+        deleteToken(t);
+    }
+}
 
 #include "parse_program.cc"
 #include "parse_program_head.cc"
@@ -207,6 +219,7 @@ void Parser<Lexer>::update_guess(Token *new_tok) {
 #include "parse_type.cc"
 #include "parse_const_exp.cc"
 #include "parse_exp.cc"
+#include "parse_variable.cc"
 #include "parse_statement.cc"
 
 #undef expected_keyword
@@ -215,11 +228,12 @@ void Parser<Lexer>::update_guess(Token *new_tok) {
 #undef expected_type_r
 #undef expected_type
 #undef maybe_recover_keyword
-#undef fall_expect_t
-#undef fall_expect_v
 #undef skip_error_token
 #undef skip_any_but_eof_token
 
+#undef fall_expect_t
+#undef fall_expect_s
+#undef fall_expect_v
 #undef skip_error_token_t
 #undef skip_error_token_s
 #undef skip_error_token_v

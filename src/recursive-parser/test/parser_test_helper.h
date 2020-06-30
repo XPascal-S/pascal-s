@@ -64,7 +64,7 @@ struct ParserTest : public testing::TestWithParam<ParserTestCase> {
     deleteAST(ast); \
 }
 
-#define PARSER_GUESS_SUB_BASIC_TEST_P(ParserTestName, ParseRespFunc) TEST_P(ParserTestName, BasicWillNotThrowException) /* NOLINT */ \
+#define PARSER_GUESS_P_SUB_BASIC_TEST_P(ParserTestName, ParseRespFunc, ext) TEST_P(ParserTestName, BasicWillNotThrowException) /* NOLINT */ \
 { \
     auto &&param = GetParam(); \
     MockLexer lexer(param.token_stream); \
@@ -77,10 +77,15 @@ struct ParserTest : public testing::TestWithParam<ParserTestCase> {
     if (parser.errors.empty()) { \
         ASSERT_TRUE(false) << "abort";\
     } \
+    ASSERT_##ext(parser.current_token, nullptr); \
     ASSERT_NE(ast, nullptr); \
  \
     deleteAST(ast); \
 }
+
+#define PARSER_GUESS_SUB_BASIC_TEST_P(ParserTestName, ParseRespFunc) PARSER_GUESS_P_SUB_BASIC_TEST_P(ParserTestName, ParseRespFunc, EQ)
+#define PARSER_GUESS_STOP_SUB_BASIC_TEST_P(ParserTestName, ParseRespFunc) \
+    PARSER_GUESS_P_SUB_BASIC_TEST_P(ParserTestName, ParseRespFunc, NE)
 
 
 #define raw_length_of(rs) (sizeof(rs) - 1)

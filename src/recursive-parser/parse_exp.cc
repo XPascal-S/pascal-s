@@ -154,8 +154,11 @@ ast::Exp *Parser<Lexer>::parse_fac() {
                         ident, parse_expression_list_with_paren());
                 // [
             } else if (marker->marker_type == MarkerType::LBracket) {
-                //todo
-                throw std::runtime_error("todo");
+                auto variable = new ast::Variable();
+                variable->id = ident;
+                // will not eat [, just parse [ expression list ]
+                variable->id_var = parse_expression_list_with_bracket();
+                return variable;
             }
         }
 

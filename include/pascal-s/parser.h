@@ -15,10 +15,10 @@
 template<typename Lexer>
 class Parser {
     LexerProxy<Lexer> lexer;
-    const Token *current_token;
     std::vector<Token *> guessing_token;
 
 public:
+    const Token *current_token;
     std::vector<PascalSError *> errors;
 
     explicit Parser(LexerProxy<Lexer> lexer);
@@ -40,6 +40,8 @@ public:
     ast::ParamList *parse_param_list_with_paren();
 
     ast::ExpressionList *parse_expression_list_with_paren();
+
+    ast::ExpressionList *parse_expression_list_with_bracket();
 
     ast::IdentList *parse_id_list();
 
@@ -81,15 +83,17 @@ public:
 
     ast::Exp *parse_exp(const std::set<const Token *> *till = nullptr);
 
+    ast::Variable *parse_variable(const std::set<const Token *> *till = nullptr);
+
     ast::Exp *
     parse_binary_exp(ast::Exp *lhs, const Marker *marker, pascal_s::marker_type_underlying_type current_marker_pri,
                      const std::set<const Token *> *till = nullptr);
 
     ast::Exp *parse_fac();
 
-    virtual bool has_error();
+    [[maybe_unused]] virtual bool has_error();
 
-    const std::vector<PascalSError *> &get_all_errors() {
+    [[maybe_unused]] const std::vector<PascalSError *> &get_all_errors() {
         return errors;
     }
 

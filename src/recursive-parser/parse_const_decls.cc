@@ -8,11 +8,9 @@ template<typename Lexer>
 ast::ConstDecls *Parser<Lexer>::parse_const_decls() {
 
     // const
-    expected_enum_type(predicate::is_const, predicate::keyword_const);
+    expected_enum_type_r_e(predicate::is_const, predicate::keyword_const, nullptr,
+                           || predicate::is_var(current_token));
     next_token();
-
-    // look ahead
-    expected_type_r(TokenType::Identifier, nullptr);
 
     // declarations
     return _parse_const_decls(new ast::ConstDecls);
@@ -21,18 +19,19 @@ ast::ConstDecls *Parser<Lexer>::parse_const_decls() {
 template<typename Lexer>
 ast::ConstDecls *Parser<Lexer>::_parse_const_decls(ast::ConstDecls *decls) {
 
-    // declaration
-    auto decl = parse_const_decl();
-    if (decl == nullptr) {
-        return decls;
-    }
-    decls->decls.push_back(decl);
+    for (;;) {
+        // declaration
+        auto decl = parse_const_decl();
+        if (decl == nullptr) {
+            return decls;
+        }
+        decls->decls.push_back(decl);
 
-    // look ahead
-    if (current_token == nullptr || current_token->type != TokenType::Identifier) {
-        return decls;
+        // look ahead
+        if (current_token == nullptr || predicate::is_var(current_token)) {
+            return decls;
+        }
     }
-    return _parse_const_decls(decls);
 }
 
 template<typename Lexer>
@@ -43,14 +42,16 @@ ast::ConstDecl *Parser<Lexer>::parse_const_decl() {
     next_token();
 
     // =
-    expected_enum_type(predicate::is_eq, predicate::marker_eq);
+    expected_enum_type_r_e(predicate::is_eq, predicate::marker_eq, nullptr,
+                           || predicate::is_var(current_token));
     next_token();
 
     // const exp
-    auto decl = new ast::ConstDecl(ident, parse_const_exp(&predicate::predicateContainers.semicolonContainer));
+    auto decl = new ast::ConstDecl(ident, parse_const_exp(&predicate::predicateContainers.semicolonOrVarContainer));
 
     // ;
-    expected_enum_type(predicate::is_semicolon, predicate::marker_semicolon);
+    expected_enum_type_r_e(predicate::is_semicolon, predicate::marker_semicolon, decl,
+                           || predicate::is_var(current_token));
     next_token();
 
     return decl;
