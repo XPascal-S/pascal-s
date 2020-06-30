@@ -36,11 +36,14 @@ ast::IdentList *Parser<Lexer>::_parse_id_list(ast::IdentList *params) {
         if (predicate::is_rparen(current_token)) {
             return params;
         }
+        if (predicate::is_colon(current_token)) {
+            return params;
+        }
         if (current_token != nullptr && current_token->type == TokenType::Identifier) {
             break;
         }
-        skip_any_but_eof_token_s("variable list sep marker ')'");
-        return fall_expect_s("variable list sep marker ')'"), params;
+        skip_any_but_eof_token_s("variable list sep marker ')' or ':'");
+        return fall_expect_s("variable list sep marker ')' or ':'"), params;
     }
 
     // id
@@ -52,8 +55,11 @@ ast::IdentList *Parser<Lexer>::_parse_id_list(ast::IdentList *params) {
         if (predicate::token_equal(current_token, &predicate::predicateContainers.commaOrRParenContainer)) {
             break;
         }
-        skip_any_but_eof_token_s("variable list sep marker ',' or ')'");
-        return fall_expect_s("variable list sep marker ',' or ')'"), params;
+        if (predicate::is_colon(current_token)) {
+            break;
+        }
+        skip_any_but_eof_token_s("variable list sep marker ',', ':' or ')'");
+        return fall_expect_s("variable list sep marker ',', ':' or ')'"), params;
     }
 
     // ,

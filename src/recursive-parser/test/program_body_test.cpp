@@ -21,6 +21,8 @@ INSTANTIATE_TEST_SUITE_P(Simple, ProgramBodyTest, testing::Values( /* NOLINT */
                         new Marker(MarkerType::EQ),
                         new ConstantInteger(1),
                         new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Begin),
+                        new Keyword(KeywordType::End),
                 }
         }
 ));

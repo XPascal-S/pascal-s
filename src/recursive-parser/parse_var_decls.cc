@@ -18,26 +18,31 @@ ast::VarDecls *Parser<Lexer>::parse_var_decls() {
 template<typename Lexer>
 ast::VarDecls *Parser<Lexer>::_parse_var_decls(ast::VarDecls *decls) {
 
-    // declaration
-    auto decl = parse_var_decl();
-    if (decl == nullptr) {
-        return decls;
-    }
-    decls->decls.push_back(decl);
-
     for (;;) {
-        if (current_token != nullptr && current_token->type == TokenType::Identifier) {
-            break;
+        // declaration
+        auto decl = parse_var_decl();
+        if (decl == nullptr) {
+            return decls;
         }
-        skip_error_token_s("expect new var decl or other token");
-        return fall_expect_s("expect new var decl or other token"), decls;
-    }
+        decls->decls.push_back(decl);
 
-    // look ahead
-    if (current_token == nullptr || current_token->type != TokenType::Identifier) {
-        return decls;
+        // look ahead
+        for (;;) {
+            if (current_token == nullptr) {
+                return decls;
+            }
+            if (current_token->type == TokenType::Identifier) {
+                break;
+            }
+            maybe_recover_keyword(KeywordType::Begin)
+
+            skip_error_token_s("expect new var decl or other token");
+            return fall_expect_s("expect new var decl or other token"), decls;
+        }
+        if (current_token == nullptr || current_token->type != TokenType::Identifier) {
+            return decls;
+        }
     }
-    return _parse_var_decls(decls);
 }
 
 template<typename Lexer>

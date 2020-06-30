@@ -17,13 +17,13 @@ ast::CompoundStatement *Parser<Lexer>::_parse_compound_statement(std::set<const 
 
     std::vector<ast::Statement *> stmts;
     auto sl = new ast::StatementList;
-    sl->statement.swap(stmts);
     auto block = new ast::CompoundStatement(sl/*begin_tok, end_tok*/);
 
     // end
     ast::Statement *stmt;
     while (!predicate::is_end(current_token)) {
         if (current_token == nullptr) {
+            sl->statement.swap(stmts);
             return fall_expect_v(&predicate::keyword_end), block;
         }
 
@@ -57,16 +57,28 @@ ast::CompoundStatement *Parser<Lexer>::_parse_compound_statement(std::set<const 
 
         for (;;) {
             if (current_token == nullptr) {
+                sl->statement.swap(stmts);
                 return fall_expect_s("end statement"), block;
             }
             // look ahead
-            if (predicate::is_end(current_token)) {
+
+            if (current_token->type == TokenType::Identifier) {
                 break;
             }
+
+            maybe_recover_keyword(KeywordType::End)
+            maybe_recover_keyword(KeywordType::Begin)
+            maybe_recover_keyword(KeywordType::For)
+            maybe_recover_keyword(KeywordType::If)
+            maybe_recover_keyword(KeywordType::Read)
+            maybe_recover_keyword(KeywordType::Write)
+
             if (predicate::is_semicolon(current_token)) {
                 break;
             }
+
             skip_error_token_s("end statement");
+            sl->statement.swap(stmts);
             return fall_expect_s("end statement"), block;
         }
 
@@ -79,5 +91,6 @@ ast::CompoundStatement *Parser<Lexer>::_parse_compound_statement(std::set<const 
     // end
     auto end_tok = reinterpret_cast<const Keyword *>(current_token);
     next_token();
+    sl->statement.swap(stmts);
     return block;
 }

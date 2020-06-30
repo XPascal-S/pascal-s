@@ -36,32 +36,28 @@ ast::ParamList *Parser<Lexer>::parse_param_list() {
 
 template<typename Lexer>
 ast::ParamList *Parser<Lexer>::_parse_param_list(ast::ParamList *params) {
-    auto spec = parse_param();
-    if (spec == nullptr) {
-        return params;
-    }
-    params->params.push_back(spec);
-
     for (;;) {
-        if (predicate::is_semicolon(current_token)) {
-            break;
+        auto spec = parse_param();
+        if (spec == nullptr) {
+            return params;
         }
-        if (predicate::is_rparen(current_token)) {
-            break;
-        }
-        skip_any_but_eof_token_s("param list sep marker ';' or ')'");
-        return fall_expect_s("param list sep marker ';' or ')'"), params;
-    }
+        params->params.push_back(spec);
 
-    //look ahead
-    // ;
-    if (predicate::is_semicolon(current_token)) {
+
+        //look ahead
+        // ;
+        for (;;) {
+            if (current_token == nullptr || predicate::is_rparen(current_token)) {
+                return params;
+            }
+            if (predicate::is_semicolon(current_token)) {
+                break;
+            }
+            skip_any_but_eof_token_s("param list sep marker ';' or ')'");
+            return fall_expect_s("param list sep marker ';' or ')'"), params;
+        }
         next_token();
-
-        // param list
-        _parse_param_list(params);
     }
-    return params;
 }
 
 template<typename Lexer>

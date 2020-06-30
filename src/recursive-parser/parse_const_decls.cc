@@ -28,7 +28,23 @@ ast::ConstDecls *Parser<Lexer>::_parse_const_decls(ast::ConstDecls *decls) {
         decls->decls.push_back(decl);
 
         // look ahead
-        if (current_token == nullptr || predicate::is_var(current_token)) {
+
+        for (;;) {
+            if (current_token == nullptr) {
+                return decls;
+            }
+
+            if (current_token->type == TokenType::Identifier) {
+                break;
+            }
+            maybe_recover_keyword(KeywordType::Var)
+            maybe_recover_keyword(KeywordType::Begin)
+
+            skip_any_but_eof_token_s("next const decl or var/begin");
+            return fall_expect_s("next const decl or var/begin"), decls;
+        }
+
+        if (predicate::is_var(current_token) || predicate::is_begin(current_token)) {
             return decls;
         }
     }
