@@ -22,7 +22,7 @@ ast::Exp *Parser<Lexer>::parse_exp(const std::set<const Token *> *till) {
         if (predicate::is_dot(current_token)) {
             break;
         }
-        if (current_token->type == TokenType::Identifier) {
+        if (predicate::is_assgin(current_token)) {
             break;
         }
         skip_any_but_eof_token_s("expression fac")
@@ -76,6 +76,7 @@ ast::Exp *Parser<Lexer>::parse_exp(const std::set<const Token *> *till) {
                 return nullptr;
         }
     } else {
+        assert(false);
         throw std::runtime_error(
                 std::string("want marker, got ") + fmt::format("{}",
                                                                convertToString(current_token))

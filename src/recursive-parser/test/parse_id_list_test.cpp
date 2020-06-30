@@ -27,3 +27,29 @@ INSTANTIATE_TEST_SUITE_P(Simple, IdentListTest, testing::Values( /* NOLINT */
                 }
         }
 ));
+
+
+struct GuessIdentListTest : public ParserTest {
+};
+
+PARSER_GUESS_SUB_BASIC_TEST_P(GuessIdentListTest, parse_id_list)
+
+
+INSTANTIATE_TEST_SUITE_P(Simple, GuessIdentListTest, testing::Values( /* NOLINT */
+        ParserTestCase{
+                {
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Identifier("a"),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Identifier("a"),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Marker(MarkerType::Comma),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Identifier("a"),
+                }
+        }
+));

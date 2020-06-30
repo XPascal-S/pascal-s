@@ -30,10 +30,6 @@ ast::ParamList *Parser<Lexer>::parse_param_list_with_paren() {
 template<typename Lexer>
 ast::ParamList *Parser<Lexer>::parse_param_list() {
     //look ahead
-    if (current_token == nullptr ||
-        (current_token->type != TokenType::Identifier && current_token->type != TokenType::Keyword)) {
-        return nullptr;
-    }
     return _parse_param_list(new ast::ParamList);
 }
 
@@ -45,6 +41,17 @@ ast::ParamList *Parser<Lexer>::_parse_param_list(ast::ParamList *params) {
         return params;
     }
     params->params.push_back(spec);
+
+    for (;;) {
+        if (predicate::is_semicolon(current_token)) {
+            break;
+        }
+        if (predicate::is_rparen(current_token)) {
+            break;
+        }
+        skip_any_but_eof_token_s("param list sep marker ';' or ')'");
+        return fall_expect_s("param list sep marker ';' or ')'"), params;
+    }
 
     //look ahead
     // ;
@@ -59,9 +66,31 @@ ast::ParamList *Parser<Lexer>::_parse_param_list(ast::ParamList *params) {
 
 template<typename Lexer>
 ast::ParamSpec *Parser<Lexer>::parse_param() {
+
+    for (;;) {
+        if (current_token == nullptr) {
+            return fall_expect_s("keyword var or id list");
+        }
+        if (predicate::is_rparen(current_token)) {
+            return fall_expect_s("keyword var or id list");
+        }
+        if (predicate::is_semicolon(current_token)) {
+            return fall_expect_s("keyword var or id list");
+        }
+        if (predicate::is_var(current_token)) {
+            break;
+        }
+        if (current_token->type == TokenType::Identifier) {
+            break;
+        }
+
+        skip_any_but_eof_token_s("keyword var or id list");
+        return fall_expect_s("keyword var or id list");
+    }
+
+
     auto keyword_var = reinterpret_cast<const Keyword *>(current_token);
-    if (current_token == nullptr ||
-        keyword_var->type != TokenType::Keyword ||
+    if (keyword_var->type != TokenType::Keyword ||
         keyword_var->key_type != KeywordType::Var) {
 
         keyword_var = nullptr;
@@ -79,20 +108,28 @@ ast::ParamSpec *Parser<Lexer>::parse_param() {
     expected_enum_type(predicate::is_colon, predicate::marker_colon);
     next_token();
 
+
+    if (current_token == nullptr || current_token->type != TokenType::Keyword) {
+        for (;;) {
+            if (current_token == nullptr) {
+                return fall_expect_s("basic type spec");
+            }
+            if (predicate::is_rparen(current_token)) {
+                return fall_expect_s("basic type spec");
+            }
+            if (predicate::is_semicolon(current_token)) {
+                return fall_expect_s("basic type spec");
+            }
+            maybe_recover_keyword(KeywordType::Boolean)
+            maybe_recover_keyword(KeywordType::Integer)
+            maybe_recover_keyword(KeywordType::Char)
+            maybe_recover_keyword(KeywordType::Real)
+            skip_error_token_s("basic type spec")
+            return fall_expect_s("basic type spec"), new ast::ParamSpec(keyword_var, id_list, nullptr);
+        }
+    }
+
     auto basic = reinterpret_cast<const Keyword *>(current_token);
-    if (basic == nullptr || basic->type != TokenType::Keyword) {
-        return nullptr;
-    }
-    if (
-        // basic type
-            basic->key_type != KeywordType::Integer &&
-            basic->key_type != KeywordType::Real &&
-            basic->key_type != KeywordType::Char &&
-            basic->key_type != KeywordType::Boolean
-            ) {
-        errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "basic type spec", basic));
-        return nullptr;
-    }
     auto spec = new ast::BasicTypeSpec(basic);
     next_token();
 

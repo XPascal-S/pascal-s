@@ -25,6 +25,14 @@ ast::VarDecls *Parser<Lexer>::_parse_var_decls(ast::VarDecls *decls) {
     }
     decls->decls.push_back(decl);
 
+    for (;;) {
+        if (current_token != nullptr && current_token->type == TokenType::Identifier) {
+            break;
+        }
+        skip_error_token_s("expect new var decl or other token");
+        return fall_expect_s("expect new var decl or other token"), decls;
+    }
+
     // look ahead
     if (current_token == nullptr || current_token->type != TokenType::Identifier) {
         return decls;

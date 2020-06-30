@@ -52,8 +52,8 @@ ast::VariableList *Parser<Lexer>::parse_variable_list() {
             if (predicate::token_equal(current_token, &predicate::predicateContainers.commaOrRParenContainer)) {
                 break;
             }
-            skip_error_token_s("variable list sep marker ',' or '/'");
-            return fall_expect_s("variable list sep marker ',' or '/'"), ret;
+            skip_error_token_s("variable list sep marker ',' or ')'");
+            return fall_expect_s("variable list sep marker ',' or ')'"), ret;
         }
 
         // eat , if possible

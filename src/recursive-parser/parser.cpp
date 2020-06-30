@@ -65,11 +65,20 @@ struct Parser<FullInMemoryLexer>;
 
 #define expected_enum_type(predicator, indicate) expected_enum_type_r(predicator, indicate, nullptr)
 
-#define expected_type_r(tok_type, rvalue) do {if (current_token == nullptr || current_token->type != tok_type) {\
-    errors.push_back(new PascalSParseExpectTGotError(__FUNCTION__, tok_type, current_token));\
-    return rvalue;\
+#define expected_type_r_e(tok_type, rvalue, ext) do {if (current_token == nullptr || current_token->type != tok_type) {\
+    for(;;) {\
+        if (current_token != nullptr && current_token->type == tok_type) {\
+            break;\
+        }\
+        if (!(predicate::is_end(current_token) || predicate::is_semicolon(current_token) ext)) {\
+            skip_error_token_t(tok_type)\
+        }\
+        errors.push_back(new PascalSParseExpectTGotError(__FUNCTION__, tok_type, current_token));\
+        return rvalue;\
+    }\
 }}while(0)
 
+#define expected_type_r(tok_type, rvalue) expected_type_r_e(tok_type, rvalue, )
 #define expected_type(tok_type) expected_type_r(tok_type, nullptr)
 
 namespace predicate {
@@ -227,13 +236,20 @@ Parser<Lexer>::~Parser() {
 #include "parse_const_exp.cc"
 #include "parse_variable.cc"
 #include "parse_exp.cc"
+
 #include "parse_statement.cc"
+#include "parse_statement_compound.cc"
+#include "parse_statement_for.cc"
+#include "parse_statement_if_else.cc"
 
 #undef expected_keyword
 #undef expected_enum_type
 #undef expected_enum_type_r
-#undef expected_type_r
+#undef expected_enum_type_r_e
 #undef expected_type
+#undef expected_type_r
+#undef expected_type_r_e
+
 #undef maybe_recover_keyword
 #undef skip_error_token
 #undef skip_any_but_eof_token
