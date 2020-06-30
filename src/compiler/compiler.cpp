@@ -77,6 +77,7 @@ struct CompilerOptions {
     std::vector<std::fstream *> files;
 
     std::fstream *source_file = nullptr;
+
     std::istream &get_source() {
         if (source_path == "stdin") {
             return std::cin;
@@ -140,6 +141,13 @@ struct Compiler {
             lexer(std::move(lexer)), parser(std::move(parser)),
             options(options), _exit(std::move(_exit)) {}
 
+    ~Compiler() {
+        if (_cached_ast != nullptr) {
+            ast::deleteAST(_cached_ast);
+            _cached_ast = nullptr;
+        }
+    }
+
     int work(int &argc, const char *argv[]) {
         reset();
         work_help(argc, argv);
@@ -194,17 +202,21 @@ private:
 
     void work_compile(int argc, const char *argv[]) {
         if (exited) return;
+        pascal_s::CPPStreamFile fin(options.get_source());
+        FileProxy<pascal_s::CPPStreamFile> fp(fin);
+        WriterProxy<std::ostream> os(std::cout);
 
-        CompilerTargetTask task;
+        CompilerTargetTask task{fp, os};
 
+        task.file_path = options.source_path.c_str();
         task.target = options.out_path;
+        task.out_ir = !options.out_with_ir.empty();
+
         task.source = get_ast();
 
         if (lexer.has_error() || parser.has_error()) {
             exit(1);
         }
-
-        task.out_ir = !options.out_with_ir.empty();
 
         exit(target_compile(argc, argv, &task));
     }
@@ -245,6 +257,10 @@ private:
 
     void exit(int code) {
         exited = true;
+        if (_cached_ast != nullptr) {
+            ast::deleteAST(_cached_ast);
+            _cached_ast = nullptr;
+        }
         _exit(_code = code);
     }
 

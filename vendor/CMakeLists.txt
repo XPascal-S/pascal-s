@@ -23,10 +23,10 @@ add_subdirectory(googletest)
 #
 #add_definitions(${LLVM_DEFINITIONS})
 
-function(target_include_llvm target_name)
-    get_property(_target_llvm_include_directory GLOBAL PROPERTY _target_llvm_include_directory_property)
-    target_include_directories(${target_name} PUBLIC BEFORE ${_target_llvm_include_directory})
-endfunction()
+#function(target_include_llvm target_name)
+#    get_property(_target_llvm_include_directory GLOBAL PROPERTY _target_llvm_include_directory_property)
+#    target_include_directories(${target_name} PUBLIC BEFORE ${_target_llvm_include_directory})
+#endfunction()
 # LLVM End
 
 #fmt

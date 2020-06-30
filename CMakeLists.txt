@@ -25,7 +25,8 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 message(STATUS "llvm include dir ${LLVM_INCLUDE_DIRS}")
 
 add_definitions(${LLVM_DEFINITIONS})
-set_property(GLOBAL PROPERTY _target_llvm_include_directory_property ${LLVM_INCLUDE_DIRS})
+include_directories(${LLVM_INCLUDE_DIRS})
+#set_property(GLOBAL PROPERTY _target_llvm_include_directory_property ${LLVM_INCLUDE_DIRS})
 
 # lib files (internal libraries)
 add_subdirectory(lib)
