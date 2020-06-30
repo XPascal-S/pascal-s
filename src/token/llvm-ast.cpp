@@ -265,6 +265,13 @@ void ast::printAST(ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = IfElseStatement\n");
+            put_tab(dep + 1);
+            printf("cond = \n");
+            printAST(cur_node->expression, dep + 1);
+            printf("if_part = \n");
+            printAST(cur_node->if_part, dep + 1);
+            printf("else_part = \n");
+            printAST(cur_node->else_part, dep + 1);
 
             put_tab(dep);
             printf("}\n");

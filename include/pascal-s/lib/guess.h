@@ -39,7 +39,7 @@ namespace pascal_s {
         bool near(const char *u, int u_len, const char *v, int v_len) {
             int dist = min_str_dist(u, u_len, v, v_len);
             // dist <= 2 -> 允许两次增删替换，或一次交换
-            return 0 <= dist && dist <= 2;
+            return 0 <= dist && dist <= std::min(2, std::min((u_len + 1) / 2, (v_len + 1) / 2));
         }
     };
 }

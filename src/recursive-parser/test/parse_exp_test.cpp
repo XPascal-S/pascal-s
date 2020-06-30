@@ -147,3 +147,130 @@ INSTANTIATE_TEST_SUITE_P(Arithmetic, ExpTest, testing::Values( /* NOLINT */
         }
 ));
 
+
+struct GuessFacTest : public ParserTest {
+};
+
+PARSER_GUESS_SUB_BASIC_TEST_P(GuessFacTest, parse_fac)
+
+
+INSTANTIATE_TEST_SUITE_P(ConstFac, GuessFacTest, testing::Values( /* NOLINT */
+        ParserTestCase{
+                {
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Identifier("a"),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("a", raw_length_of("a")),
+                        new ConstantReal(".1", .1),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("a", raw_length_of("a")),
+                        new ConstantChar('a'),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("a", raw_length_of("a")),
+                        new ConstantInteger(1),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Marker(MarkerType::Add),
+                        new ConstantInteger(1),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Marker(MarkerType::LogicNot),
+                        new ConstantBoolean(true),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Marker(MarkerType::LParen),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new ConstantBoolean(true),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Marker(MarkerType::RParen),
+                }
+        }
+));
+
+
+struct GuessExpressionTest : public ParserTest {
+};
+
+PARSER_GUESS_SUB_BASIC_TEST_P(GuessExpressionTest, parse_exp)
+
+
+INSTANTIATE_TEST_SUITE_P(BinaryExpression, GuessExpressionTest, testing::Values( /* NOLINT */
+        ParserTestCase{
+                {
+                        new ErrorToken("a", raw_length_of("a")),
+                        new ConstantInteger(1),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Marker(MarkerType::Add),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new ConstantInteger(1),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("a", raw_length_of("a")),
+                        new ConstantInteger(1),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Marker(MarkerType::Add),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Marker(MarkerType::Add),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new ConstantInteger(1),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Marker(MarkerType::LParen),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new ConstantInteger(1),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Marker(MarkerType::Add),
+                        new Marker(MarkerType::LParen),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new Marker(MarkerType::Add),
+                        new ErrorToken("a", raw_length_of("a")),
+                        new ConstantInteger(1),
+                        new Marker(MarkerType::RParen),
+                        new Marker(MarkerType::RParen),
+                }
+        }
+));
+
+
+
+
+//struct GuessStopExpressionTest : public ParserTest {
+//};
+//
+//PARSER_GUESS_STOP_SUB_BASIC_TEST_P(GuessStopExpressionTest, parse_exp)
+//
+//
+//INSTANTIATE_TEST_SUITE_P(BinaryExpression, GuessStopExpressionTest, testing::Values( /* NOLINT */
+//        ParserTestCase{
+//                {
+//                        new Marker(MarkerType::LParen),
+//                        new ErrorToken("a", raw_length_of("a")),
+//                        new ConstantInteger(1),
+//                        new ErrorToken("a", raw_length_of("a")),
+//                        new Marker(MarkerType::LParen),
+//                }
+//        }
+//));
+//

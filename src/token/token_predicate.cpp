@@ -18,6 +18,12 @@ const Marker marker_## lower(MarkerType::upper);
 }\
 const Keyword keyword_## lower(KeywordType::upper);
 
+    marker_predicator(logic_not, LogicNot)
+
+    marker_predicator(logic_and, LogicAnd)
+
+    marker_predicator(logic_or, LogicOr)
+
     marker_predicator(neq, NEQ)
 
     marker_predicator(le, LE)
@@ -148,6 +154,15 @@ const Keyword keyword_## lower(KeywordType::upper);
 
     bool is_const_token(TokenType tt) {
         return TokenType::ConstRangeL <= tt && tt <= TokenType::ConstRangeR;
+    }
+
+    bool is_binary_sign(const Token *t) {
+        return t != nullptr && t->type == TokenType::Marker
+               && is_binary_sign(reinterpret_cast<const Marker *>(t)->marker_type);
+    }
+
+    bool is_binary_sign(MarkerType mt) {
+        return MarkerType::LogicAnd <= mt && mt <= MarkerType::Mod;
     }
 
 #undef marker_predicator
