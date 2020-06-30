@@ -148,8 +148,12 @@ void ast::printAST(ast::Node *node, int dep) {
             put_tab(dep + 1);
             printf("param(ids) = \n");
             printAST(const_cast<IdentList *>(cur_node->programHead->idlist), dep + 1);
-//            printAST(const_cast<ConstDecls*>(cur_node->programBody->constdecls), dep+1);
-//            printAST(const_cast<VarDecls*>(cur_node->programBody->vardecls), dep+1);
+            put_tab(dep + 1);
+            printf("const decls = \n");
+            printAST(const_cast<ConstDecls *>(cur_node->programBody->constdecls), dep + 1);
+            put_tab(dep + 1);
+            printf("var decls = \n");
+            printAST(const_cast<VarDecls *>(cur_node->programBody->vardecls), dep + 1);
 //            printAST(const_cast<SubprogramDecls*>(cur_node->programBody->subprogram), dep+1);
             put_tab(dep + 1);
             printf("body = \n");
@@ -333,6 +337,11 @@ void ast::printAST(ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ConstDecl\n");
+            put_tab(dep + 1);
+            printf("lhs  = %s\n", convertToString(cur_node->ident).c_str());
+            put_tab(dep + 1);
+            printf("rhs = \n");
+            printAST(const_cast<Exp *>(cur_node->rhs), dep + 1);
 
             put_tab(dep);
             printf("}\n");
@@ -344,6 +353,9 @@ void ast::printAST(ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ConstDecls\n");
+            for (auto c: cur_node->decls) {
+                printAST(c, dep + 1);
+            }
 
             put_tab(dep);
             printf("}\n");
@@ -355,6 +367,13 @@ void ast::printAST(ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = VarDecl\n");
+            put_tab(dep + 1);
+            printf("idents = \n");
+            printAST(cur_node->idents, dep + 1);
+            put_tab(dep + 1);
+            printf("type_spec = \n");
+            printAST(cur_node->type_spec, dep + 1);
+
 
             put_tab(dep);
             printf("}\n");
@@ -366,6 +385,9 @@ void ast::printAST(ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = VarDecls\n");
+            for (auto c: cur_node->decls) {
+                printAST(c, dep + 1);
+            }
 
             put_tab(dep);
             printf("}\n");
@@ -492,6 +514,7 @@ void ast::printAST(ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = BasicTypeSpec\n");
+            printf("key_type = %s\n", convertToString(cur_node->keyword).c_str());
 
             put_tab(dep);
             printf("}\n");
@@ -503,6 +526,14 @@ void ast::printAST(ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ArrayTypeSpec\n");
+            put_tab(dep + 1);
+            printf("range = \n");
+            for (auto &pr: cur_node->periods) {
+                put_tab(dep + 2);
+                printf("[%lld, %lld]\n", pr.first, pr.second);
+            }
+            put_tab(dep + 1);
+            printf("key_type = %s\n", convertToString(cur_node->keyword).c_str());
 
             put_tab(dep);
             printf("}\n");

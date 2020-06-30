@@ -19,7 +19,7 @@ ast::IdentList *Parser<Lexer>::parse_id_list_with_paren() {
     // rparen
     if (!predicate::is_rparen(current_token)) {
         delete ident_list;
-        errors.push_back(new PascalSParseExpectGotError(__FUNCTION__, &predicate::marker_rparen, current_token));
+        errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, &predicate::marker_rparen, current_token));
         return nullptr;
     }
     next_token();

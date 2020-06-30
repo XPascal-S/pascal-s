@@ -8,17 +8,9 @@
 #include <vector>
 #include <cassert>
 #include "exception.h"
+#include "lib/stdtype.h"
 
-using pascal_s_integer_t = int64_t;
-using pascal_s_real_t = double;
-
-using line_t = uint32_t;
-using column_t = uint32_t;
-using length_t = uint32_t;
-using offset_t = uint64_t;
-
-using token_type_underlying_type = uint32_t;
-enum class TokenType : token_type_underlying_type {
+enum class TokenType : pascal_s::token_type_underlying_type {
     Unknown = 0,
     Keyword = 1,
     ConstantString = 2,
@@ -31,11 +23,12 @@ enum class TokenType : token_type_underlying_type {
     Nullptr = 9,
     ErrorToken = 10,
     Length = 11,
+    ConstRangeL = ConstantString,
+    ConstRangeR = ConstantBoolean,
 };
 
 
-using keyword_type_underlying_type = uint8_t;
-enum class KeywordType : keyword_type_underlying_type {
+enum class KeywordType : pascal_s::keyword_type_underlying_type {
     Program,
     Const,
     Var,
@@ -68,8 +61,7 @@ enum class KeywordType : keyword_type_underlying_type {
     Length
 };
 
-using marker_type_underlying_type = uint8_t ;
-enum class MarkerType : marker_type_underlying_type {
+enum class MarkerType : pascal_s::marker_type_underlying_type {
     Range = 0x00, // ..
 
     LogicAnd = 0x01, // and
@@ -105,12 +97,12 @@ enum class MarkerType : marker_type_underlying_type {
 struct Token {
     // 0 ~ 8字节
     TokenType type;
-    line_t line;
+    pascal_s::line_t line;
     // 8 ~ 16字节
-    column_t column;
-    length_t length;
+    pascal_s::column_t column;
+    pascal_s::length_t length;
     // 16 ~ 24字节
-    offset_t offset;
+    pascal_s::offset_t offset;
 };
 
 
@@ -119,6 +111,8 @@ struct ErrorToken : public Token {
     const char *hint;
 
     explicit ErrorToken(const char *content, const char *hint = nullptr);
+
+    explicit ErrorToken(const char *content, int len, const char *hint = nullptr);
 
     static ErrorToken *copy_in(const char *content, const char *hint = nullptr);
 
@@ -137,7 +131,7 @@ struct ConstantString : public Token {
 
 struct ConstantReal : public Token {
     const char *content;
-    pascal_s_real_t attr;
+    pascal_s::pascal_s_real_t attr;
 
     ConstantReal(const char *content, double attr);
 
@@ -145,9 +139,9 @@ struct ConstantReal : public Token {
 };
 
 struct ConstantInteger : public Token {
-    pascal_s_integer_t attr;
+    pascal_s::pascal_s_integer_t attr;
 
-    explicit ConstantInteger(pascal_s_integer_t attr);
+    explicit ConstantInteger(pascal_s::pascal_s_integer_t attr);
 
     ~ConstantInteger();
 };
@@ -188,18 +182,21 @@ void deleteToken(Token *pToken);
 
 std::string convertToString(const Token *pToken);
 
+const char *convertToString(TokenType tt);
+
 KeywordType get_keyword_type(const std::string &kt);
 
-const char *get_keyword_type_reversed(KeywordType kt);
+const std::string &get_keyword_type_reversed(KeywordType kt);
 
-marker_type_underlying_type get_marker_pri(MarkerType);
+pascal_s::marker_type_underlying_type get_marker_pri(MarkerType);
 
 MarkerType get_marker_type(const std::string &mt);
 
-const char *get_marker_type_reversed(MarkerType mt);
-
+const std::string &get_marker_type_reversed(MarkerType mt);
 
 namespace predicate {
+    bool is_const_token(TokenType tt);
+
 #define pascal_s_predicator(cls, cls_lower, lower, upper) bool is_ ## lower(const Token *tok);\
 extern const cls cls_lower ##_## lower;
 

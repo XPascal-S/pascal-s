@@ -8,9 +8,9 @@
 #include <string>
 
 using keyword_mapping = std::map<std::string, KeywordType>;
-using reverse_keyword_mapping = std::map<KeywordType, const char *>;
+using reverse_keyword_mapping = std::map<KeywordType, std::string>;
 using marker_mapping = std::map<std::string, MarkerType>;
-using reverse_marker_mapping = std::map<MarkerType, const char *>;
+using reverse_marker_mapping = std::map<MarkerType, std::string>;
 
 keyword_mapping key_map = {
         keyword_mapping::value_type{"to", KeywordType::To},
@@ -84,26 +84,26 @@ MarkerType get_marker_type(const std::string &mt) {
 
 reverse_keyword_mapping reverse_key_map;
 
-const char *get_keyword_type_reversed(KeywordType kt) {
+const std::string &get_keyword_type_reversed(KeywordType kt) {
     if (reverse_key_map.empty()) {
         for (auto &kv: key_map) {
-            reverse_key_map[kv.second] = kv.first.c_str();
+            reverse_key_map[kv.second] = kv.first;
         }
     }
     return reverse_key_map.at(kt);
 }
 
-marker_type_underlying_type get_marker_pri(MarkerType marker_type) {
-    return static_cast<marker_type_underlying_type>(marker_type)
+pascal_s::marker_type_underlying_type get_marker_pri(MarkerType marker_type) {
+    return static_cast<pascal_s::marker_type_underlying_type>(marker_type)
             >> 0x4U;
 }
 
 reverse_marker_mapping reverse_marker_map;
 
-const char *get_marker_type_reversed(MarkerType mt) {
+const std::string &get_marker_type_reversed(MarkerType mt) {
     if (reverse_marker_map.empty()) {
         for (auto &mv : marker_map) {
-            reverse_marker_map[mv.second] = mv.first.c_str();
+            reverse_marker_map[mv.second] = mv.first;
         }
     }
     return reverse_marker_map.at(mt);

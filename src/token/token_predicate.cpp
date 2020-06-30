@@ -146,6 +146,10 @@ const Keyword keyword_## lower(KeywordType::upper);
         }
     }
 
+    bool is_const_token(TokenType tt) {
+        return TokenType::ConstRangeL <= tt && tt <= TokenType::ConstRangeR;
+    }
+
 #undef marker_predicator
 #undef keyword_predicator
 }

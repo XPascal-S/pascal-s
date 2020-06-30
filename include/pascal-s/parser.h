@@ -10,16 +10,20 @@
 #include "llvm-ast.h"
 #include "exception.h"
 #include <set>
+#include <pascal-s/lib/guess.h>
 
 template<typename Lexer>
 class Parser {
     LexerProxy<Lexer> lexer;
-    const Token *current_token;
+    std::vector<Token *> guessing_token;
 
 public:
+    const Token *current_token;
     std::vector<PascalSError *> errors;
 
     explicit Parser(LexerProxy<Lexer> lexer);
+
+    virtual ~Parser();
 
     ast::Node *parse();
 
@@ -37,11 +41,18 @@ public:
 
     ast::ExpressionList *parse_expression_list_with_paren();
 
+    ast::ExpressionList *parse_expression_list_with_bracket();
+
+    ast::VariableList *parse_variable_list_with_paren();
+
     ast::IdentList *parse_id_list();
 
     ast::ParamList *parse_param_list();
 
-    ast::ExpressionList *parse_expression_list();
+    template<typename F>
+    ast::ExpressionList *parse_expression_list(const F &is_follow, const std::set<const Token *> *till = nullptr);
+
+    ast::VariableList *parse_variable_list();
 
     ast::ParamSpec *parse_param();
 
@@ -77,14 +88,24 @@ public:
 
     ast::Exp *parse_exp(const std::set<const Token *> *till = nullptr);
 
-    ast::Exp *parse_binary_exp(ast::Exp *lhs, const Marker *marker, marker_type_underlying_type current_marker_pri,
-                               const std::set<const Token *> *till = nullptr);
+    ast::Variable *parse_variable(const std::set<const Token *> *till = nullptr);
+
+    ast::Exp *
+    parse_binary_exp(ast::Exp *lhs, const Marker *marker, pascal_s::marker_type_underlying_type current_marker_pri,
+                     const std::set<const Token *> *till = nullptr);
 
     ast::Exp *parse_fac();
 
-    virtual bool has_error();
+    [[maybe_unused]] virtual bool has_error();
+
+    [[maybe_unused]] const std::vector<PascalSError *> &get_all_errors() {
+        return errors;
+    }
 
 private:
+
+    pascal_s::MinStrDist guesser;
+
     ast::IdentList *_parse_id_list(ast::IdentList *);
 
     ast::ParamList *_parse_param_list(ast::ParamList *params);
@@ -96,6 +117,10 @@ private:
     ast::FunctionDecls *_parse_function_decls(ast::FunctionDecls *decls);
 
     ast::CompoundStatement *_parse_compound_statement(std::set<const Token *> *till = nullptr);
+
+    bool guess_keyword(KeywordType k);
+
+    void update_guess(Token *new_tok);
 };
 
 

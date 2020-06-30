@@ -28,6 +28,27 @@ ast::Exp *Parser<Lexer>::parse_const_fac(const std::set<const Token *> *till) {
         errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "const value", current_token));
         return nullptr;
     }
+    if (!predicate::is_const_token(current_token->type)) {
+        for (;;) {
+            if (predicate::token_equal(current_token, till)) {
+                return fall_expect_s("constant fac");
+            }
+            if (predicate::is_add(current_token)) {
+                break;
+            }
+            if (predicate::is_sub(current_token)) {
+                break;
+            }
+            if (predicate::is_lparen(current_token)) {
+                break;
+            }
+            if (predicate::is_const_token(current_token->type)) {
+                break;
+            }
+            skip_any_but_eof_token_s("constant fac")
+            return fall_expect_s("constant fac");
+        }
+    }
 
     if (current_token->type == TokenType::Marker) {
         auto marker = reinterpret_cast<const Marker *>(current_token);
@@ -40,6 +61,7 @@ ast::Exp *Parser<Lexer>::parse_const_fac(const std::set<const Token *> *till) {
                 next_token();
                 return parse_const_exp(&predicate::predicateContainers.rParenContainer);
             default:
+                assert(false);
                 throw std::runtime_error("expected +/-/(");
         }
     }
@@ -70,13 +92,9 @@ ast::Exp *Parser<Lexer>::parse_const_fac(const std::set<const Token *> *till) {
                     reinterpret_cast<const ConstantBoolean *>(current_token));
             break;
         default:
-            return nullptr;
+            assert(false);
+            throw std::runtime_error("expect constant fac");
     }
     next_token();
     return fac;
-}
-
-template<typename Lexer>
-bool Parser<Lexer>::has_error() {
-    return !errors.empty();
 }

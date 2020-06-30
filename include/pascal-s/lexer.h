@@ -5,6 +5,7 @@
 #ifndef PASCAL_S_LEXER_H
 #define PASCAL_S_LEXER_H
 
+#include "lib/stdtype.h"
 #include <FlexLexer.h>
 #include "logger.h"
 #include "token.h"
@@ -43,7 +44,7 @@ protected:
     Logger logger;
 
     // current_offset由gulp.h中的YY_USER_ACTION更新
-    column_t current_offset = 0, line_offset = 0;
+    pascal_s::column_t current_offset = 0, line_offset = 0;
 
     virtual int addToken(Token *token) = 0;
 

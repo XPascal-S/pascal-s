@@ -50,3 +50,34 @@ INSTANTIATE_TEST_SUITE_P(Simple, ConstFacTest, testing::Values( /* NOLINT */
                 }
         }
 ));
+
+
+struct GuessConstFacTest : public ParserTest {
+};
+
+PARSER_GUESS_SUB_BASIC_TEST_P(GuessConstFacTest, parse_const_fac)
+
+
+INSTANTIATE_TEST_SUITE_P(Simple, GuessConstFacTest, testing::Values( /* NOLINT */
+        ParserTestCase{
+                {
+                        new Keyword(KeywordType::Const),
+                        new ConstantReal("1.", 1.),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Keyword(KeywordType::Const),
+                        new Marker(MarkerType::Add),
+                        new ConstantReal("1.", 1.),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Keyword(KeywordType::Const),
+                        new Marker(MarkerType::Add),
+                        new Identifier("a"),
+                        new ConstantReal("1.", 1.),
+                }
+        }
+));

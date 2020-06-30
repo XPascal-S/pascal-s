@@ -154,8 +154,11 @@ ast::Exp *Parser<Lexer>::parse_fac() {
                         ident, parse_expression_list_with_paren());
                 // [
             } else if (marker->marker_type == MarkerType::LBracket) {
-                //todo
-                throw std::runtime_error("todo");
+                auto variable = new ast::Variable();
+                variable->id = ident;
+                // will not eat [, just parse [ expression list ]
+                variable->id_var = parse_expression_list_with_bracket();
+                return variable;
             }
         }
 
@@ -167,7 +170,8 @@ ast::Exp *Parser<Lexer>::parse_fac() {
 
 template<typename Lexer>
 ast::Exp *
-Parser<Lexer>::parse_binary_exp(ast::Exp *lhs, const Marker *marker, marker_type_underlying_type current_marker_pri,
+Parser<Lexer>::parse_binary_exp(ast::Exp *lhs, const Marker *marker,
+                                pascal_s::marker_type_underlying_type current_marker_pri,
                                 const std::set<const Token *> *till) {
 
     auto rhs = parse_fac();
