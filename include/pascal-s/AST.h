@@ -187,6 +187,15 @@ struct ArrayTypeSpec : public TypeSpec {
 
 };
 
+struct IdentList : public Node {
+
+    std::vector<const Identifier*> idents;
+
+
+
+    IdentList() : Node(Type::IdentList) {}
+
+};
 
 struct ParamSpec : public Node {
 
@@ -264,17 +273,6 @@ struct VariableList : public Node {
 
 };
 
-
-
-struct IdentList : public Node {
-
-    std::vector<const Identifier*> idents;
-
-
-
-    IdentList() : Node(Type::IdentList) {}
-
-};
 
 
 
@@ -366,7 +364,6 @@ struct FunctionDecl : public Node {
     BasicTypeSpec* basic;
 
     FunctionDecl(Identifier* name, VarDecls* decls, BasicTypeSpec* basic) : Node(Type::FunctionDecl), name(name), decls(decls), basic(basic) {}
-
 
 
     ~FunctionDecl(){

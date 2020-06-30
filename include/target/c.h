@@ -18,6 +18,7 @@
 
 
 namespace target_c {
+
     class Buffer {
         std::ostream &os;
     public:
@@ -37,8 +38,7 @@ namespace target_c {
 
     //符号表表项
     struct SymbolEntry{
-        std::string typeDecl; //变量类型
-        std::string newName; //变量名称 (符号表层级+原始名称)
+        std::string typeDecl;//变量定义类型
         std::string value; //变量值 在常数定义语境下是常量值。
         const struct ArrayTypeSpec *arrayInfo; // 数组信息.
         char varType; //变量类型 (常数定义，基本类型定义，数组定义。)
@@ -54,11 +54,14 @@ namespace target_c {
     };
 
     struct FuncInfo{
-        std::string funcName;
-        std::string returnType;
-        std::string formalPara;
-        std::string additionPara;
-        std::string funcBody;
+        std::string funcName; //函数名
+        std::string returnType; //函数返回类型
+        std::vector<std::string> paraType; //函数形参类型表
+        std::string formalPara; // 函数定义字符串 int a, int b,
+        std::string additionPara; // 函数形参追加表 (用以传入不在函数内定义的变量) c, d
+        std::string funcBody; // 函数体
+        //formalPara, 用于最终函数定义时字符串输出。包含原始形参表和追加形参表的字符串内容
+        //additionPara 不是形参定义表。只是在调用函数时，需要追加在调用参数后面。
     };
 
     struct CBuilder {
@@ -509,9 +512,11 @@ namespace target_c {
                     struct SymbolEntry se;
                     if(x->type_spec->type == Type::BasicTypeSpec){
                         keyword2str(reinterpret_cast<const BasicTypeSpec *>(x)->keyword->key_type, se.typeDecl);
+                        nowFuncInfo.paraType.push_back(se.typeDecl);
                         se.varType = ISBASIC;
                     }else if(x->type_spec->type == Type::ArrayTypeSpec){
                         keyword2str(reinterpret_cast<const ArrayTypeSpec *>(x)->keyword->key_type, se.typeDecl);
+                        nowFuncInfo.paraType.push_back(se.typeDecl);
                         se.varType = ISARRAY;
                         se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(x->type_spec);
                     }else{
@@ -527,15 +532,13 @@ namespace target_c {
         };
 
         int code_gen_FunctionDecl(const FunctionDecl *node){
-            std::string funcReturn;
-            keyword2str(node->basic->keyword->key_type, funcReturn);
             auto iter = this->functionBuff.find(this->nowST_pointer->tableName);
             if(iter == this->functionBuff.end()){
                 assert(false); //未找到函数
                 return TranslateFailed;
             }
             struct FuncInfo &nowFuncInfo = iter->second;
-            nowFuncInfo.returnType = funcReturn;
+            keyword2str(node->basic->keyword->key_type, nowFuncInfo.returnType);
             code_gen_headerDecl_helper(node->decls->decls, nowFuncInfo);
             return OK;
         }
@@ -572,7 +575,7 @@ namespace target_c {
             return OK;
         }
 
-        int code_gen_exp(const Exp *node, std::string &buffer){
+        int code_gen_exp(const Exp *node, std::string &buffer, std::string &expType){
             switch(node->type){
                 case Type::BiExp:
                     return code_gen_BiExp(reinterpret_cast<const BiExp *>(node), buffer);
@@ -605,7 +608,7 @@ namespace target_c {
             }
         }
 
-        int code_gen_BiExp(const BiExp *node, std::string &buffer){
+        int code_gen_BiExp(const BiExp *node, std::string &buffer, std::string &expType){
             code_gen_exp(node->lhs, buffer);
             std::string markerStr;
             marker2str(node->marker->marker_type, markerStr);
@@ -615,7 +618,7 @@ namespace target_c {
             return OK;
         }
 
-        int code_gen_ExpCall(const ExpCall *node, std::string &buffer){
+        int code_gen_ExpCall(const ExpCall *node, std::string &buffer, std::string &expType){
             auto iter = this->functionBuff.find(node->fn->content);
             if(iter == this->functionBuff.end()){
                 assert(false); //未找到函数
@@ -626,6 +629,7 @@ namespace target_c {
             buffer += "(";
             for(auto x : node->params->params){
                 code_gen_Variable(x, buffer);
+
                 buffer += ", ";
             }
             std::string otherPara = callInfo.additionPara;
@@ -636,7 +640,7 @@ namespace target_c {
             return OK;
         }
 
-        int code_gen_Variable(const Variable *node, std::string &buffer){
+        int code_gen_Variable(const Variable *node, std::string &buffer, std::string expType){
             bool varFind = false;
             struct SymbolTable *theTable = this->nowST_pointer;
             auto iterTable = theTable->content.find(node->id->content);
@@ -656,6 +660,7 @@ namespace target_c {
                             return TranslateFailed;
                         }
                         iterFunc->second.additionPara += fmt::format("{0}, ", node->id->content);
+                        iterFunc->second.paraType.push_back(iterTable->second.typeDecl);
                         //在函数形参表添加完变量之后，在当前符号表内加上该变量的定义。
                         this->nowST_pointer->content.insert(
                                 std::pair<std::string, struct SymbolEntry>(iterTable->first, iterTable->second));
@@ -672,7 +677,9 @@ namespace target_c {
             }
         }
 
-        int code_gen_ExpAssign(const ExpAssign *node, std::string &buffer){
+        int code_gen_ExpAssign(const ExpAssign *node, std::string &buffer, std::string expType){
+            //类型检查
+
             code_gen_exp(node->lhs, buffer);
             buffer += " " + std::string("=") + " ";
             code_gen_exp(node->rhs, buffer);
@@ -680,17 +687,19 @@ namespace target_c {
             return OK;
         }
 
-        int code_gen_UnExp(const UnExp *node, std::string &buffer){
+        int code_gen_UnExp(const UnExp *node, std::string &buffer, std::string expType){
 
         }
 
-        int code_gen_IfElseStatement(const IfElseStatement *node, std::string &buffer){
+        int code_gen_IfElseStatement(const IfElseStatement *node, std::string &buffer, std::string expType){
 
         }
 
-        int code_gen_ForStatement(const ForStatement *node, std::string &buffer){
+        int code_gen_ForStatement(const ForStatement *node, std::string &buffer, std::string expType){
 
         }
+
+        /*
 
         int search_for_symbol(const std::string &symbol, std::string &value)
         {
@@ -706,6 +715,7 @@ namespace target_c {
             throw std::runtime_error(fmt::format("symbol {} not found", symbol));
             return TranslateFailed;
         }
+
 
         void insert_const_decls(std::map<std::string, std::string> &map, ConstDecls *pDecls)
         {
@@ -750,6 +760,7 @@ namespace target_c {
             }
         }
     };
+         */
 }
 
 
