@@ -149,13 +149,7 @@ INSTANTIATE_TEST_SUITE_P(MarkerRegex, GoodLexerGetAllTokensTest, testing::Values
         CaseExpectMarker(", ", MarkerType::Comma),
         CaseExpectMarker(". ", MarkerType::Dot),
         CaseExpectMarker("; ", MarkerType::Semicolon),
-        CaseExpectMarker(": ", MarkerType::Colon),
-
-        CaseExpectMarker("div ", MarkerType::Div),
-        CaseExpectMarker("mod ", MarkerType::Mod),
-        CaseExpectMarker("and ", MarkerType::LogicAnd),
-        CaseExpectMarker("or ", MarkerType::LogicOr),
-        CaseExpectMarker("not ", MarkerType::LogicNot)
+        CaseExpectMarker(": ", MarkerType::Colon)
 ));
 
 #undef CaseExpectMarker
@@ -251,11 +245,11 @@ INSTANTIATE_TEST_SUITE_P(Stream, GoodLexerGetAllTokensTest, testing::Values( /* 
                 "div mod And Or Not read write",
                 new std::vector<Token *>(
                         {
-                                new Marker(get_marker_type("div")),
-                                new Marker(get_marker_type("mod")),
-                                new Marker(get_marker_type("and")),
-                                new Marker(get_marker_type("or")),
-                                new Marker(get_marker_type("not")),
+                                new Keyword(get_keyword_type("div")),
+                                new Keyword(get_keyword_type("mod")),
+                                new Keyword(get_keyword_type("and")),
+                                new Keyword(get_keyword_type("or")),
+                                new Keyword(get_keyword_type("not")),
                                 new Keyword(get_keyword_type("write")),
                                 new Keyword(get_keyword_type("read"))})}
 ));

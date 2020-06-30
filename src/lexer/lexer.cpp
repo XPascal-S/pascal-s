@@ -92,9 +92,7 @@ int Lexer::addKeyword() {
  * 将类型装入Marker
  */
 int Lexer::addMarker() {
-    std::string str_temp = std::string(yytext);
-    std::transform(str_temp.begin(), str_temp.end(), str_temp.begin(), tolower);
-    auto tok = new Marker(get_marker_type(str_temp));
+    auto tok = new Marker(get_marker_type(yytext));
     return addToken(tok);
 }
 

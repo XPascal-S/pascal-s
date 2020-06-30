@@ -6,10 +6,9 @@
 #define PASCAL_S_TARGET_TASK_H
 
 #include <string>
-#include <pascal-s/llvm-ast.h>
 
 struct CompilerTargetTask {
-    ast::Node *source;
+//    ast::Node *source;
     std::string target;
     bool out_ir;
 };

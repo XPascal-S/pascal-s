@@ -7,8 +7,6 @@
 
 #include "token.h"
 #include <vector>
-#include "lib/stdtype.h"
-#include "exception.h"
 
 // reserve lvalue reference semantics
 // ProxyTarget
@@ -120,19 +118,19 @@ template<typename Error>
 struct ErrorProxy {
     DefaultProxyConstructor(ErrorProxy, Error, err)
 
-    [[maybe_unused]] [[nodiscard]] pascal_s::line_t visit_line() const {
+    [[maybe_unused]] line_t visit_line() {
         return err.line;
     }
 
-    [[maybe_unused]] [[nodiscard]] pascal_s::column_t visit_column() const {
+    [[maybe_unused]] column_t visit_column() {
         return err.column;
     }
 
-    [[maybe_unused]] [[nodiscard]] pascal_s::length_t visit_length() const {
+    [[maybe_unused]] length_t visit_length() {
         return err.length;
     }
 
-    [[maybe_unused]] [[nodiscard]] pascal_s::offset_t visit_offset() const {
+    [[maybe_unused]] offset_t visit_offset() {
         return err.offset;
     }
 
@@ -140,26 +138,6 @@ struct ErrorProxy {
     [[maybe_unused]] const char *visit_hint() {
         return err.hint;
     }
-};
-
-template<typename Parser>
-struct ParserProxy {
-    DefaultProxyConstructor(ParserProxy, Parser, parser)
-
-    using error_references = std::vector<PascalSError *>;
-
-    // cursor控制peek_token的值
-
-    // 重置cursor
-    [[maybe_unused]] ast::Node *parse() { return parser.parse(); }
-
-    // 判断是否存在语法错误
-    [[maybe_unused]] bool has_error() { return parser.has_error(); }
-
-    // 获取所有的词法错误
-    [[maybe_unused]] const error_references &get_all_errors() { return parser.get_all_errors(); }
-
-
 };
 
 #endif //PASCAL_S_INTERFACE_H

@@ -16,7 +16,7 @@
 \{[^}]*\} {} /* do nothing */
 \/\/.*\n {} /* do nothing */
 (?i:to|do|of|for|else|if|then|char|boolean|real|integer|array|end|begin|function|procedure|var|const|program|read|write) { return addKeyword(); }
-(?i:div|mod|and|or|not) { return addMarker(); }
+(?i:div|mod|and|or|not) { return addKeyword(); }
 \<>|\<=|>=|:=|\.\.|[()\[\]<=>,.;:+\-*/] { return addMarker(); }
 % { return addMarker(); }
 true|false { return addBoolean(); }
