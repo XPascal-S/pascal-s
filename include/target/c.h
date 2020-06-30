@@ -44,7 +44,7 @@ namespace target_c {
     };
 
     //符号表
-    struct SymbolTable {
+    struct SymbolTable
         std::string tableName;  //表示当前符号表的作用域。（以函数名称作为区分）
         SymbolTable *prev; //指向上层符号表
         std::map<std::string, struct SymbolTable *> nextTable; //Hash。函数名->符号表的映射
@@ -391,30 +391,34 @@ namespace target_c {
         }
 
         int code_gen_programBody(const ProgramBody *node) {
-            code_gen_ConstDecls(node->constdecls, this->mainBuff);
-            code_gen_VarDecls(node->vardecls, this->mainBuff);
-            code_gen_node(node->subprogram); //SubprogramDecls
-            code_gen_CompoundStatement(node->compound, this->mainBuff); //CompoundStatement
+            bool check = true;
+            check &= code_gen_ConstDecls(node->constdecls, this->mainBuff);
+            check &= code_gen_VarDecls(node->vardecls, this->mainBuff);
+            check &= code_gen_node(node->subprogram); //SubprogramDecls
+            check &= code_gen_CompoundStatement(node->compound, this->mainBuff); //CompoundStatement
+            return check;
         }
 
         int code_gen_program(const Program *node) {
             // in fmt::format {{ = {, }} = }
             //
-            code_gen_node(node->programHead);
-            code_gen_node(node->programBody);
+            bool check = true;
+            check &= code_gen_node(node->programHead);
+            check &= code_gen_node(node->programBody);
             //buf.writeln(fmt::format("int {}(){{", node->name->content));
             //buf.writeln("printf(\"hello world\");");
             //buf.writeln("}");
-            return OK;
+            return check;
         }
 
         int code_gen_ConstDecls(const ConstDecls *node, std::string &buffer) {
             if (node == NULL)
                 return OK;
+            bool check = true;
             for (auto x : node->decls) {
-                code_gen_ConstDecl(x, buffer);
+                check &= code_gen_ConstDecl(x, buffer);
             }
-            return OK;
+            return check;
         }
 
         int code_gen_ConstDecl(const ConstDecl *node, std::string &buffer) {
@@ -456,10 +460,11 @@ namespace target_c {
         int code_gen_VarDecls(const VarDecls *node, std::string &buffer) {
             if(node == NULL)
                 return OK;
+            bool check = true;
             for (auto x : node->decls) {
-                code_gen_VarDecl(x, buffer);
+                check &= code_gen_VarDecl(x, buffer);
             }
-            return OK;
+            return check;
         }
 
         int code_gen_VarDecl(const VarDecl *node, std::string &buffer) {
@@ -493,21 +498,24 @@ namespace target_c {
         }
 
         int code_gen_SubprogramDecls(const SubprogramDecls *node) {
+            bool check = true;
             for (auto x : node->subprogram) {
-                code_gen_node(x);
+                check &= code_gen_node(x);
             }
-            return OK;
+            return check;
         }
 
         int code_gen_Subprogram(const Subprogram *node) {
             //符号表的初始化，在subprogram_head中完成
-            code_gen_node(node->subhead);
-            code_gen_node(node->subbody);
+            bool check = true;
+            check &= code_gen_node(node->subhead);
+            check &= code_gen_node(node->subbody);
             this->nowST_pointer = this->nowST_pointer->prev; // 回到上层符号表，subprogram生成完毕
-            return OK;
+            return check;
         }
 
         int code_gen_SubprogramHead(const SubprogramHead *node) {
+            bool check = true;
             struct SymbolTable *st_pointer = new struct SymbolTable;
             st_pointer->prev = this->nowST_pointer;
             struct FuncInfo functionInfo;
@@ -522,7 +530,7 @@ namespace target_c {
                 this->nowST_pointer->nextTable.insert(
                         std::pair<std::string, struct SymbolTable *>(funcName, st_pointer));
                 this->nowST_pointer = st_pointer;
-                code_gen_node(node->func);
+                check &= code_gen_node(node->func);
             } else if (node->proc != NULL) {
                 std::string procName = node->proc->name->content;
                 st_pointer->tableName = procName;
@@ -531,15 +539,16 @@ namespace target_c {
                 this->nowST_pointer->nextTable.insert(
                         std::pair<std::string, struct SymbolTable *>(procName, st_pointer));
                 this->nowST_pointer = st_pointer;
-                code_gen_node(node->proc);
+                check &= code_gen_node(node->proc);
             } else {
                 assert(false);
                 return TranslateFailed;
             }
-            return OK;
+            return check;
         }
 
         int code_gen_headerDecl_helper(const std::vector<VarDecl *> &decls, struct FuncInfo &nowFuncInfo) {
+            bool check = true;
             for (const auto x : decls) {
                 //本来函数形参表的node表示，应该是文法里的formal_parameter
                 //但是实际ast实现里，形参还是用varDecls表示的
@@ -548,11 +557,11 @@ namespace target_c {
                 for (const auto y : x->idents->idents) {
                     struct SymbolEntry se;
                     if (x->type_spec->type == Type::BasicTypeSpec) {
-                        keyword2str(reinterpret_cast<const BasicTypeSpec *>(x)->keyword->key_type, se.typeDecl);
+                        check &= keyword2str(reinterpret_cast<const BasicTypeSpec *>(x)->keyword->key_type, se.typeDecl);
                         nowFuncInfo.paraType.push_back(se.typeDecl);
                         se.varType = ISBASIC;
                     } else if (x->type_spec->type == Type::ArrayTypeSpec) {
-                        keyword2str(reinterpret_cast<const ArrayTypeSpec *>(x)->keyword->key_type, se.typeDecl);
+                        check &= keyword2str(reinterpret_cast<const ArrayTypeSpec *>(x)->keyword->key_type, se.typeDecl);
                         for(int i=0; i<reinterpret_cast<const ArrayTypeSpec *>(x)->periods.size(); i++){
                             se.typeDecl += "*"; //数组类型
                         }
@@ -568,7 +577,7 @@ namespace target_c {
                     nowFuncInfo.formalPara += se.typeDecl + " " + y->content + ", ";
                 }
             }
-            return OK;
+            return check;
         };
 
         int code_gen_FunctionDecl(const FunctionDecl *node) {
@@ -577,10 +586,11 @@ namespace target_c {
                 assert(false); //未找到函数
                 return TranslateFailed;
             }
+            bool check = true;
             struct FuncInfo &nowFuncInfo = iter->second;
-            keyword2str(node->basic->keyword->key_type, nowFuncInfo.returnType);
-            code_gen_headerDecl_helper(node->decls->decls, nowFuncInfo);
-            return OK;
+            check &= keyword2str(node->basic->keyword->key_type, nowFuncInfo.returnType);
+            check &= code_gen_headerDecl_helper(node->decls->decls, nowFuncInfo);
+            return check;
         }
 
         int code_gen_Procedure(const Procedure *node) {
@@ -589,10 +599,11 @@ namespace target_c {
                 assert(false); //未找到函数
                 return TranslateFailed;
             }
+            bool check = true;
             struct FuncInfo &nowFuncInfo = iter->second;
             nowFuncInfo.returnType = "void";
-            code_gen_headerDecl_helper(node->decls->decls, nowFuncInfo);
-            return OK;
+            check &= code_gen_headerDecl_helper(node->decls->decls, nowFuncInfo);
+            return check;
         }
 
         int code_gen_SubprogramBody(const SubprogramBody *node) {
@@ -601,18 +612,21 @@ namespace target_c {
                 assert(false); //未找到函数
                 return TranslateFailed;
             }
+            bool check = true;
             struct FuncInfo &nowFuncInfo = iter->second;
-            code_gen_ConstDecls(node->constdecls, nowFuncInfo.funcBody);
-            code_gen_VarDecls(node->vardecls, nowFuncInfo.funcBody);
-            code_gen_CompoundStatement(node->compound, nowFuncInfo.funcBody);
+            check &= code_gen_ConstDecls(node->constdecls, nowFuncInfo.funcBody);
+            check &= code_gen_VarDecls(node->vardecls, nowFuncInfo.funcBody);
+            check &= code_gen_CompoundStatement(node->compound, nowFuncInfo.funcBody);
+            return check;
         }
 
         int code_gen_CompoundStatement(const CompoundStatement *node, std::string &buffer) {
+            bool check = true;
             for (auto x : node->state->statement) {
-                code_gen_Statement(x, buffer);
+                check &= code_gen_Statement(x, buffer);
                 //buffer += ";\n";
             }
-            return OK;
+            return check;
         }
 
         int code_gen_exp(const Exp *node, std::string &buffer, std::string &expType) {
@@ -663,15 +677,24 @@ namespace target_c {
         }
 
         int code_gen_BiExp(const BiExp *node, std::string &buffer, std::string &expType) {
+            bool check = true;
             std::string lhsType;
             std::string rhsType;
-            code_gen_exp(node->lhs, buffer, lhsType);
+            check &= code_gen_exp(node->lhs, buffer, lhsType);
             std::string markerStr;
-            marker2str(node->marker->marker_type, markerStr);
+            check &= marker2str(node->marker->marker_type, markerStr);
             buffer += " " + markerStr + " ";
-            code_gen_exp(node->rhs, buffer, rhsType);
+            check &= code_gen_exp(node->rhs, buffer, rhsType);
             buffer += ";\n";
-            return OK;
+            if (check) {
+                if (lhsType == rhsType) {
+                    expType = lhsType;
+                }
+                else {
+                    check = false;
+                }
+            }
+            return check;
         }
 
         int code_gen_ExpCall(const ExpCall *node, std::string &buffer, std::string &expType) {
@@ -680,20 +703,21 @@ namespace target_c {
                 assert(false); //未找到函数
                 return TranslateFailed;
             }
+            bool check;
             const struct FuncInfo callInfo = iter->second;
             buffer += node->fn->content;
             buffer += "(";
             for (auto x : node->params->explist) {
-                code_gen_exp(x, buffer, expType);
-
+                check &= code_gen_exp(x, buffer, expType);
                 buffer += ", ";
             }
+            expType = callInfo.returnType;
             std::string otherPara = callInfo.additionPara;
             otherPara.pop_back();
             otherPara.pop_back();
             buffer += otherPara;
             buffer += ");\n";
-            return OK;
+            return check;
         }
 
         int code_gen_Variable(const Variable *node, std::string &buffer, std::string &expType) {
@@ -743,6 +767,7 @@ namespace target_c {
 
         int code_gen_ExpAssign(const ExpAssign *node, std::string &buffer, std::string &expType) {
             //类型检查
+            bool check = true;
             std::string lhsType;
             std::string rhsType;
             if(node->lhs->type == Type::Variabele){
@@ -762,84 +787,96 @@ namespace target_c {
             }
             // 处理正常的表达式赋值
             code_gen_exp(node->lhs, buffer, lhsType);
+            check &= code_gen_exp(node->lhs, buffer, lhsType);
             buffer += " " + std::string("=") + " ";
-            code_gen_exp(node->rhs, buffer, rhsType);
+            check &= code_gen_exp(node->rhs, buffer, rhsType);
             buffer += ";\n";
-            return OK;
+            if (check) {
+                if (lhsType == rhsType) {
+                    expType = lhsType;
+                }
+                else {
+                    check = false;
+                }
+            }
+            return check;
         }
 
         int code_gen_UnExp(const UnExp *node, std::string &buffer, std::string &expType) {
+            bool check = true;
             std::string markerStr;
-            marker2str(node->marker->marker_type, markerStr);
+            check &= marker2str(node->marker->marker_type, markerStr);
             buffer += markerStr + " ";
-            code_gen_exp(node->lhs, buffer, expType);
-            return OK;
+            check &= code_gen_exp(node->lhs, buffer, expType);
+            return check;
         }
 
         int code_gen_IfElseStatement(const IfElseStatement *node, std::string &buffer) {
+            bool check = true;
             buffer += "if (";
-            code_gen_Statement(node->expression, buffer);
+            check &= code_gen_Statement(node->expression, buffer);
             buffer += "){\n";
             for (auto x: node->if_part->statement) {
-                code_gen_Statement(x, buffer);
+                check &= code_gen_Statement(x, buffer);
             }
             buffer += "}\n";
             if (node->else_part->statement.size()) {
                 buffer += "else{\n";
                 for (auto x: node->else_part->statement) {
-                    code_gen_Statement(x, buffer);
+                    check &= code_gen_Statement(x, buffer);
                 }
                 buffer += "}\n";
             }
-            return OK;
+            return check;
         }
 
         int code_gen_ForStatement(const ForStatement *node, std::string &buffer) {
-            bool typeCheck = true;
+            bool check = true;
             buffer += fmt::format("for (int {} = ", node->id->content);
             std::string expType;
-            code_gen_exp(node->express1, buffer, expType);
+            check &= code_gen_exp(node->express1, buffer, expType);
             buffer += "; ";
+            if (expType != "int") {
+                check = false;
+            }
             buffer += fmt::format("{} <= ", node->id->content);
-            code_gen_exp(node->express2, buffer, expType);
+            check &= code_gen_exp(node->express2, buffer, expType);
             buffer += "; ";
+            if (expType != "int") {
+                check = false;
+            }
             buffer += fmt::format("{}++", node->id->content);
             buffer += "){\n";
             for (auto x: node->for_stmt->statement) {
-                code_gen_Statement(x, buffer);
+                check &= code_gen_Statement(x, buffer);
             }
             buffer += "}\n";
-            return OK;
+            return check;
         }
 
         int code_gen_ExpConstantBoolean(const ExpConstantBoolean *node, std::string &buffer, std::string &expType) {
             buffer += std::to_string(node->value->attr);
-            constType2str(node->type, expType);
-            return OK;
+            return constType2str(node->type, expType);
         }
 
         int code_gen_ExpConstantChar(const ExpConstantChar *node, std::string &buffer, std::string &expType) {
             buffer += node->value->attr;
-            constType2str(node->type, expType);
-            return OK;
+            return constType2str(node->type, expType);
         }
 
         int code_gen_ExpConstantReal(const ExpConstantReal *node, std::string &buffer, std::string &expType) {
             buffer += node->value->content;
-            constType2str(node->type, expType);
-            return OK;
+            return constType2str(node->type, expType);
         }
 
         int code_gen_ExpConstantInteger(const ExpConstantInteger *node, std::string &buffer, std::string &expType) {
             buffer += std::to_string(node->value->attr);
-            constType2str(node->type, expType);
-            return OK;
+            return constType2str(node->type, expType);
         }
 
         int code_gen_ExpConstantString(const ExpConstantString *node, std::string &buffer, std::string &expType) {
             buffer += node->value->attr;
-            constType2str(node->type, expType);
-            return OK;
+            return constType2str(node->type, expType);
         }
 
         /*

@@ -29,9 +29,9 @@ void deleteAST(Node *node) {
         case Type::Function:
             delete reinterpret_cast<Function *>(node);
             break;
-        //case Type::StatementBlock:
-        //    delete reinterpret_cast<StatementBlock *>(node);
-        //    break;
+//        case Type::StatementBlock:
+//            delete reinterpret_cast<StatementBlock *>(node);
+//            break;
         case Type::Statement:
           delete reinterpret_cast<Statement *>(node);
           break;
@@ -193,19 +193,19 @@ void printAST(Node *node, int dep) {
             put_tab(dep);
             printf("}\n");
             break;
-        //case Type::StatementBlock:
-#define cur_node (reinterpret_cast<StatementBlock*>(node))
-            put_tab(dep);
-            printf("{\n");
-            put_tab(dep + 1);
-            printf("type = StatementBlock\n");
-//            for (auto &stmt: cur_node->stmts) {
-//                printAST(stmt, dep + 1);
-//            }
-            put_tab(dep);
-            printf("}\n");
-#undef  cur_node
-            break;
+//        case Type::StatementBlock:
+//#define cur_node (reinterpret_cast<StatementBlock*>(node))
+//            put_tab(dep);
+//            printf("{\n");
+//            put_tab(dep + 1);
+//            printf("type = StatementBlock\n");
+////            for (auto &stmt: cur_node->stmts) {
+////                printAST(stmt, dep + 1);
+////            }
+//            put_tab(dep);
+//            printf("}\n");
+//#undef  cur_node
+//            break;
         case Type::Statement:
 #define cur_node (reinterpret_cast<Statement *>(node))
           put_tab(dep);
