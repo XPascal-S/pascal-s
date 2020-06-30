@@ -19,7 +19,7 @@ ast::VariableList *Parser<Lexer>::parse_variable_list_with_paren() {
     // )
     if (!predicate::is_rparen(current_token)) {
         delete var_list;
-        errors.push_back(new PascalSParseExpectGotError(__FUNCTION__, &predicate::marker_rparen, current_token));
+        errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, &predicate::marker_rparen, current_token));
         return nullptr;
     }
     next_token();
@@ -38,7 +38,7 @@ ast::VariableList *Parser<Lexer>::parse_variable_list() {
         }
 
         // extend production
-        ret->params.push_back(parse_exp(&predicate::predicateContainers.commaOrRParenContainer));
+        ret->params.push_back(parse_variable(&predicate::predicateContainers.commaOrRParenContainer));
 
         // eat , if possible
         if (predicate::is_comma(current_token)) {
@@ -46,9 +46,7 @@ ast::VariableList *Parser<Lexer>::parse_variable_list() {
 
             // want FOLLOW(variable) = {)}
         } else if (!predicate::is_rparen(current_token)) {
-            delete ret;
-            throw std::runtime_error("expected ,/)");
-            return nullptr;
+            return ret;
         }
     }
     return nullptr;

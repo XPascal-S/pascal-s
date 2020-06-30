@@ -43,12 +43,16 @@ public:
 
     ast::ExpressionList *parse_expression_list_with_bracket();
 
+    ast::VariableList *parse_variable_list_with_paren();
+
     ast::IdentList *parse_id_list();
 
     ast::ParamList *parse_param_list();
 
     template<typename F>
     ast::ExpressionList *parse_expression_list(const F &is_follow, const std::set<const Token *> *till = nullptr);
+
+    ast::VariableList *parse_variable_list();
 
     ast::ParamSpec *parse_param();
 
