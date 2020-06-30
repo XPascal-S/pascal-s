@@ -66,8 +66,8 @@ namespace target_c {
     struct CBuilder {
 
         enum TranslateCode {
-            OK,
             TranslateFailed,
+            OK
         };
 
         std::vector<std::string> include_files;
@@ -99,16 +99,19 @@ namespace target_c {
         }
 
         int code_gen(const Node *node) {
-            for (const auto &f : include_files) {
-                outputBuff.writeln(fmt::format("#include <{}>", f));
-            }
-
             if (node->type != Type::Program) {
                 assert(false);
                 return TranslateFailed;
             }
-
             int code = code_gen_node(node);
+            if (code == TranslateFailed) {
+                return TranslateFailed;
+            }
+
+            //输出头文件
+            for (const auto &f : include_files) {
+                outputBuff.writeln(fmt::format("#include <{}>", f));
+            }
 
             //输出全局变量定义
             /*
@@ -153,6 +156,29 @@ namespace target_c {
                     .writeln("return 0;")
                     .writeln("}");
             return code;
+        }
+
+        int constType2str(const Type type, std::string &result) {
+            switch (type) {
+                case Type::ExpConstantInteger:
+                    result = "int";
+                    return 1;
+                case Type::ExpConstantChar:
+                    result = "char";
+                    return 1;
+                case Type::ExpConstantBoolean:
+                    result = "bool";
+                    return 1;
+                case Type::ExpConstantReal:
+                    result = "double";
+                    return 1;
+                case Type::ExpConstantString:
+                    result = "char*";
+                    return 1;
+                default:
+                    assert(false);
+                    return 0;
+            }
         }
 
         int keyword2str(const KeywordType kt, std::string &result) {
@@ -718,34 +744,76 @@ namespace target_c {
         }
 
         int code_gen_UnExp(const UnExp *node, std::string &buffer, std::string &expType) {
+            std::string markerStr;
+            marker2str(node->marker->marker_type, markerStr);
+            buffer += markerStr + " ";
+            code_gen_exp(node->lhs, buffer, expType);
             return OK;
         }
 
         int code_gen_IfElseStatement(const IfElseStatement *node, std::string &buffer) {
+            buffer += "if (";
+            code_gen_Statement(node->experssion, buffer);
+            buffer += "){\n";
+            for (auto x: node->if_part->statement) {
+                code_gen_Statement(x, buffer);
+            }
+            buffer += "}\n";
+            if (node->else_part->statement.size()) {
+                buffer += "else{\n";
+                for (auto x: node->else_part->statement) {
+                    code_gen_Statement(x, buffer);
+                }
+                buffer += "}\n";
+            }
             return OK;
         }
 
         int code_gen_ForStatement(const ForStatement *node, std::string &buffer) {
+            bool typeCheck = true;
+            buffer += fmt::format("for (int {} = ", node->id->content);
+            std::string expType;
+            code_gen_exp(node->express1, buffer, expType);
+            buffer += "; ";
+            buffer += fmt::format("{} <= ", node->id->content);
+            code_gen_exp(node->express2, buffer, expType);
+            buffer += "; ";
+            buffer += fmt::format("{}++", node->id->content);
+            buffer += "){\n";
+            for (auto x: node->for_stmt->statement) {
+                code_gen_Statement(x, buffer);
+            }
+            buffer += "}\n";
             return OK;
         }
 
         int code_gen_ExpConstantBoolean(const ExpConstantBoolean *node, std::string &buffer, std::string &expType) {
+            buffer += std::to_string(node->value->attr);
+            constType2str(node->type, expType)
             return OK;
         }
 
         int code_gen_ExpConstantChar(const ExpConstantChar *node, std::string &buffer, std::string &expType) {
+            buffer += node->value->attr;
+            constType2str(node->type, expType)
             return OK;
         }
 
         int code_gen_ExpConstantReal(const ExpConstantReal *node, std::string &buffer, std::string &expType) {
+            buffer += node->value->content;
+            constType2str(node->type, expType)
             return OK;
         }
 
         int code_gen_ExpConstantInteger(const ExpConstantInteger *node, std::string &buffer, std::string &expType) {
+            buffer += std::to_string(node->value->attr);
+            constType2str(node->type, expType)
             return OK;
         }
 
         int code_gen_ExpConstantString(const ExpConstantString *node, std::string &buffer, std::string &expType) {
+            buffer += node->value->attr;
+            constType2str(node->type, expType)
             return OK;
         }
 
