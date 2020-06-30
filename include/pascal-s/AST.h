@@ -192,7 +192,6 @@ struct IdentList : public Node {
     std::vector<const Identifier*> idents;
 
 
-
     IdentList() : Node(Type::IdentList) {}
 
 };
@@ -254,7 +253,6 @@ struct Variable : public Exp {
 struct VariableList : public Node {
 
     std::vector<Variable*> params;
-
 
 
     VariableList() : Node(Type::VariableList) {}
@@ -477,11 +475,10 @@ struct ExpCall : public Exp {
 
     const Identifier* fn;
 
-    VariableList* params;
+    ExpressionList* params;
 
 
-
-    explicit ExpCall(const Identifier* fn, VariableList* params) : Exp(Type::ExpCall), fn(fn), params(params) {}
+    explicit ExpCall(const Identifier* fn, ExpressionList* params) : Exp(Type::ExpCall), fn(fn), params(params) {}
 
     ~ExpCall() {
 

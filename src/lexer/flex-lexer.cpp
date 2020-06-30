@@ -766,7 +766,7 @@ yy_find_action:
                 case 5:
                     YY_RULE_SETUP
 #line 19 "lexer.flex"
-                    { return addKeyword(); }
+                    { return addMarker(); }
                     YY_BREAK
                 case 6:
                     YY_RULE_SETUP
@@ -875,15 +875,14 @@ yy_find_action:
                          * will run more slowly).
                          */
 
-			yy_next_state = yy_try_NUL_trans( yy_current_state );
+                        yy_next_state = yy_try_NUL_trans(yy_current_state);
 
-			yy_bp = (yytext_ptr) + YY_MORE_ADJ;
+                        yy_bp = (yytext_ptr) + YY_MORE_ADJ;
 
-			if ( yy_next_state )
-				{
-				/* Consume the NUL. */
-				yy_cp = ++(yy_c_buf_p);
-				yy_current_state = yy_next_state;
+                        if (yy_next_state) {
+                            /* Consume the NUL. */
+                            yy_cp = ++(yy_c_buf_p);
+                            yy_current_state = yy_next_state;
 				goto yy_match;
 				}
 

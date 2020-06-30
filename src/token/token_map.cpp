@@ -8,9 +8,9 @@
 #include <string>
 
 using keyword_mapping = std::map<std::string, KeywordType>;
-using reverse_keyword_mapping = std::map<KeywordType, const char *>;
+using reverse_keyword_mapping = std::map<KeywordType, std::string>;
 using marker_mapping = std::map<std::string, MarkerType>;
-using reverse_marker_mapping = std::map<MarkerType, const char *>;
+using reverse_marker_mapping = std::map<MarkerType, std::string>;
 
 keyword_mapping key_map = {
         keyword_mapping::value_type{"to", KeywordType::To},
@@ -32,11 +32,11 @@ keyword_mapping key_map = {
         keyword_mapping::value_type{"program", KeywordType::Program},
         keyword_mapping::value_type{"var", KeywordType::Var},
         keyword_mapping::value_type{"const", KeywordType::Const},
-        keyword_mapping::value_type{"div", KeywordType::Div},
-        keyword_mapping::value_type{"mod", KeywordType::Mod},
-        keyword_mapping::value_type{"and", KeywordType::And},
-        keyword_mapping::value_type{"or", KeywordType::Or},
-        keyword_mapping::value_type{"not", KeywordType::Not},
+//        keyword_mapping::value_type{"div", KeywordType::Div},
+//        keyword_mapping::value_type{"mod", KeywordType::Mod},
+//        keyword_mapping::value_type{"and", KeywordType::And},
+//        keyword_mapping::value_type{"or", KeywordType::Or},
+//        keyword_mapping::value_type{"not", KeywordType::Not},
         keyword_mapping::value_type{"read", KeywordType::Read},
         keyword_mapping::value_type{"write", KeywordType::Write}
 };
@@ -55,6 +55,8 @@ marker_mapping marker_map = {
         marker_mapping::value_type{"-", MarkerType::Sub},
         marker_mapping::value_type{"*", MarkerType::Mul},
         marker_mapping::value_type{"/", MarkerType::Div},
+        marker_mapping::value_type{"div", MarkerType::Div},
+        marker_mapping::value_type{"mod", MarkerType::Mod},
 
         marker_mapping::value_type{"(", MarkerType::LParen},
         marker_mapping::value_type{")", MarkerType::RParen},
@@ -64,7 +66,12 @@ marker_mapping marker_map = {
         marker_mapping::value_type{",", MarkerType::Comma},
         marker_mapping::value_type{".", MarkerType::Dot},
         marker_mapping::value_type{";", MarkerType::Semicolon},
-        marker_mapping::value_type{":", MarkerType::Colon}
+        marker_mapping::value_type{":", MarkerType::Colon},
+
+
+        marker_mapping::value_type{"and", MarkerType::LogicAnd},
+        marker_mapping::value_type{"or", MarkerType::LogicOr},
+        marker_mapping::value_type{"not", MarkerType::LogicNot},
 };
 
 KeywordType get_keyword_type(const std::string &kt) {
@@ -77,26 +84,26 @@ MarkerType get_marker_type(const std::string &mt) {
 
 reverse_keyword_mapping reverse_key_map;
 
-const char *get_keyword_type_reversed(KeywordType kt) {
+const std::string &get_keyword_type_reversed(KeywordType kt) {
     if (reverse_key_map.empty()) {
         for (auto &kv: key_map) {
-            reverse_key_map[kv.second] = kv.first.c_str();
+            reverse_key_map[kv.second] = kv.first;
         }
     }
     return reverse_key_map.at(kt);
 }
 
-marker_type_underlying_type get_marker_pri(MarkerType marker_type) {
-    return static_cast<marker_type_underlying_type>(marker_type)
+pascal_s::marker_type_underlying_type get_marker_pri(MarkerType marker_type) {
+    return static_cast<pascal_s::marker_type_underlying_type>(marker_type)
             >> 0x4U;
 }
 
 reverse_marker_mapping reverse_marker_map;
 
-const char *get_marker_type_reversed(MarkerType mt) {
+const std::string &get_marker_type_reversed(MarkerType mt) {
     if (reverse_marker_map.empty()) {
         for (auto &mv : marker_map) {
-            reverse_marker_map[mv.second] = mv.first.c_str();
+            reverse_marker_map[mv.second] = mv.first;
         }
     }
     return reverse_marker_map.at(mt);

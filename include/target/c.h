@@ -10,7 +10,7 @@
 #define ISARRAY 3
 
 #include <pascal-s/AST.h>
-#include <fmt/core.h>
+#include <fmt/include/fmt/core.h>
 #include <vector>
 #include <string>
 #include <deque>
@@ -443,6 +443,9 @@ namespace target_c {
                     se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(node);
                     se.varType = ISARRAY;
                     keyword2str(se.arrayInfo->keyword->key_type, se.typeDecl);
+                    for(int i=0; i<se.arrayInfo->periods.size(); i++){
+                        se.typeDecl += "*"; //数组类型 example：char**
+                    }
                     buffer += fmt::format("{0} {1}", se.typeDecl, name);
                     for (auto x : se.arrayInfo->periods) {
                         buffer += "[" + std::to_string(x.second) + "]";
@@ -518,6 +521,9 @@ namespace target_c {
                         se.varType = ISBASIC;
                     } else if (x->type_spec->type == Type::ArrayTypeSpec) {
                         keyword2str(reinterpret_cast<const ArrayTypeSpec *>(x)->keyword->key_type, se.typeDecl);
+                        for(int i=0; i<reinterpret_cast<const ArrayTypeSpec *>(x)->periods.size(); i++){
+                            se.typeDecl += "*"; //数组类型
+                        }
                         nowFuncInfo.paraType.push_back(se.typeDecl);
                         se.varType = ISARRAY;
                         se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(x->type_spec);
@@ -677,12 +683,11 @@ namespace target_c {
                             assert(false);
                             return TranslateFailed;
                         }
-                        if (iterTable->second.varType == ISARRAY) {
-
-                        } else {
-                            iterFunc->second.additionPara += fmt::format("{0}, ", node->id->content);
-                            iterFunc->second.paraType.push_back(iterTable->second.typeDecl);
-                        }
+                        expType = iterTable->second.typeDecl;
+                        iterFunc->second.formalPara += fmt::format(
+                                "{0} {1}, ", iterTable->second.typeDecl, iterTable->first);
+                        iterFunc->second.additionPara += fmt::format("{0}, ", iterTable->first);
+                        iterFunc->second.paraType.push_back(iterTable->second.typeDecl);
                         //在函数形参表添加完变量之后，在当前符号表内加上该变量的定义。
                         this->nowST_pointer->content.insert(
                                 std::pair<std::string, struct SymbolEntry>(iterTable->first, iterTable->second));
