@@ -69,27 +69,35 @@ enum class KeywordType : keyword_type_underlying_type {
 using marker_type_underlying_type = uint8_t ;
 enum class MarkerType :marker_type_underlying_type {
     Range = 0x00, // ..
-    NEQ = 0x01, // <>
-    LE = 0x02, // <=
-    GE = 0x03, // >=
-    LT = 0x04, // <
-    EQ = 0x05, // =
-    GT = 0x06, // >
-    Add = 0x10, // +
-    Sub = 0x11, // -
-    Mul = 0x20, // *
-    Div = 0x21, // /
 
-    LParen = 0x30, // (
-    RParen = 0x31, // )
-    LBracket = 0x40, // [
-    RBracket = 0x41, // ]
+    LogicAnd = 0x01, // and
+    LogicOr = 0x02, // or
+    LogicNot = 0x03, // not
 
-    Assign = 0x50, // :=
-    Comma = 0x51, // ,
-    Dot = 0x52, // .
-    Semicolon = 0x53, // ;
-    Colon = 0x54, // :
+    NEQ = 0x11, // <>
+    LE = 0x12, // <=
+    GE = 0x13, // >=
+    LT = 0x14, // <
+    EQ = 0x15, // =
+    GT = 0x16, // >
+
+    Add = 0x20, // +
+    Sub = 0x21, // -
+
+    Mul = 0x30, // *
+    Div = 0x31, // /
+    Mod = 0x32, // mod
+
+    LParen = 0x40, // (
+    RParen = 0x41, // )
+    LBracket = 0x50, // [
+    RBracket = 0x51, // ]
+
+    Assign = 0x60, // :=
+    Comma = 0x61, // ,
+    Dot = 0x62, // .
+    Semicolon = 0x63, // ;
+    Colon = 0x64, // :
 };
 
 struct Token {

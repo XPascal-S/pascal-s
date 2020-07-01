@@ -207,6 +207,18 @@ namespace target_c {
                 case KeywordType::Real:
                     result = "double";
                     return 1;
+                case KeywordType::Mod:
+                    result = "%";
+                    return 1;
+                case KeywordType::And:
+                    result = "&&";
+                    return 1;
+                case KeywordType::Or:
+                    result = "||";
+                    return 1;
+                case KeywordType::Not:
+                    result = "!";
+                    return 1;
                 default:
                     assert(false);
                     throw std::runtime_error("semantic error: no keyword type match");
@@ -273,9 +285,6 @@ namespace target_c {
                 case MarkerType::Colon:
                     result = ":";
                     return OK;
-                case MarkerType::MOD:
-                    result = "%";
-                    return OK;
                 default:
                     //assert(false);
                     throw std::runtime_error("semantic error: no marker type match");
@@ -313,12 +322,6 @@ namespace target_c {
                 case Type::SubprogramHead:
                     return code_gen_SubprogramHead(
                             reinterpret_cast<const SubprogramHead *>(node));
-                case Type::FunctionDecl:
-                    return code_gen_FunctionDecl(
-                            reinterpret_cast<const FunctionDecl *>(node));
-                case Type::Procedure:
-                    return code_gen_Procedure(
-                            reinterpret_cast<const Procedure *>(node));
                 case Type::SubprogramBody:
                     return code_gen_SubprogramBody(
                             reinterpret_cast<const SubprogramBody *>(node));
@@ -543,32 +546,44 @@ namespace target_c {
             functionInfo.funcBody = "";
             functionInfo.formalPara = "";
             functionInfo.additionPara = "";
-            if (node->func != NULL) {
-                std::string funcName = node->func->name->content;
-                st_pointer->tableName = funcName;
-                functionInfo.funcName = funcName;
-                this->functionBuff.insert(std::pair<std::string, struct FuncInfo>(funcName, functionInfo));
-                this->nowST_pointer->nextTable.insert(
-                        std::pair<std::string, struct SymbolTable *>(funcName, st_pointer));
-                this->nowST_pointer = st_pointer;
-                check &= code_gen_node(node->func);
-            } else if (node->proc != NULL) {
-                std::string procName = node->proc->name->content;
-                st_pointer->tableName = procName;
-                functionInfo.funcName = procName;
-                this->functionBuff.insert(std::pair<std::string, struct FuncInfo>(procName, functionInfo));
-                this->nowST_pointer->nextTable.insert(
-                        std::pair<std::string, struct SymbolTable *>(procName, st_pointer));
-                this->nowST_pointer = st_pointer;
-                check &= code_gen_node(node->proc);
-            } else {
-                assert(false);
-                throw std::runtime_error("semantic error: subprogram with no func or proc");
-                return TranslateFailed;
+            std::string funcName = node->name->content;
+            st_pointer->tableName = funcName;
+            functionInfo.funcName = funcName;
+            check &= keyword2str(node->ret_type->keyword->key_type, functionInfo.returnType);
+            for (const auto param : node->decls->params){
+                for(const auto id : param->id_list->idents){
+                    struct SymbolEntry se;
+                    if (param->spec->type == Type::BasicTypeSpec) {
+                        check &= keyword2str(reinterpret_cast<const BasicTypeSpec *>(param->spec)->keyword->key_type, se.typeDecl);
+                        functionInfo.paraType.push_back(se.typeDecl);
+                        se.varType = ISBASIC;
+                    } else if (param->spec->type == Type::ArrayTypeSpec) {
+                        check &= keyword2str(reinterpret_cast<const ArrayTypeSpec *>(param->spec)->keyword->key_type, se.typeDecl);
+                        for(int i=0; i<reinterpret_cast<const ArrayTypeSpec *>(param->spec)->periods.size(); i++){
+                            se.typeDecl += "*"; //数组类型
+                        }
+                        functionInfo.paraType.push_back(se.typeDecl);
+                        se.varType = ISARRAY;
+                        se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(param->spec);
+                    } else {
+                        assert(false);
+                        throw std::runtime_error("semantic error: no var type match");
+                        return TranslateFailed;
+                    }
+
+                    st_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(id->content, se));
+                    functionInfo.formalPara += se.typeDecl + " " + id->content + ", ";
+                }
             }
+            this->functionBuff.insert(std::pair<std::string, struct FuncInfo>(funcName, functionInfo));
+            this->nowST_pointer->nextTable.insert(
+                    std::pair<std::string, struct SymbolTable *>(funcName, st_pointer));
+            this->nowST_pointer = st_pointer;
+            //check &= code_gen_node(node->func);
             return check;
         }
 
+        /*
         int code_gen_headerDecl_helper(const std::vector<VarDecl *> &decls, struct FuncInfo &nowFuncInfo) {
             bool check = true;
             for (const auto x : decls) {
@@ -630,6 +645,7 @@ namespace target_c {
             check &= code_gen_headerDecl_helper(node->decls->decls, nowFuncInfo);
             return check;
         }
+         */
 
         int code_gen_SubprogramBody(const SubprogramBody *node) {
             auto iter = this->functionBuff.find(this->nowST_pointer->tableName);
@@ -857,20 +873,17 @@ namespace target_c {
 
         int code_gen_IfElseStatement(const IfElseStatement *node, std::string &buffer) {
             bool check = true;
+            std::string ifType;
             buffer += "if (";
-            check &= code_gen_Statement(node->expression, buffer);
+            check &= code_gen_exp(node->expression, buffer, ifType);
             buffer += "){\n";
-            for (auto x: node->if_part->statement) {
-                check &= code_gen_Statement(x, buffer);
-                buffer += ";\n";
-            }
+            check &= code_gen_Statement(node->if_part, buffer);
+            buffer += ";\n";
             buffer += "}\n";
-            if (!node->else_part->statement.empty()) {
+
+            if (node->else_part != nullptr) {
                 buffer += "else{\n";
-                for (auto x: node->else_part->statement) {
-                    check &= code_gen_Statement(x, buffer);
-                    buffer += ";\n";
-                }
+                code_gen_Statement(node->else_part, buffer);
                 buffer += "}\n";
             }
             return check;
@@ -897,10 +910,8 @@ namespace target_c {
             }
             buffer += fmt::format("{}++", node->id->content);
             buffer += "){\n";
-            for (auto x: node->for_stmt->statement) {
-                check &= code_gen_Statement(x, buffer);
-                buffer += ";\n";
-            }
+            check &= code_gen_Statement(node->for_stmt, buffer);
+            buffer += ";\n";
             buffer += "}\n";
             return check;
         }

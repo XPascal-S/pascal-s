@@ -6,6 +6,7 @@
 #include <target/c.h>
 #include <iostream>
 
+/*
 Program * test_gcd() {
     auto *integer = new Keyword(KeywordType::Integer);
     auto *intKeyWord = new ExpKeyword(integer);
@@ -137,6 +138,7 @@ Program * test_gcd() {
     auto *mainProgram = new Program(mainHead, mainBody);
     return mainProgram;
 }
+*/
 
 Program * test_write_char(){
     Keyword *integer = new Keyword(KeywordType::Integer);
@@ -176,13 +178,14 @@ Program * test_write_char(){
     SubprogramHead *functionHeader = new SubprogramHead;
     BasicTypeSpec *intType = new BasicTypeSpec(integer);
     BasicTypeSpec *charType = new BasicTypeSpec(charC);
-    VarDecls *functionPara = new VarDecls;
+    ParamList *functionPara = new ParamList;
     IdentList *functionident = new IdentList;
     functionident->idents.push_back(functionParaIden); // function write_char(a:char):int;
-    VarDecl *charPara = new VarDecl(functionident, charType);
-    functionPara->decls.push_back(charPara);
-    FunctionDecl *functionDecl = new FunctionDecl(writeChar, functionPara, intType);
-    functionHeader->func = functionDecl;
+    ParamSpec *charPara = new ParamSpec(nullptr, functionident, charType);
+    functionPara->params.push_back(charPara);
+    functionHeader->name = writeChar;
+    functionHeader->decls = functionPara;
+    functionHeader->ret_type = intType;
 
 
     Variable *funcName = new Variable();
@@ -205,6 +208,7 @@ Program * test_write_char(){
     return mainProgram;
 }
 
+/*
 Program * test_if_else() {
     auto *integer = new Keyword(KeywordType::Integer);
     auto *intKeyWord = new ExpKeyword(integer);
@@ -316,6 +320,7 @@ Program * test_if_else() {
     auto *mainProgram = new Program(mainHead, mainBody);
     return mainProgram;
 }
+*/
 
 /*
 program main;

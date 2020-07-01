@@ -553,7 +553,6 @@ struct ExpConstantReal : public Exp {
 struct ExpMarker : public Exp {
     const Marker *value;
 
-
     explicit ExpMarker(const Marker *value) : Exp(Type::ExpMarker), value(value) {}
 
 };

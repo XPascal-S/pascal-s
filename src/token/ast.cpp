@@ -68,9 +68,6 @@ void deleteAST(Node *node) {
         case Type::VarDecls:
             delete reinterpret_cast<VarDecls *>(node);
             break;
-        case Type::FunctionDecls:
-            delete reinterpret_cast<FunctionDecls *>(node);
-            break;
         case Type::ExpAssign:
             delete reinterpret_cast<ExpAssign *>(node);
             break;
@@ -136,16 +133,16 @@ void printAST(Node *node, int dep) {
         case Type::Unknown:
           throw RuntimeReinterpretASTException(node);
         case Type::Program:
-#define cur_node (reinterpret_cast<Procedure*>(node))
-            put_tab(dep);
-            printf("{\n");
-            put_tab(dep + 1);
-            printf("type = Program\n");
-            for (Node *c : cur_node->children) {
-              printAST(c, dep + 1);
-            }
-            put_tab(dep);
-            printf("}\n");
+//#define cur_node (reinterpret_cast<Procedure*>(node))
+//            put_tab(dep);
+//            printf("{\n");
+//            put_tab(dep + 1);
+//            printf("type = Program\n");
+//            for (Node *c : cur_node->children) {
+//              printAST(c, dep + 1);
+//            }
+//            put_tab(dep);
+//            printf("}\n");
 //        case Type::ParamSpec:
 //            put_tab(dep);
 //            printf("{\n");
@@ -156,6 +153,7 @@ void printAST(Node *node, int dep) {
 //            printf("}\n");
 #undef cur_node
             break;
+        /*
   case Type::Procedure:
 #define cur_node (reinterpret_cast<Procedure*>(node))
             put_tab(dep);
@@ -167,6 +165,7 @@ void printAST(Node *node, int dep) {
             }
             put_tab(dep);
             printf("}\n");
+            */
 #undef  cur_node
             break;
         case Type::Function:
@@ -366,6 +365,7 @@ void printAST(Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
+            /*
         case Type::FunctionDecls:
 #define cur_node (reinterpret_cast<FunctionDecls*>(node))
             put_tab(dep);
@@ -377,6 +377,7 @@ void printAST(Node *node, int dep) {
             }
             put_tab(dep);
             printf("}\n");
+             */
 #undef  cur_node
             break;
         case Type::ExpAssign:
