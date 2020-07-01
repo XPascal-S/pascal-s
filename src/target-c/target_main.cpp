@@ -140,6 +140,7 @@ Program * test_gcd() {
 }
 */
 
+
 Program * test_write_char(){
     Keyword *integer = new Keyword(KeywordType::Integer);
     Keyword *charC = new Keyword(KeywordType::Char);
@@ -207,6 +208,48 @@ Program * test_write_char(){
     Program *mainProgram = new Program(promHead, mainBody);
     return mainProgram;
 }
+
+Program * test_write_char_2(){
+    Keyword *integer = new Keyword(KeywordType::Integer);
+    Keyword *charC = new Keyword(KeywordType::Char);
+    ExpKeyword *intKeyWord = new ExpKeyword(integer);
+    Identifier *mainIdentifier = new Identifier("main");
+    Ident *mainIdent = new Ident(mainIdentifier);
+    ProgramHead *promHead = new ProgramHead(intKeyWord, mainIdent, nullptr);
+    StatementList *mainStatementList = new StatementList;
+    Identifier *writeChar = new Identifier("write_char");
+
+    char testChar[6] = "hello";
+    for(int i=0; i<5; i++) {
+        //  write_char('h') --- write_char('0')
+        Write *writeStat = new Write;
+        ExpressionList *writeExpression = new ExpressionList;
+        ConstantChar *hchar = new ConstantChar(testChar[i]);
+        ExpConstantChar *inputHchar = new ExpConstantChar(hchar);
+        writeExpression->explist.push_back(inputHchar);
+        writeStat->exp_list = writeExpression;
+        ExecStatement *statement1 = new ExecStatement(writeStat);
+        mainStatementList->statement.push_back(statement1);
+    }
+
+    //主函数内容
+    Variable *mainFunc = new Variable();
+    mainFunc->id = mainIdentifier;
+    ConstantInteger *return1 = new ConstantInteger(1);
+    ConstantInteger *return0 = new ConstantInteger(0);
+    ExpConstantInteger *returnvalue = new ExpConstantInteger(return0);
+    ExpAssign *returnStat = new ExpAssign(mainFunc, returnvalue); // main := 0
+    ExecStatement *statement2 = new ExecStatement(returnStat);
+    mainStatementList->statement.push_back(statement2);
+    CompoundStatement *mainCompoundStatement = new CompoundStatement(mainStatementList);
+
+
+    ProgramBody *mainBody = new ProgramBody(nullptr, nullptr, nullptr, mainCompoundStatement);
+
+    Program *mainProgram = new Program(promHead, mainBody);
+    return mainProgram;
+}
+
 
 /*
 Program * test_if_else() {
@@ -342,7 +385,7 @@ end
 int main()
 {
 
-    Program *mainProgram = test_write_char();
+    Program *mainProgram = test_write_char_2();
     target_c::Buffer tempBuffer(std::cout);
     std::vector<std::string> include_files;
     target_c::CBuilder theBuilder(include_files, tempBuffer);
