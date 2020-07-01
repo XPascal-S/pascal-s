@@ -44,7 +44,7 @@ namespace target_c {
     };
 
     //符号表
-    struct SymbolTable
+    struct SymbolTable{
         std::string tableName;  //表示当前符号表的作用域。（以函数名称作为区分）
         SymbolTable *prev; //指向上层符号表
         std::map<std::string, struct SymbolTable *> nextTable; //Hash。函数名->符号表的映射
