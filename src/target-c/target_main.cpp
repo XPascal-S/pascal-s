@@ -116,7 +116,8 @@ int main()
     Variable *mainFunc = new Variable();
     mainFunc->id = mainIdentifier;
     ConstantInteger *return1 = new ConstantInteger(1);
-    ExpConstantInteger *returnvalue = new ExpConstantInteger(return1);
+    ConstantInteger *return0 = new ConstantInteger(0);
+    ExpConstantInteger *returnvalue = new ExpConstantInteger(return0);
     ExpAssign *returnStat = new ExpAssign(mainFunc, returnvalue); // main := 0
     ExecStatement *statement2 = new ExecStatement(returnStat);
     mainStatementList->statement.push_back(statement2);

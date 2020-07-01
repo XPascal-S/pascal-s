@@ -79,11 +79,18 @@ namespace target_c {
         struct SymbolTable *nowST_pointer; //当前符号表指针
 
         CBuilder(std::vector<std::string> &include_files,
-                 Buffer &buf) : include_files(std::move(include_files)), outputBuff(outputBuff) {
+                 Buffer &buf) : include_files(std::move(include_files)), outputBuff(buf) {
             this->startST_pointer = new SymbolTable;
             this->nowST_pointer = this->startST_pointer;
             this->nowST_pointer->prev = NULL;
             this->nowST_pointer->tableName = "main";
+            struct FuncInfo functionInfo;
+            functionInfo.funcName = "main";
+            functionInfo.returnType = "int";
+            functionInfo.funcBody = "";
+            functionInfo.formalPara = "";
+            functionInfo.additionPara = "";
+            this->functionBuff.insert(std::pair<std::string, struct FuncInfo>(this->nowST_pointer->tableName, functionInfo));
         }
 
         ~CBuilder() {
@@ -91,6 +98,7 @@ namespace target_c {
             st_deque.push_back(this->startST_pointer);
             while (!st_deque.empty()) {
                 struct SymbolTable *now_pointer = st_deque.front();
+                st_deque.pop_front();
                 for (auto x : now_pointer->nextTable) {
                     st_deque.push_back(x.second);
                 }
@@ -140,21 +148,23 @@ namespace target_c {
 
             //输出函数定义
             for (auto x : this->functionBuff) {
+                if(x.first == "main")
+                    continue;
                 x.second.formalPara.pop_back();
                 x.second.formalPara.pop_back();
                 this->outputBuff.writeln(
                         x.second.returnType + " " + x.second.funcName + "("
-                        + x.second.formalPara + "){\n"
+                        + x.second.formalPara + "){"
                 );
                 this->outputBuff.write(x.second.funcBody);
-                this->outputBuff.write("}");
+                this->outputBuff.write("}\n");
             }
 
             //输出主函数内容
             outputBuff
                     .writeln("int main(){")
-                    .writeln(fmt::format("{}", this->mainBuff))
-                    .writeln("return 0;")
+                    .write(fmt::format("{}", this->mainBuff))
+                    //.writeln("return 0;")
                     .writeln("}");
             return code;
         }
@@ -566,11 +576,11 @@ namespace target_c {
                 for (const auto y : x->idents->idents) {
                     struct SymbolEntry se;
                     if (x->type_spec->type == Type::BasicTypeSpec) {
-                        check &= keyword2str(reinterpret_cast<const BasicTypeSpec *>(x)->keyword->key_type, se.typeDecl);
+                        check &= keyword2str(reinterpret_cast<const BasicTypeSpec *>(x->type_spec)->keyword->key_type, se.typeDecl);
                         nowFuncInfo.paraType.push_back(se.typeDecl);
                         se.varType = ISBASIC;
                     } else if (x->type_spec->type == Type::ArrayTypeSpec) {
-                        check &= keyword2str(reinterpret_cast<const ArrayTypeSpec *>(x)->keyword->key_type, se.typeDecl);
+                        check &= keyword2str(reinterpret_cast<const ArrayTypeSpec *>(x->type_spec)->keyword->key_type, se.typeDecl);
                         for(int i=0; i<reinterpret_cast<const ArrayTypeSpec *>(x)->periods.size(); i++){
                             se.typeDecl += "*"; //数组类型
                         }
@@ -718,7 +728,7 @@ namespace target_c {
                 throw std::runtime_error("semantic error: no func or proc found in functionBuff");
                 return TranslateFailed;
             }
-            bool check;
+            bool check = true;
             const struct FuncInfo callInfo = iter->second;
             buffer += node->fn->content;
             buffer += "(";
@@ -728,9 +738,11 @@ namespace target_c {
             }
             expType = callInfo.returnType;
             std::string otherPara = callInfo.additionPara;
-            otherPara.pop_back();
-            otherPara.pop_back();
+            //otherPara.pop_back();
+            //otherPara.pop_back();
             buffer += otherPara;
+            buffer.pop_back();
+            buffer.pop_back();
             buffer += ");\n";
             return check;
         }
@@ -789,10 +801,11 @@ namespace target_c {
             std::string rhsType;
             if(node->lhs->type == Type::Variabele){
                 //处理函数返回值的问题
-                std::string varName = reinterpret_cast<const Variable *>(node)->id->content;
+                std::string varName = reinterpret_cast<const Variable *>(node->lhs)->id->content;
                 if(varName == this->nowST_pointer->tableName){
                     buffer += "return ";
                     code_gen_exp(node->rhs, buffer, rhsType);
+                    buffer += ";\n";
                     auto funcIter = this->functionBuff.find(this->nowST_pointer->tableName);
                     if(funcIter->second.returnType != rhsType){
                         //函数返回值类型不符
@@ -884,7 +897,9 @@ namespace target_c {
         }
 
         int code_gen_ExpConstantChar(const ExpConstantChar *node, std::string &buffer, std::string &expType) {
+            buffer += "'";
             buffer += node->value->attr;
+            buffer += "'";
             return constType2str(node->type, expType);
         }
 
@@ -899,7 +914,9 @@ namespace target_c {
         }
 
         int code_gen_ExpConstantString(const ExpConstantString *node, std::string &buffer, std::string &expType) {
+            buffer += "\"";
             buffer += node->value->attr;
+            buffer += "\"";
             return constType2str(node->type, expType);
         }
 
