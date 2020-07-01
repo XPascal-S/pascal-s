@@ -20,9 +20,6 @@ void deleteAST(Node *node) {
         case Type::Program:
             delete reinterpret_cast<Program *>(node);
             break;
-        case Type::Procedure:
-            delete reinterpret_cast<Procedure *>(node);
-            break;
 //        case Type::ParamSpec:
 //            delete reinterpret_cast<ParamSpec *>(node);
 //            break;

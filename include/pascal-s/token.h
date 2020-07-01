@@ -79,7 +79,6 @@ enum class MarkerType :marker_type_underlying_type {
     Sub = 0x11, // -
     Mul = 0x20, // *
     Div = 0x21, // /
-    MOD = 0x61, // %
 
     LParen = 0x30, // (
     RParen = 0x31, // )
