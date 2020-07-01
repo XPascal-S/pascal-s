@@ -663,6 +663,10 @@ namespace target_c {
                     return code_gen_BiExp(reinterpret_cast<const BiExp *>(node), buffer, expType);
                 case Type::UnExp:
                     return code_gen_UnExp(reinterpret_cast<const UnExp *>(node), buffer, expType);
+                case Type::Read:
+                    return code_gen_Read(reinterpret_cast<const Read *>(node), buffer);
+                case Type::Write:
+                    return code_gen_Write(reinterpret_cast<const Write *>(mode), buffer);
                 case Type::ExpCall:
                     return code_gen_ExpCall(reinterpret_cast<const ExpCall *>(node), buffer, expType);
                 case Type::ExpAssign:
@@ -852,6 +856,73 @@ namespace target_c {
             check &= marker2str(node->marker->marker_type, markerStr);
             buffer += markerStr + " ";
             check &= code_gen_exp(node->lhs, buffer, expType);
+            return check;
+        }
+
+        int typeStr2ioStr(const std::string typeStr, std::string &result) {
+            switch (var_type) {
+                case "int":
+                    result = "%d";
+                    break;
+                case "char*":
+                    result = "%s";
+                    break;
+                case "double":
+                    result = "%lf";
+                    break;
+                case "char":
+                    result = "%c";
+                    break;
+                default:
+                    assert(false);
+                    throw std::runtime_error("semantic error: no var type match");
+                    return 0;
+            }
+            return 1;
+        }
+
+        int code_gen_Read(const Read *node, std::string &buffer) {
+            buffer += "scanf(\"";
+            for (auto x: node->var_list->params) {
+                auto var_type = this->nowST_pointer->content[x->id->content];
+                std::string io_type;
+                if (typeStr2ioStr(var_type, io_type)) {
+                    buffer += io_type;
+                }
+                else {
+                    assert(false);
+                    throw std::runtime_error("semantic error: no var type match");
+                    return TranslateFailed;
+                }
+            }
+            buffer += "\"";
+            for (auto x: node->var_list->params) {
+                buffer += ", " + x->id->content;
+            }
+            buffer += ");\n";
+            return OK;
+        }
+
+        int code_gen_Write(const Write *node, std::string &buffer) {
+            buffer += "printf(\"";
+            std::string writeBuffer;
+            bool check = true;
+            for (auto x: node->exp_list->explist) {
+                std::string expType, ioType;
+                writeBuffer += ", ";
+                check &= code_gen_exp(x, writeBuffer, expType);
+                if (typeStr2ioStr(expType, ioType)) {
+                    buffer += ioType;
+                }
+                else {
+                    assert(false);
+                    throw std::runtime_error("semantic error: no var type match");
+                    return TranslateFailed;
+                }
+            }
+            buffer += "\"";
+            buffer += writeBuffer;
+            buffer += ");\n";
             return check;
         }
 
