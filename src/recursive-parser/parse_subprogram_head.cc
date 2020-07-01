@@ -6,56 +6,56 @@
 template<typename Lexer>
 ast::SubprogramHead *Parser<Lexer>::parse_subprogram_head() {
 
-    // keyword procedure or function
-    if (!predicate::is_procedure(current_token) || !predicate::is_function(current_token)) {
-        errors.push_back(new PascalSParseExpectTGotError(__FUNCTION__, TokenType::Function, current_token));
-        return nullptr;
-    }
+    // program id
     auto fn_def = reinterpret_cast<const Keyword *>(current_token);
     next_token();
+    assert(fn_def->key_type == KeywordType::Procedure || fn_def->key_type == KeywordType::Function);
 
-    // id
     auto ident = reinterpret_cast<const Identifier *>(current_token);
     expected_type(TokenType::Identifier);
     next_token();
 
-    // share common struct type Procedure
-    auto proc = new ast::Procedure(fn_def, ident);
+    // share common struct type SubprogramHead
+    ast::SubprogramHead *hd = new ast::SubprogramHead(fn_def, ident, nullptr, nullptr);
 
-    // param list
+    // maybe param list
     if (predicate::is_lparen(current_token)) {
-        proc->params = parse_param_list_with_paren();
-        if (proc->params == nullptr) {
-            delete proc;
-            return nullptr;
-        }
+        hd->decls = parse_param_list_with_paren();
     }
 
     // function should with type
     if (predicate::is_function(fn_def)) {
 
         // :
-        expected_enum_type_r(predicate::is_colon, predicate::marker_colon, decls);
+        expected_enum_type_r(predicate::is_colon, predicate::marker_colon, hd);
         next_token();
 
-        // basic type
-        auto basic = reinterpret_cast<const Keyword *>(current_token);
-        if (
-                basic->key_type == KeywordType::Integer ||
-                basic->key_type == KeywordType::Real ||
-                basic->key_type == KeywordType::Char ||
-                basic->key_type == KeywordType::Boolean
-                ) {
-            next_token();
-            proc->return_type = new ast::BasicTypeSpec(basic);
-        } else {
-            errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "basic type spec", basic));
-            delete proc;
-            return decls;
+        if (current_token == nullptr || current_token->type != TokenType::Keyword) {
+            for (;;) {
+                if (current_token == nullptr) {
+                    return fall_expect_s("basic type spec"), hd;
+                }
+                if (predicate::is_rparen(current_token)) {
+                    return fall_expect_s("basic type spec"), hd;
+                }
+                if (predicate::is_semicolon(current_token)) {
+                    return fall_expect_s("basic type spec"), hd;
+                }
+                maybe_recover_keyword(KeywordType::Boolean)
+                maybe_recover_keyword(KeywordType::Integer)
+                maybe_recover_keyword(KeywordType::Char)
+                maybe_recover_keyword(KeywordType::Real)
+                skip_error_token_s("basic type spec")
+
+                return fall_expect_s("basic type spec"), hd;
+            }
         }
+
+        auto basic = reinterpret_cast<const Keyword *>(current_token);
+        hd->ret_type = new ast::BasicTypeSpec(basic);
+        next_token();
     }
 
-
-    return proc;
+    return hd;
 }
 

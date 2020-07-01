@@ -101,101 +101,103 @@ struct LLVMBuilder {
                                    std::map<std::string, llvm::AllocaInst *> &map,
                                    std::map<std::string, llvm::Value *> &const_map);
 
-    static Function *code_gen_procedure(const ast::Subprogram *pProcedure) {
-        throw std::exception("todo code gen procedure");
-//        Function *fn = modules.getFunction(pProcedure->subhead->ident->content);
+    Function *code_gen_procedure(const ast::Subprogram *pSubprogram) {
+        \
+        Function *fn = modules.getFunction(pSubprogram->subhead->name->content);
+
+        // create function proto llvm_func
+        if (!fn) {
+            llvm::Type *llvm_ret_type = nullptr;
+            if (pSubprogram->subhead->ret_type == nullptr) {
+                llvm_ret_type = llvm::Type::getVoidTy(ctx);
+            } else {
+                llvm_ret_type = create_type(pSubprogram->subhead->ret_type);
+            }
+
+            int args_proto_size = 0;
+
+            for (auto arg_spec : pSubprogram->subhead->decls->params) {
+                args_proto_size += arg_spec->id_list->idents.size();
+            }
+
+            std::vector<llvm::Type *> args_proto;
+            args_proto.reserve(args_proto_size);
+
+            for (auto arg_spec : pSubprogram->subhead->decls->params) {
+                llvm::Type *llvm_arg_type = create_type(arg_spec->spec);
+
+                if (arg_spec->keyword_var != nullptr) {
+                    llvm_arg_type = llvm_arg_type->getPointerTo();
+                }
+
+                for (auto ident: arg_spec->id_list->idents) {
+                    args_proto.push_back(llvm_arg_type);
+                }
+            }
+
+            auto *prototype = llvm::FunctionType::get(
+                    llvm_ret_type, args_proto, false);
+
+            fn = Function::Create(prototype, Function::ExternalLinkage,
+                                  pSubprogram->subhead->name->content, modules);
+
+            int arg_cursor = 0;
+            for (auto arg_spec : pSubprogram->subhead->decls->params) {
+                for (auto ident: arg_spec->id_list->idents) {
+                    fn->getArg(arg_cursor++)->setName(ident->content);
+                }
+            }
+        } else {
+//            for (int i = 0; i < fn->arg_size(); i++) {
+//                const auto &arg = fn->getArg(i);
 //
-//        // create function proto llvm_func
-//        if (!fn) {
-//            llvm::Type *llvm_ret_type = nullptr;
-//            if (pProcedure->return_type == nullptr) {
-//                llvm_ret_type = llvm::Type::getVoidTy(ctx);
-//            } else {
-//                llvm_ret_type = create_type(pProcedure->return_type);
 //            }
-//
-//            int args_proto_size = 0;
-//
-//            for (auto arg_spec : pProcedure->params->params) {
-//                args_proto_size += arg_spec->id_list->idents.size();
-//            }
-//
-//            std::vector<llvm::Type *> args_proto;
-//            args_proto.reserve(args_proto_size);
-//
-//            for (auto arg_spec : pProcedure->params->params) {
-//                llvm::Type *llvm_arg_type = create_type(arg_spec->spec);
-//
-//                if (arg_spec->keyword_var != nullptr) {
-//                    llvm_arg_type = llvm_arg_type->getPointerTo();
-//                }
-//
-//                for (auto ident: arg_spec->id_list->idents) {
-//                    args_proto.push_back(llvm_arg_type);
-//                }
-//            }
-//
-//            auto *prototype = llvm::FunctionType::get(
-//                    llvm_ret_type, args_proto, false);
-//
-//            fn = Function::Create(prototype, Function::ExternalLinkage,
-//                                  pProcedure->subhead->ident->content, modules);
-//
-//            int arg_cursor = 0;
-//            for (auto arg_spec : pProcedure->params->params) {
-//                for (auto ident: arg_spec->id_list->idents) {
-//                    fn->getArg(arg_cursor++)->setName(ident->content);
-//                }
-//            }
-//        } else {
-//            for (int i = 0; i < program->arg_size(); i++) {
-//                const auto &arg = program->getArg(i);
-//            }
-//            //todo action fn existed
-//        }
-//
-//        // out_code('entry:')
-//        llvm::BasicBlock *body = llvm::BasicBlock::Create(ctx, "entry", fn);
-//        ir_builder.SetInsertPoint(body);
-//
-//        // create local variable map this.ctx
-//        std::map<std::string, llvm::AllocaInst *> program_this;
-//        insert_var_decls(fn, program_this, pProcedure->var_decls);
-//        // create local const map this.const_ctx
-//        std::map<std::string, Value *> program_const_this;
-//        insert_const_decls(program_const_this, pProcedure->const_decls);
-//        insert_param_decls(fn, program_this, program_const_this);
-//
-//        // push 'this' into scope stack
-//        auto link = LinkedContext{scope_stack, &program_this, &program_const_this};
-//        scope_stack = &link;
-//
-//        // out_code( define variable ret_type: %procedure.name )
-//        llvm::IRBuilder<> dfn_block(&fn->getEntryBlock(), fn->getEntryBlock().begin());
-//        program_this[pProcedure->subhead->ident->content] = dfn_block.CreateAlloca(
-//                fn->getReturnType(), nullptr, pProcedure->subhead->ident->content);
-//
-//        // generate body
-//        if (code_gen_statement(pProcedure->body)) {
-//            // if body generated
-//            // out_code( %ret_tmp = load ret_type from %procedure.name )
-//            // out_code( ret ret_type: %ret_tmp )
-//            ir_builder.CreateRet(
-//                    ir_builder.CreateLoad(program_this[pProcedure->subhead->ident->content], "ret_tmp"));
-//
-//            llvm::verifyFunction(*fn);
-//            fn_pass_manager.run(*fn);
-//
-//            // pop 'this' from scope stack
-//        scope_stack->deconstruct();
-//            scope_stack = link.last;
-//            return fn;
-//        }
-//
-//        fn->eraseFromParent();
-//        // pop 'this' from scope stack
-//        scope_stack->deconstruct();
-//        scope_stack = link.last;
+            //todo action fn existed
+        }
+
+        // out_code('entry:')
+        llvm::BasicBlock *body = llvm::BasicBlock::Create(ctx, "entry", fn);
+        ir_builder.SetInsertPoint(body);
+
+        // create local variable map this.ctx
+        std::map<std::string, pascal_s::ArrayInfo *> program_array_infos;
+        std::map<std::string, llvm::AllocaInst *> program_this;
+        insert_var_decls(fn, program_array_infos, program_this, pSubprogram->subbody->vardecls);
+        // create local const map this.const_ctx
+        std::map<std::string, Value *> program_const_this;
+        insert_const_decls(program_const_this, pSubprogram->subbody->constdecls);
+        insert_param_decls(fn, program_this, program_const_this);
+
+        // push 'this' into scope stack
+        auto link = LinkedContext{scope_stack, &program_array_infos, &program_this, &program_const_this};
+        scope_stack = &link;
+
+        // out_code( define variable ret_type: %procedure.name )
+        llvm::IRBuilder<> dfn_block(&fn->getEntryBlock(), fn->getEntryBlock().begin());
+        program_this[pSubprogram->subhead->name->content] = dfn_block.CreateAlloca(
+                fn->getReturnType(), nullptr, pSubprogram->subhead->name->content);
+
+        // generate body
+        if (code_gen_statement(pSubprogram->subbody->compound)) {
+            // if body generated
+            // out_code( %ret_tmp = load ret_type from %procedure.name )
+            // out_code( ret ret_type: %ret_tmp )
+            ir_builder.CreateRet(
+                    ir_builder.CreateLoad(program_this[pSubprogram->subhead->name->content], "ret_tmp"));
+
+            llvm::verifyFunction(*fn);
+            fn_pass_manager.run(*fn);
+
+            // pop 'this' from scope stack
+            scope_stack->deconstruct();
+            scope_stack = link.last;
+            return fn;
+        }
+
+        fn->eraseFromParent();
+        // pop 'this' from scope stack
+        scope_stack->deconstruct();
+        scope_stack = link.last;
         return nullptr;
     }
 

@@ -15,63 +15,91 @@ INSTANTIATE_TEST_SUITE_P(Simple, ParserMainTest, testing::Values( /* NOLINT */
                         new Keyword(KeywordType::Begin),
                         new Identifier("a"),
                         new Keyword(KeywordType::End),
-//                        new Marker(MarkerType::Semicolon),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Keyword(KeywordType::Program),
+                        new Identifier("main"),
+                        new Marker(MarkerType::LParen),
+                        new Identifier("a"),
+                        new Marker(MarkerType::RParen),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Begin),
+                        new Identifier("a"),
+                        new Keyword(KeywordType::End),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Keyword(KeywordType::Program),
+                        new Identifier("main"),
+                        new Marker(MarkerType::LParen),
+                        new Identifier("a"),
+                        new Marker(MarkerType::Comma),
+                        new Identifier("b"),
+                        new Marker(MarkerType::RParen),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Begin),
+                        new Identifier("a"),
+                        new Keyword(KeywordType::End),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Keyword(KeywordType::Program),
+                        new Identifier("main"),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Const),
+                        new Identifier("a"),
+                        new Marker(MarkerType::EQ),
+                        new ConstantInteger(1),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Begin),
+                        new Identifier("a"),
+                        new Keyword(KeywordType::End),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Keyword(KeywordType::Program),
+                        new Identifier("main"),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Var),
+                        new Identifier("a"),
+                        new Marker(MarkerType::Colon),
+                        new Keyword(KeywordType::Integer),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Begin),
+                        new Identifier("a"),
+                        new Keyword(KeywordType::End),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Keyword(KeywordType::Program),
+                        new Identifier("main"),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Var),
+                        new Identifier("a"),
+                        new Marker(MarkerType::Colon),
+                        new Keyword(KeywordType::Integer),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Procedure),
+                        new Identifier("main"),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Const),
+                        new Identifier("a"),
+                        new Marker(MarkerType::EQ),
+                        new ConstantInteger(1),
+                        new Marker(MarkerType::Semicolon),
+                        new Keyword(KeywordType::Begin),
+                        new Keyword(KeywordType::End),
+                        new Keyword(KeywordType::Begin),
+                        new Identifier("a"),
+                        new Keyword(KeywordType::End),
                 }
         }
-//        ,
-//        ParserTestCase{
-//                {
-//                        new Keyword(KeywordType::Program),
-//                        new Identifier("main"),
-//                        new Marker(MarkerType::LParen),
-//                        new Identifier("a"),
-//                        new Marker(MarkerType::RParen),
-//                        new Marker(MarkerType::Semicolon),
-//                        new Identifier("a"),
-//                        new Marker(MarkerType::Semicolon),
-//                }
-//        },
-//        ParserTestCase{
-//                {
-//                        new Keyword(KeywordType::Program),
-//                        new Identifier("main"),
-//                        new Marker(MarkerType::LParen),
-//                        new Identifier("a"),
-//                        new Marker(MarkerType::RParen),
-//                        new Marker(MarkerType::Semicolon),
-//                        new Identifier("a"),
-//                        new Marker(MarkerType::Semicolon),
-//                }
-//        },
-//        ParserTestCase{
-//                {
-//                        new Keyword(KeywordType::Program),
-//                        new Identifier("main"),
-//                        new Marker(MarkerType::LParen),
-//                        new Identifier("a"),
-//                        new Marker(MarkerType::Comma),
-//                        new Identifier("b"),
-//                        new Marker(MarkerType::RParen),
-//                        new Marker(MarkerType::Semicolon),
-//                        new Identifier("a"),
-//                        new Marker(MarkerType::Semicolon),
-//                }
-//        }
-//        ,
-//        ParserTestCase{
-//                {
-//                        new Keyword(KeywordType::Program),
-//                        new Identifier("main"),
-//                        new Marker(MarkerType::Semicolon),
-//                        new Keyword(KeywordType::Const),
-//                        new Identifier("a"),
-//                        new Marker(MarkerType::EQ),
-//                        new ConstantInteger("1"),
-//                        new Marker(MarkerType::Semicolon),
-//                        new Identifier("a"),
-//                        new Marker(MarkerType::Semicolon),
-//                }
-//        }
 ));
 
 INSTANTIATE_TEST_SUITE_P(HelloWorld, ParserMainTest, testing::Values( /* NOLINT */

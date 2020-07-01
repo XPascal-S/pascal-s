@@ -4,63 +4,38 @@
 
 
 template<typename Lexer>
-ast::FunctionDecls *Parser<Lexer>::parse_function_decls() {
-
-    // look ahead
-    if (predicate::is_function(current_token) || predicate::is_procedure(current_token)) {
-
-        // procedure or function
-        return _parse_function_decls(new ast::FunctionDecls);
-    }
-    return nullptr;
+ast::SubprogramDecls *Parser<Lexer>::parse_subprogram_decls() {
+    return _parse_subprogram_decls(new ast::SubprogramDecls);
 }
 
 template<typename Lexer>
-ast::FunctionDecls *Parser<Lexer>::_parse_function_decls(ast::FunctionDecls *decls) {
+ast::SubprogramDecls *Parser<Lexer>::_parse_subprogram_decls(ast::SubprogramDecls *decls) {
 
     // function head
-    ast::Procedure *proc = parse_function_head();
-    if (proc == nullptr) {
+
+    auto subprogram = new ast::Subprogram(nullptr, nullptr);
+    decls->subprogram.push_back(subprogram);
+
+    // subprogram head
+    subprogram->subhead = parse_subprogram_head();
+    if (subprogram->subhead == nullptr) {
         return decls;
-    }
-
-    // function should with type
-    if (predicate::is_function(proc->fn_def)) {
-
-        // :
-        expected_enum_type_r(predicate::is_colon, predicate::marker_colon, decls);
-        next_token();
-
-        // basic type
-        auto basic = reinterpret_cast<const Keyword *>(current_token);
-        if (
-                basic->key_type == KeywordType::Integer ||
-                basic->key_type == KeywordType::Real ||
-                basic->key_type == KeywordType::Char ||
-                basic->key_type == KeywordType::Boolean
-                ) {
-            next_token();
-            proc->return_type = new ast::BasicTypeSpec(basic);
-        } else {
-            errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "basic type spec", basic));
-            delete proc;
-            return decls;
-        }
     }
 
     // ;
     expected_enum_type_r(predicate::is_semicolon, predicate::marker_semicolon, decls);
+    subprogram->semicolon = reinterpret_cast<const Marker *>(current_token);
     next_token();
 
-    // function body
-    proc = parse_function_body(proc);
-    if (proc != nullptr) {
-        decls->decls.push_back(proc);
+    // subprogram body
+    subprogram->subbody = parse_subprogram_body();
+    if (subprogram->subbody == nullptr) {
+        return decls;
     }
 
     // look ahead
     if (predicate::is_function(current_token) || predicate::is_procedure(current_token)) {
-        return _parse_function_decls(decls);
+        return _parse_subprogram_decls(decls);
     }
 
     return decls;

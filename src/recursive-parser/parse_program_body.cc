@@ -17,13 +17,13 @@ ast::ProgramBody *Parser<Lexer>::parse_program_body() {
     if (predicate::is_var(current_token)) {
         var_decls = parse_var_decls();
     }
-//
-//    // function declarations
-//    ast::FunctionDecls *fn_decls = nullptr;
-//    if (predicate::is_function(current_token) || predicate::is_procedure(current_token)) {
-//        fn_decls = parse_function_decls();
-//    }
-//
+
+    // function declarations
+    ast::SubprogramDecls *fn_decls = nullptr;
+    if (predicate::is_function(current_token) || predicate::is_procedure(current_token)) {
+        fn_decls = parse_subprogram_decls();
+    }
+
 //    std::set<const Token *> till;
 //    till.insert(reinterpret_cast<const Token *>(&predicate::marker_semicolon));
 //    // program statement
@@ -31,5 +31,5 @@ ast::ProgramBody *Parser<Lexer>::parse_program_body() {
 //            program, ident, ident_list,
 //            const_decls, var_decls, fn_decls, parse_statement(&till));
 
-    return new ast::ProgramBody(const_decls, var_decls, nullptr, parse_compound_statement());
+    return new ast::ProgramBody(const_decls, var_decls, fn_decls, parse_compound_statement());
 }

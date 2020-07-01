@@ -5,6 +5,8 @@
 #ifndef PASCAL_S_STREAM_FILE_H
 #define PASCAL_S_STREAM_FILE_H
 
+#include <istream>
+
 namespace pascal_s {
 
     class CPPStreamFile {

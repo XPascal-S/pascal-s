@@ -38,10 +38,9 @@ template<typename Lexer>
 ast::ParamList *Parser<Lexer>::_parse_param_list(ast::ParamList *params) {
     for (;;) {
         auto spec = parse_param();
-        if (spec == nullptr) {
-            return params;
+        if (spec != nullptr) {
+            params->params.push_back(spec);
         }
-        params->params.push_back(spec);
 
 
         //look ahead
@@ -68,8 +67,12 @@ ast::ParamSpec *Parser<Lexer>::parse_param() {
             return fall_expect_s("keyword var or id list");
         }
         if (predicate::is_rparen(current_token)) {
-            return fall_expect_s("keyword var or id list");
+            return nullptr;
         }
+        // todo: allow empty?
+//        if (predicate::is_rparen(current_token)) {
+//            return fall_expect_s("keyword var or id list");
+//        }
         if (predicate::is_semicolon(current_token)) {
             return fall_expect_s("keyword var or id list");
         }
@@ -108,13 +111,13 @@ ast::ParamSpec *Parser<Lexer>::parse_param() {
     if (current_token == nullptr || current_token->type != TokenType::Keyword) {
         for (;;) {
             if (current_token == nullptr) {
-                return fall_expect_s("basic type spec");
+                return fall_expect_s("basic type spec"), new ast::ParamSpec(keyword_var, id_list, nullptr);
             }
             if (predicate::is_rparen(current_token)) {
-                return fall_expect_s("basic type spec");
+                return fall_expect_s("basic type spec"), new ast::ParamSpec(keyword_var, id_list, nullptr);
             }
             if (predicate::is_semicolon(current_token)) {
-                return fall_expect_s("basic type spec");
+                return fall_expect_s("basic type spec"), new ast::ParamSpec(keyword_var, id_list, nullptr);
             }
             maybe_recover_keyword(KeywordType::Boolean)
             maybe_recover_keyword(KeywordType::Integer)
