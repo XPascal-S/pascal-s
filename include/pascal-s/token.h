@@ -290,6 +290,10 @@ extern const cls cls_lower ##_## lower;
 
     pascal_s_predicator(Keyword, keyword, of, Of)
 
+    pascal_s_predicator(Keyword, keyword, read, Read)
+
+    pascal_s_predicator(Keyword, keyword, write, Write)
+
 #undef pascal_s_predicator
 
 

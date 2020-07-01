@@ -49,13 +49,36 @@ ast::Statement *Parser<Lexer>::parse_statement(std::set<const Token *> *till) {
             case KeywordType::If:
                 return parse_if_else_statement(till);
             case KeywordType::Read:
+                return parse_read_statement(till);
             case KeywordType::Write:
-                //todo: read, write
-                throw std::runtime_error("todo read, write stmt");
+                return parse_write_statement(till);
+            default:
+                assert(false);
+                return nullptr;
         }
     }
 
 
     // epsilon
     return nullptr;
+}
+
+template<typename Lexer>
+ast::Statement *Parser<Lexer>::parse_read_statement(std::set<const Token *> *till) {
+    assert(predicate::is_read(current_token));
+    next_token();
+
+    auto stmt = new ast::Read();
+    stmt->var_list = parse_variable_list_with_paren();
+    return stmt;
+}
+
+template<typename Lexer>
+ast::Statement *Parser<Lexer>::parse_write_statement(std::set<const Token *> *till) {
+    assert(predicate::is_write(current_token));
+    next_token();
+
+    auto stmt = new ast::Write();
+    stmt->exp_list = parse_expression_list_with_paren();
+    return stmt;
 }

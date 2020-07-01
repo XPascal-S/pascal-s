@@ -451,17 +451,17 @@ namespace ast {
     };
 
 
-    struct Read : public Exp {
+    struct Read : public Statement {
         VariableList *var_list = nullptr;
 
-        explicit Read() : Exp(Type::Read) {}
+        explicit Read() : Statement(Type::Read) {}
     };
 
 
-    struct Write : public Exp {
+    struct Write : public Statement {
         ExpressionList *exp_list = nullptr;
 
-        explicit Write() : Exp(Type::Write) {}
+        explicit Write() : Statement(Type::Write) {}
     };
 
 

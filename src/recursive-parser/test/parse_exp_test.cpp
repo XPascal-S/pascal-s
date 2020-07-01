@@ -109,6 +109,16 @@ INSTANTIATE_TEST_SUITE_P(Assign, ExpTest, testing::Values( /* NOLINT */
                         new Marker(MarkerType::Add),
                         new Identifier("a"),
                 }
+        },
+        ParserTestCase{
+                {
+                        new Identifier("x"),
+                        new Marker(MarkerType::Assign),
+                        new Identifier("a"),
+                        new Marker(MarkerType::LBracket),
+                        new Identifier("i"),
+                        new Marker(MarkerType::RBracket),
+                }
         }
 ));
 

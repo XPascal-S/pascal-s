@@ -104,6 +104,10 @@ const Keyword keyword_## lower(KeywordType::upper);
 
     keyword_predicator(of, Of)
 
+    keyword_predicator(read, Read)
+
+    keyword_predicator(write, Write)
+
     bool token_equal(const Token *lhs, const std::vector<Token *> *rhs) {
         if (rhs == nullptr || lhs == nullptr) {
             return lhs == nullptr;

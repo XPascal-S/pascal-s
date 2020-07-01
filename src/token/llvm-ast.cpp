@@ -283,6 +283,45 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
+        case Type::Read:
+#define cur_node (reinterpret_cast<const ast::Read*>(node))
+            put_tab(dep);
+            printf("{\n");
+            put_tab(dep + 1);
+            printf("type = Read\n");
+//            put_tab(dep + 1);
+//            printf("invoke_target = %s\n", convertToString(cur_node->).c_str());
+            put_tab(dep + 1);
+            printf("invoke_params = \n");
+            for (auto exp: cur_node->var_list->params) {
+                printAST(exp, dep + 1);
+            }
+
+
+            put_tab(dep);
+            printf("}\n");
+#undef  cur_node
+            break;
+        case Type::Write:
+#define cur_node (reinterpret_cast<const ast::Write*>(node))
+            put_tab(dep);
+            printf("{\n");
+            put_tab(dep + 1);
+            printf("type = Write\n");
+//            put_tab(dep + 1);
+//            printf("invoke_target = %s\n", convertToString(cur_node->fn).c_str());
+            put_tab(dep + 1);
+            printf("invoke_params = \n");
+
+            for (auto exp: cur_node->exp_list->explist) {
+                printAST(exp, dep + 1);
+            }
+
+
+            put_tab(dep);
+            printf("}\n");
+#undef  cur_node
+            break;
         case Type::ExecStatement:
 #define cur_node (reinterpret_cast<const ast::ExecStatement*>(node))
 //            printf("{\n");
@@ -346,12 +385,31 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
+        case Type::Variabele:
+#define cur_node (reinterpret_cast<const ast::Variable*>(node))
+            put_tab(dep);
+            printf("{\n");
+            put_tab(dep + 1);
+            printf("type = Variabele\n");
+            printf("name = %s\n", convertToString(cur_node->id).c_str());
+            printf("exps =\n");
+            for (auto param: cur_node->id_var->explist) {
+                printAST(param, dep + 1);
+            }
+
+            put_tab(dep);
+            printf("}\n");
+#undef  cur_node
+            break;
         case Type::VariableList:
 #define cur_node (reinterpret_cast<const ast::VariableList*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
             printf("type = VariableList\n");
+            for (auto param: cur_node->params) {
+                printAST(param, dep + 1);
+            }
 
             put_tab(dep);
             printf("}\n");
