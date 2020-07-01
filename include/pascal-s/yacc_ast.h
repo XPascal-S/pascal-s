@@ -247,9 +247,11 @@ struct ParamList : public Node {
 
 
 struct ExpressionList : public Node {
+
     std::vector<Exp*> explist;
 
     explicit ExpressionList() : Node(Type::ExpressionList) {}
+
 };
 
 
@@ -485,9 +487,9 @@ struct IfElseStatement : public Statement {
 
     Exp* expression = nullptr;
 
-    Statement* if_part = nullptr;
+    ExpressionList* if_part = nullptr;
 
-    Statement* else_part = nullptr;
+    ExpressionList* else_part = nullptr;
 
     IfElseStatement() : Statement(Type::IfElseStatement) {}
 
@@ -502,7 +504,7 @@ struct ForStatement : public Statement {
 
     Exp* express2 = nullptr;
 
-    Statement* for_stmt = nullptr;
+    ExpressionList* for_stmt = nullptr;
 
     ForStatement() : Statement(Type::ForStatement) {}
 
