@@ -27,6 +27,54 @@ Program * test_gcd() {
     auto *varB = new Variable;
     varB->id = new Identifier("b");
 
+    // ----function write_char
+    auto *readInt = new Identifier("read");
+    Identifier *writeChar = new Identifier("write_char");
+    Keyword *charC = new Keyword(KeywordType::Char);
+    Identifier *functionParaIden = new Identifier("a");
+    SubprogramHead *functionHeader = new SubprogramHead;
+    BasicTypeSpec *intType = new BasicTypeSpec(integer);
+    BasicTypeSpec *charType = new BasicTypeSpec(charC);
+    VarDecls *functionPara = new VarDecls;
+    IdentList *functionident = new IdentList;
+    functionident->idents.push_back(functionParaIden); // function write_char(a:char):int;
+    VarDecl *charPara = new VarDecl(functionident, charType);
+    functionPara->decls.push_back(charPara);
+    FunctionDecl *functionDecl = new FunctionDecl(writeChar, functionPara, intType);
+    functionHeader->func = functionDecl;
+
+
+    Variable *funcName = new Variable();
+    funcName->id = writeChar;
+    ConstantInteger *return1 = new ConstantInteger(1);
+    ExpConstantInteger *returnvalue = new ExpConstantInteger(return1);
+    ExpAssign *funcReturnStat = new ExpAssign(funcName, returnvalue); // write_char := 0
+    ExecStatement *statement0 = new ExecStatement(funcReturnStat);
+    StatementList *funcStatementlist = new StatementList;
+    funcStatementlist->statement.push_back(statement0);
+    CompoundStatement *funcCompoundStatement = new CompoundStatement(funcStatementlist);
+    SubprogramBody *funcBody = new SubprogramBody(nullptr, nullptr, funcCompoundStatement);
+
+    Subprogram *function = new Subprogram(functionHeader, funcBody);
+    subprogramDecls->subprogram.push_back(function);
+    // ----function write_char
+
+    // ----function read
+    FunctionDecl *functionDecl_read = new FunctionDecl(readInt, functionPara, intType);
+    SubprogramHead *functionHeader_read = new SubprogramHead;
+    functionHeader_read->func = functionDecl_read;
+    Variable *funcName_read = new Variable();
+    funcName_read->id = readInt;
+    ExpAssign *funcReturnStat_read = new ExpAssign(funcName_read, returnvalue); // read := 0
+    ExecStatement *statement_read = new ExecStatement(funcReturnStat_read);
+    StatementList *funcStatementlist_read = new StatementList;
+    funcStatementlist_read->statement.push_back(statement_read);
+    CompoundStatement *funcCompoundStatement_read = new CompoundStatement(funcStatementlist_read);
+    SubprogramBody *funcBody_read = new SubprogramBody(nullptr, nullptr, funcCompoundStatement_read);
+    Subprogram *function_read = new Subprogram(functionHeader_read, funcBody_read);
+    subprogramDecls->subprogram.push_back(function_read);
+    // ---- function read
+
     auto *gcdHead = new SubprogramHead;
     auto *gcdVarDecls = new VarDecls;
     auto *gcdVarIdentList = new IdentList;
@@ -66,8 +114,8 @@ Program * test_gcd() {
     subprogramDecls->subprogram.push_back(gcdSubprogram);
 
     auto *mainStatList = new StatementList;
-    auto *readIdent = new Identifier("read_int64");
-    auto *writeIdent = new Identifier("write_int64");
+    auto *readIdent = new Identifier("read");
+    auto *writeIdent = new Identifier("write_char");
     auto *varX = new Variable;
     varX->id = new Identifier("x");
     auto *varY = new Variable;
@@ -289,7 +337,7 @@ end
 int main()
 {
 
-    Program *mainProgram = test_if_else();
+    Program *mainProgram = test_write_char();
     target_c::Buffer tempBuffer(std::cout);
     std::vector<std::string> include_files;
     target_c::CBuilder theBuilder(include_files, tempBuffer);

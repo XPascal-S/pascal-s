@@ -273,8 +273,11 @@ namespace target_c {
                 case MarkerType::Colon:
                     result = ":";
                     return OK;
+                case MarkerType::MOD:
+                    result = "%";
+                    return OK;
                 default:
-                    assert(false);
+                    //assert(false);
                     throw std::runtime_error("semantic error: no marker type match");
                     return TranslateFailed;
             }
@@ -647,7 +650,9 @@ namespace target_c {
             bool check = true;
             for (auto x : node->state->statement) {
                 check &= code_gen_Statement(x, buffer);
-                //buffer += ";\n";
+                if(x->type == Type::IfElseStatement || x->type == Type::ForStatement)
+                    continue;
+                buffer += ";\n";
             }
             return check;
         }
@@ -686,9 +691,11 @@ namespace target_c {
         int code_gen_Statement(const Statement *node, std::string &buffer) {
             // 该函数负责statement的生成。
             std::string tempString;
+            bool check = true;
             switch (node->type) {
                 case Type::ExecStatement:
-                    return code_gen_exp(reinterpret_cast<const ExecStatement *>(node)->exp, buffer, tempString);
+                    check &= code_gen_exp(reinterpret_cast<const ExecStatement *>(node)->exp, buffer, tempString);
+                    return check;
                 case Type::IfElseStatement:
                     return code_gen_IfElseStatement(reinterpret_cast<const IfElseStatement *>(node), buffer);
                 case Type::ForStatement:
@@ -723,11 +730,14 @@ namespace target_c {
 
         int code_gen_ExpCall(const ExpCall *node, std::string &buffer, std::string &expType) {
             auto iter = this->functionBuff.find(node->fn->content);
+            //TODO
+
             if (iter == this->functionBuff.end()) {
                 assert(false); //未找到函数
                 throw std::runtime_error("semantic error: no func or proc found in functionBuff");
                 return TranslateFailed;
             }
+
             bool check = true;
             const struct FuncInfo callInfo = iter->second;
             buffer += node->fn->content;
@@ -743,7 +753,7 @@ namespace target_c {
             buffer += otherPara;
             buffer.pop_back();
             buffer.pop_back();
-            buffer += ");\n";
+            buffer += ")";
             return check;
         }
 
@@ -805,7 +815,7 @@ namespace target_c {
                 if(varName == this->nowST_pointer->tableName){
                     buffer += "return ";
                     code_gen_exp(node->rhs, buffer, rhsType);
-                    buffer += ";\n";
+                    //buffer += ";\n";
                     auto funcIter = this->functionBuff.find(this->nowST_pointer->tableName);
                     if(funcIter->second.returnType != rhsType){
                         //函数返回值类型不符
@@ -813,6 +823,7 @@ namespace target_c {
                         throw std::runtime_error("semantic error: type of return value does not match func");
                         return TranslateFailed;
                     }
+                    expType = "return";
                     return OK;
                 }
             }
@@ -821,7 +832,7 @@ namespace target_c {
             check &= code_gen_exp(node->lhs, buffer, lhsType);
             buffer += " " + std::string("=") + " ";
             check &= code_gen_exp(node->rhs, buffer, rhsType);
-            buffer += ";\n";
+            //buffer += ";\n";
             if (check) {
                 if (lhsType == rhsType) {
                     expType = lhsType;
@@ -851,12 +862,14 @@ namespace target_c {
             buffer += "){\n";
             for (auto x: node->if_part->statement) {
                 check &= code_gen_Statement(x, buffer);
+                buffer += ";\n";
             }
             buffer += "}\n";
             if (!node->else_part->statement.empty()) {
                 buffer += "else{\n";
                 for (auto x: node->else_part->statement) {
                     check &= code_gen_Statement(x, buffer);
+                    buffer += ";\n";
                 }
                 buffer += "}\n";
             }
@@ -886,6 +899,7 @@ namespace target_c {
             buffer += "){\n";
             for (auto x: node->for_stmt->statement) {
                 check &= code_gen_Statement(x, buffer);
+                buffer += ";\n";
             }
             buffer += "}\n";
             return check;
