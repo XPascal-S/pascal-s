@@ -44,7 +44,7 @@ namespace target_c {
     };
 
     //符号表
-    struct SymbolTable
+    struct SymbolTable {
         std::string tableName;  //表示当前符号表的作用域。（以函数名称作为区分）
         SymbolTable *prev; //指向上层符号表
         std::map<std::string, struct SymbolTable *> nextTable; //Hash。函数名->符号表的映射
@@ -101,6 +101,7 @@ namespace target_c {
         int code_gen(const Node *node) {
             if (node->type != Type::Program) {
                 assert(false);
+                throw std::runtime_error("node type is not program");
                 return TranslateFailed;
             }
             int code = code_gen_node(node);
@@ -177,6 +178,7 @@ namespace target_c {
                     return 1;
                 default:
                     assert(false);
+                    throw std::runtime_error("semantic error: no const type match");
                     return 0;
             }
         }
@@ -197,6 +199,7 @@ namespace target_c {
                     return 1;
                 default:
                     assert(false);
+                    throw std::runtime_error("semantic error: no keyword type match");
                     return 0;
             }
         }
@@ -262,6 +265,7 @@ namespace target_c {
                     return OK;
                 default:
                     assert(false);
+                    throw std::runtime_error("semantic error: no marker type match");
                     return TranslateFailed;
             }
         }
@@ -272,9 +276,11 @@ namespace target_c {
             switch (node->type) {
                 default:
                     assert(false);
+                    throw std::runtime_error("semantic error: no node type match");
                     return TranslateFailed;
                 case Type::Unknown:
                     assert(false);
+                    throw std::runtime_error("semantic error: unknown node type");
                     return TranslateFailed;
                 case Type::Program:
                     return code_gen_program(
@@ -450,6 +456,7 @@ namespace target_c {
                     break;
                 default:
                     assert(false);
+                    throw std::runtime_error("semantic error: no constant rvalue type match");
                     return TranslateFailed;
             }
             this->nowST_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(lhs, se));
@@ -490,6 +497,7 @@ namespace target_c {
                     buffer += ";\n";
                 } else {
                     assert(false);
+                    throw std::runtime_error("semantic error: no var type match");
                     return TranslateFailed;
                 }
                 this->nowST_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(name, se));
@@ -542,6 +550,7 @@ namespace target_c {
                 check &= code_gen_node(node->proc);
             } else {
                 assert(false);
+                throw std::runtime_error("semantic error: subprogram with no func or proc");
                 return TranslateFailed;
             }
             return check;
@@ -570,6 +579,7 @@ namespace target_c {
                         se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(x->type_spec);
                     } else {
                         assert(false);
+                        throw std::runtime_error("semantic error: no var type match");
                         return TranslateFailed;
                     }
 
@@ -584,6 +594,7 @@ namespace target_c {
             auto iter = this->functionBuff.find(this->nowST_pointer->tableName);
             if (iter == this->functionBuff.end()) {
                 assert(false); //未找到函数
+                throw std::runtime_error("semantic error: func not found in functionBuff");
                 return TranslateFailed;
             }
             bool check = true;
@@ -597,6 +608,7 @@ namespace target_c {
             auto iter = this->functionBuff.find(this->nowST_pointer->tableName);
             if (iter == this->functionBuff.end()) {
                 assert(false); //未找到函数
+                throw std::runtime_error("semantic error: proc not found in functionBuff");
                 return TranslateFailed;
             }
             bool check = true;
@@ -610,6 +622,7 @@ namespace target_c {
             auto iter = this->functionBuff.find(this->nowST_pointer->tableName);
             if (iter == this->functionBuff.end()) {
                 assert(false); //未找到函数
+                throw std::runtime_error("semantic error: func or proc not found in functionBuff");
                 return TranslateFailed;
             }
             bool check = true;
@@ -672,6 +685,7 @@ namespace target_c {
                     return code_gen_ForStatement(reinterpret_cast<const ForStatement *>(node), buffer);
                 default:
                     assert(false);
+                    throw std::runtime_error("semantic error: no statement type match");
                     return TranslateFailed;
             }
         }
@@ -701,6 +715,7 @@ namespace target_c {
             auto iter = this->functionBuff.find(node->fn->content);
             if (iter == this->functionBuff.end()) {
                 assert(false); //未找到函数
+                throw std::runtime_error("semantic error: no func or proc found in functionBuff");
                 return TranslateFailed;
             }
             bool check;
@@ -740,6 +755,7 @@ namespace target_c {
                         if (iterFunc == this->functionBuff.end()) {
                             //没找到函数定义
                             assert(false);
+                            throw std::runtime_error("semantic error: func or proc not found in functionBuff");
                             return TranslateFailed;
                         }
                         expType = iterTable->second.typeDecl;
@@ -761,6 +777,7 @@ namespace target_c {
                 return OK;
             } else {
                 assert(false);
+                throw std::runtime_error("semantic error: var not found in current symbol table and its parent");
                 return TranslateFailed;
             }
         }
@@ -780,6 +797,7 @@ namespace target_c {
                     if(funcIter->second.returnType != rhsType){
                         //函数返回值类型不符
                         assert(false);
+                        throw std::runtime_error("semantic error: type of return value does not match func");
                         return TranslateFailed;
                     }
                     return OK;
@@ -797,6 +815,8 @@ namespace target_c {
                 }
                 else {
                     check = false;
+                    assert(false);
+                    throw std::runtime_error("semantic error: lvalue type does not match rvalue type in assign");
                 }
             }
             return check;
@@ -820,7 +840,7 @@ namespace target_c {
                 check &= code_gen_Statement(x, buffer);
             }
             buffer += "}\n";
-            if (node->else_part->statement.size()) {
+            if (!node->else_part->statement.empty()) {
                 buffer += "else{\n";
                 for (auto x: node->else_part->statement) {
                     check &= code_gen_Statement(x, buffer);
@@ -838,12 +858,16 @@ namespace target_c {
             buffer += "; ";
             if (expType != "int") {
                 check = false;
+                assert(false);
+                throw std::runtime_error("semantic error: initial value must be int");
             }
             buffer += fmt::format("{} <= ", node->id->content);
             check &= code_gen_exp(node->express2, buffer, expType);
             buffer += "; ";
             if (expType != "int") {
                 check = false;
+                assert(false);
+                throw std::runtime_error("semantic error: final value must be int");
             }
             buffer += fmt::format("{}++", node->id->content);
             buffer += "){\n";
