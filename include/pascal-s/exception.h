@@ -38,6 +38,7 @@ enum class PascalSErrno : pascal_s::errno_t {
     ParseExpectVGotError,
     ParseExpectTGotError,
     ParseExpectSGotError,
+    SemanticError,
 };
 
 struct PascalSError : public std::exception {
@@ -63,10 +64,19 @@ struct PascalSError : public std::exception {
 struct PascalSParseError : public PascalSError {
     std::string fn;
 
-    explicit PascalSParseError(char *fn, std::string msg, PascalSErrno t = PascalSErrno::ParseError) :
+    explicit PascalSParseError(const char *fn, std::string msg, PascalSErrno t = PascalSErrno::ParseError) :
             PascalSError(std::move(msg), t), fn(fn) {}
 
     ~PascalSParseError() override = default;
+};
+
+struct PascalSSemanticError : public PascalSError {
+    std::string fn;
+
+    explicit PascalSSemanticError(const char *fn, std::string msg, PascalSErrno t = PascalSErrno::SemanticError) :
+            PascalSError(std::move(msg), t), fn(fn) {}
+
+    ~PascalSSemanticError() override = default;
 };
 
 struct PascalSParseExpectVGotError : public PascalSParseError {

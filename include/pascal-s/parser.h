@@ -64,11 +64,11 @@ public:
 
     ast::VarDecl *parse_var_decl();
 
-    ast::FunctionDecls *parse_function_decls();
+    ast::SubprogramDecls *parse_subprogram_decls();
 
     ast::SubprogramHead * parse_subprogram_head();
 
-    ast::Procedure *parse_function_body(ast::Procedure *);
+    ast::SubprogramBody *parse_subprogram_body();
 
     ast::TypeSpec *parse_type();
 
@@ -114,7 +114,7 @@ private:
 
     ast::VarDecls *_parse_var_decls(ast::VarDecls *);
 
-    ast::FunctionDecls *_parse_function_decls(ast::FunctionDecls *decls);
+    ast::SubprogramDecls *_parse_subprogram_decls(ast::SubprogramDecls *decls);
 
     ast::CompoundStatement *_parse_compound_statement(std::set<const Token *> *till = nullptr);
 

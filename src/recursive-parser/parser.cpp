@@ -220,9 +220,9 @@ Parser<Lexer>::~Parser() {
 #include "parse_program_head.cc"
 #include "parse_program_body.cc"
 
-//#include "parse_subprogram.cc"
-//#include "parse_subprogram_head.cc"
-//#include "parse_subprogram_body.cc"
+#include "parse_subprogram_decls.cc"
+#include "parse_subprogram_head.cc"
+#include "parse_subprogram_body.cc"
 
 #include "parse_const_decls.cc"
 #include "parse_var_decls.cc"

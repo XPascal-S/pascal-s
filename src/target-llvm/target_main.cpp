@@ -3,7 +3,6 @@
 //
 
 #include <cstring>
-#include <pascal-s/ast.h>
 #include <target/llvm.h>
 #include <cassert>
 #include <iostream>

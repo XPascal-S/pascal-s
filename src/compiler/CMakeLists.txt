@@ -17,8 +17,6 @@ function(add_compiler compiler-suffix)
     add_executable(llvm-pascal-s${compiler-suffix} ${ARGN})
     target_link_libraries(llvm-pascal-s${compiler-suffix} fmt debug target-llvm)
     target_include_flex(llvm-pascal-s${compiler-suffix})
-
-
 endfunction()
 
 add_compiler(-r compiler.cpp ${PASCAL_S_RECURSIVE_COMPILER_SOURCE_FILES})

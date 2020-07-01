@@ -4,20 +4,20 @@
 
 
 template<typename Lexer>
-ast::Procedure *Parser<Lexer>::parse_function_body(ast::Procedure *proc) {
+ast::SubprogramBody *Parser<Lexer>::parse_subprogram_body() {
 
     // const declarations
     ast::ConstDecls *const_decls = nullptr;
     if (predicate::is_const(current_token)) {
-        proc->const_decls = parse_const_decls();
+        const_decls = parse_const_decls();
     }
 
     // var declarations
+    ast::VarDecls *var_decls = nullptr;
     if (predicate::is_var(current_token)) {
-        proc->var_decls = parse_var_decls();
+        var_decls = parse_var_decls();
     }
 
-    // statement
-    proc->body = parse_statement();
-    return proc;
+    // compound statement
+    return new ast::SubprogramBody(const_decls, var_decls, parse_compound_statement());
 }

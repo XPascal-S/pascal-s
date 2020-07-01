@@ -21,8 +21,15 @@
 #include <pascal-s/llvm-ast.h>
 #include <iostream>
 #include "llvm/IR/LegacyPassManager.h"
+#include <pascal-s/exception.h>
 
 extern const char *pascal_main_function_name;
+
+namespace pascal_s {
+    struct ArrayInfo {
+        const ast::ArrayTypeSpec *spec;
+    };
+}
 
 // 用于生成目标中间代码LLVM-IR
 struct LLVMBuilder {
@@ -35,11 +42,23 @@ struct LLVMBuilder {
     llvm::IRBuilder<> ir_builder;
     llvm::legacy::FunctionPassManager fn_pass_manager;
     Module modules;
+    std::vector<PascalSSemanticError *> errors;
 
     struct LinkedContext {
         LinkedContext *last;
+        std::map<std::string, pascal_s::ArrayInfo *> *array_infos;
         std::map<std::string, llvm::AllocaInst *> *ctx;
         std::map<std::string, Value *> *const_ctx;
+
+        ~LinkedContext() {
+            deconstruct();
+        }
+
+        void deconstruct() const {
+            for (auto &ai: *array_infos) {
+                delete ai.second;
+            }
+        }
     };
 
     LinkedContext *scope_stack;
@@ -49,734 +68,162 @@ struct LLVMBuilder {
         prepend_lib_standard_pascal_s();
     }
 
+    ~LLVMBuilder() {
+        for (auto e: errors) {
+            delete e;
+        }
+    }
+
     bool doInitialization() {
         return fn_pass_manager.doInitialization();
     }
 
-    void prepend_lib_standard_pascal_s() {
-        auto *prototype = llvm::FunctionType::get(
-                llvm::Type::getInt32Ty(ctx), {
-                        llvm::Type::getInt8PtrTy(ctx),
-                }, false);
-        Function::Create(prototype, Function::ExternalLinkage,
-                         "read_char", modules);
+    void prepend_lib_standard_pascal_s();
 
-        prototype = llvm::FunctionType::get(
-                llvm::Type::getInt32Ty(ctx), {
-                        llvm::Type::getInt64PtrTy(ctx),
-                }, false);
-        Function::Create(prototype, Function::ExternalLinkage,
-                         "read_int64", modules);
+    void insert_var_decls(Function *cur_func, std::map<std::string, pascal_s::ArrayInfo *> &array_infos,
+                          std::map<std::string, llvm::AllocaInst *> &map, const ast::VarDecls *pDecls);
 
-        prototype = llvm::FunctionType::get(
-                llvm::Type::getInt32Ty(ctx), {
-                        llvm::Type::getDoublePtrTy(ctx),
-                }, false);
-        Function::Create(prototype, Function::ExternalLinkage,
-                         "read_real", modules);
+    void insert_const_decls(std::map<std::string, llvm::Value *> &map, const ast::ConstDecls *pDecls);
 
-        prototype = llvm::FunctionType::get(
-                llvm::Type::getInt32Ty(ctx), {
-                        llvm::Type::getInt8Ty(ctx),
-                }, false);
-        Function::Create(prototype, Function::ExternalLinkage,
-                         "write_char", modules);
+    int64_t calc_periods_size(const ast::ArrayTypeSpec *spec);
 
-        prototype = llvm::FunctionType::get(
-                llvm::Type::getInt32Ty(ctx), {
-                        llvm::Type::getInt64Ty(ctx),
-                }, false);
-        Function::Create(prototype, Function::ExternalLinkage,
-                         "write_int64", modules);
+    llvm::Type *create_type(const ast::TypeSpec *spec);
 
-        prototype = llvm::FunctionType::get(
-                llvm::Type::getInt32Ty(ctx), {
-                        llvm::Type::getDoubleTy(ctx),
-                }, false);
-        Function::Create(prototype, Function::ExternalLinkage,
-                         "write_real", modules);
-    }
+    llvm::Type *create_basic_type(const ast::BasicTypeSpec *spec);
 
-    void insert_var_decls(Function *cur_func, std::map<std::string, llvm::AllocaInst *> &map, ast::VarDecls *pDecls) {
+    llvm::Type *create_basic_type_from_keyword(KeywordType spec);
 
-        if (pDecls != nullptr) {
-            llvm::IRBuilder<> dfn_block(&cur_func->getEntryBlock(),
-                                        cur_func->getEntryBlock().begin());
+    Function *code_gen_program(const ast::Program *pProgram);
 
-            for (auto decl : pDecls->decls) {
-                llvm::Type *value = create_type(decl->type_spec);
-                for (auto ident : decl->idents->idents) {
-                    map[ident->content] = dfn_block.CreateAlloca(value, nullptr, ident->content);
+    Function *rename_program_to_pascal_s_native(Function *f);
+
+    static void insert_param_decls(Function *fn,
+                                   std::map<std::string, llvm::AllocaInst *> &map,
+                                   std::map<std::string, llvm::Value *> &const_map);
+
+    Function *code_gen_procedure(const ast::Subprogram *pSubprogram) {
+        \
+        Function *fn = modules.getFunction(pSubprogram->subhead->name->content);
+
+        // create function proto llvm_func
+        if (!fn) {
+            llvm::Type *llvm_ret_type = nullptr;
+            if (pSubprogram->subhead->ret_type == nullptr) {
+                llvm_ret_type = llvm::Type::getVoidTy(ctx);
+            } else {
+                llvm_ret_type = create_type(pSubprogram->subhead->ret_type);
+            }
+
+            int args_proto_size = 0;
+
+            for (auto arg_spec : pSubprogram->subhead->decls->params) {
+                args_proto_size += arg_spec->id_list->idents.size();
+            }
+
+            std::vector<llvm::Type *> args_proto;
+            args_proto.reserve(args_proto_size);
+
+            for (auto arg_spec : pSubprogram->subhead->decls->params) {
+                llvm::Type *llvm_arg_type = create_type(arg_spec->spec);
+
+                if (arg_spec->keyword_var != nullptr) {
+                    llvm_arg_type = llvm_arg_type->getPointerTo();
+                }
+
+                for (auto ident: arg_spec->id_list->idents) {
+                    args_proto.push_back(llvm_arg_type);
                 }
             }
-        }
-    }
 
-    void insert_const_decls(std::map<std::string, llvm::Value *> &map, ast::ConstDecls *pDecls) {
-        if (pDecls != nullptr) {
-            for (auto decl : pDecls->decls) {
-                map[decl->ident->content] = code_gen(decl->rhs);
-            }
-        }
-    }
-
-    llvm::Type *create_type(const ast::TypeSpec *spec) {
-        if (spec->type == ast::Type::BasicTypeSpec) {
-            return create_basic_type(reinterpret_cast<const ast::BasicTypeSpec *>(spec));
-        } else if (spec->type == ast::Type::ArrayTypeSpec) {
-            assert(false);
-            return nullptr;
-        } else {
-            assert(false);
-            return nullptr;
-        }
-    }
-
-    llvm::Type *create_basic_type(const ast::BasicTypeSpec *spec) {
-        switch (spec->keyword->key_type) {
-            case KeywordType::Integer:
-
-                return llvm::Type::getInt64Ty(ctx);
-            case KeywordType::Real:
-                return llvm::Type::getDoubleTy(ctx);
-            case KeywordType::Char:
-                // fallthrough
-            case KeywordType::Boolean:
-                return llvm::Type::getInt8Ty(ctx);
-//            case KeywordType::String:
-            default:
-                assert(false);
-                return nullptr;
-        }
-    }
-
-    Function *code_gen_program(const ast::Program *pProgram) {
-
-        Function *program = modules.getFunction(pProgram->programHead->id->ident->content);
-
-        // gen function proto
-        if (!program) {
             auto *prototype = llvm::FunctionType::get(
-                    llvm::Type::getInt32Ty(ctx), false);
+                    llvm_ret_type, args_proto, false);
 
-            program = Function::Create(prototype, Function::ExternalLinkage,
-                                       pProgram->programHead->id->ident->content, modules);
+            fn = Function::Create(prototype, Function::ExternalLinkage,
+                                  pSubprogram->subhead->name->content, modules);
+
+            int arg_cursor = 0;
+            for (auto arg_spec : pSubprogram->subhead->decls->params) {
+                for (auto ident: arg_spec->id_list->idents) {
+                    fn->getArg(arg_cursor++)->setName(ident->content);
+                }
+            }
         } else {
-            // todo: check proto
+//            for (int i = 0; i < fn->arg_size(); i++) {
+//                const auto &arg = fn->getArg(i);
+//
+//            }
+            //todo action fn existed
         }
 
         // out_code('entry:')
-        llvm::BasicBlock *body = llvm::BasicBlock::Create(ctx, "entry", program);
+        llvm::BasicBlock *body = llvm::BasicBlock::Create(ctx, "entry", fn);
         ir_builder.SetInsertPoint(body);
 
         // create local variable map this.ctx
+        std::map<std::string, pascal_s::ArrayInfo *> program_array_infos;
         std::map<std::string, llvm::AllocaInst *> program_this;
-        // todo const cast
-        insert_var_decls(program, program_this, const_cast<ast::VarDecls *>(pProgram->programBody->vardecls));
-        // create local variable map this.const_ctx
+        insert_var_decls(fn, program_array_infos, program_this, pSubprogram->subbody->vardecls);
+        // create local const map this.const_ctx
         std::map<std::string, Value *> program_const_this;
-        // todo const cast
-        insert_const_decls(program_const_this, const_cast<ast::ConstDecls *>(pProgram->programBody->constdecls));
+        insert_const_decls(program_const_this, pSubprogram->subbody->constdecls);
+        insert_param_decls(fn, program_this, program_const_this);
 
-        // push this into scope stack
-        auto link = LinkedContext{scope_stack, &program_this, &program_const_this};
+        // push 'this' into scope stack
+        auto link = LinkedContext{scope_stack, &program_array_infos, &program_this, &program_const_this};
         scope_stack = &link;
 
-        // out_code( define variable i32: %program.name )
-        llvm::IRBuilder<> dfn_block(&program->getEntryBlock(),
-                                    program->getEntryBlock().begin());
-        program_this[pProgram->programHead->id->ident->content] = dfn_block.CreateAlloca(llvm::Type::getInt32Ty(
-                ctx), nullptr, pProgram->programHead->id->ident->content);
-
-        if (pProgram->programBody->subprogram != nullptr) {
-            for (auto fn_decl : pProgram->programBody->subprogram->subprogram) {
-                code_gen_procedure(fn_decl);
-            }
-        }
-
-        // reset insert point
-        ir_builder.SetInsertPoint(body);
+        // out_code( define variable ret_type: %procedure.name )
+        llvm::IRBuilder<> dfn_block(&fn->getEntryBlock(), fn->getEntryBlock().begin());
+        program_this[pSubprogram->subhead->name->content] = dfn_block.CreateAlloca(
+                fn->getReturnType(), nullptr, pSubprogram->subhead->name->content);
 
         // generate body
-        if (code_gen_statement(pProgram->programBody->compound)) {
+        if (code_gen_statement(pSubprogram->subbody->compound)) {
             // if body generated
-            // out_code( %ret_tmp = load i32 from %program.name )
-            // out_code( ret i32: %ret_tmp )
+            // out_code( %ret_tmp = load ret_type from %procedure.name )
+            // out_code( ret ret_type: %ret_tmp )
             ir_builder.CreateRet(
-                    ir_builder.CreateLoad(program_this[pProgram->programHead->id->ident->content], "ret_tmp"));
+                    ir_builder.CreateLoad(program_this[pSubprogram->subhead->name->content], "ret_tmp"));
 
-            llvm::verifyFunction(*program);
-            fn_pass_manager.run(*program);
+            llvm::verifyFunction(*fn);
+            fn_pass_manager.run(*fn);
 
             // pop 'this' from scope stack
+            scope_stack->deconstruct();
             scope_stack = link.last;
-            return rename_program_to_pascal_s_native(program);
+            return fn;
         }
-        program->eraseFromParent();
 
+        fn->eraseFromParent();
         // pop 'this' from scope stack
+        scope_stack->deconstruct();
         scope_stack = link.last;
         return nullptr;
     }
 
-    Function *rename_program_to_pascal_s_native(Function *f) const {
-        Function *maybe_conflict = modules.getFunction(pascal_main_function_name);
-        if (maybe_conflict) {
-            assert(false);
-            return nullptr;
-        }
+    Value *code_gen_statement_block(const ast::StatementList *pBlock);
 
-        f->setName(pascal_main_function_name);
-        return f;
-    }
-
-    static void insert_param_decls(Function *fn,
-                                   std::map<std::string, llvm::AllocaInst *> &map,
-                                   std::map<std::string, llvm::Value *> &const_map) {
-        for (size_t i = 0; i < fn->arg_size(); i++) {
-            auto arg = fn->getArg(i);
-            if (arg->getType()->isPointerTy()) {
-                map[arg->getName().str()] = llvm::dyn_cast<llvm::AllocaInst>(arg);
-            } else {
-                const_map[arg->getName().str()] = arg;
-            }
-        }
-    }
-
-    static Function *code_gen_procedure(const ast::Subprogram *pProcedure) {
-        throw std::exception("todo code gen procedure");
-//        Function *fn = modules.getFunction(pProcedure->subhead->ident->content);
-//
-//        // create function proto llvm_func
-//        if (!fn) {
-//            llvm::Type *llvm_ret_type = nullptr;
-//            if (pProcedure->return_type == nullptr) {
-//                llvm_ret_type = llvm::Type::getVoidTy(ctx);
-//            } else {
-//                llvm_ret_type = create_type(pProcedure->return_type);
-//            }
-//
-//            int args_proto_size = 0;
-//
-//            for (auto arg_spec : pProcedure->params->params) {
-//                args_proto_size += arg_spec->id_list->idents.size();
-//            }
-//
-//            std::vector<llvm::Type *> args_proto;
-//            args_proto.reserve(args_proto_size);
-//
-//            for (auto arg_spec : pProcedure->params->params) {
-//                llvm::Type *llvm_arg_type = create_type(arg_spec->spec);
-//
-//                if (arg_spec->keyword_var != nullptr) {
-//                    llvm_arg_type = llvm_arg_type->getPointerTo();
-//                }
-//
-//                for (auto ident: arg_spec->id_list->idents) {
-//                    args_proto.push_back(llvm_arg_type);
-//                }
-//            }
-//
-//            auto *prototype = llvm::FunctionType::get(
-//                    llvm_ret_type, args_proto, false);
-//
-//            fn = Function::Create(prototype, Function::ExternalLinkage,
-//                                  pProcedure->subhead->ident->content, modules);
-//
-//            int arg_cursor = 0;
-//            for (auto arg_spec : pProcedure->params->params) {
-//                for (auto ident: arg_spec->id_list->idents) {
-//                    fn->getArg(arg_cursor++)->setName(ident->content);
-//                }
-//            }
-//        } else {
-//            //todo action fn existed
-//        }
-//
-//        // out_code('entry:')
-//        llvm::BasicBlock *body = llvm::BasicBlock::Create(ctx, "entry", fn);
-//        ir_builder.SetInsertPoint(body);
-//
-//        // create local variable map this.ctx
-//        std::map<std::string, llvm::AllocaInst *> program_this;
-//        insert_var_decls(fn, program_this, pProcedure->var_decls);
-//        // create local const map this.const_ctx
-//        std::map<std::string, Value *> program_const_this;
-//        insert_const_decls(program_const_this, pProcedure->const_decls);
-//        insert_param_decls(fn, program_this, program_const_this);
-//
-//        // push 'this' into scope stack
-//        auto link = LinkedContext{scope_stack, &program_this, &program_const_this};
-//        scope_stack = &link;
-//
-//        // out_code( define variable ret_type: %procedure.name )
-//        llvm::IRBuilder<> dfn_block(&fn->getEntryBlock(), fn->getEntryBlock().begin());
-//        program_this[pProcedure->subhead->ident->content] = dfn_block.CreateAlloca(
-//                fn->getReturnType(), nullptr, pProcedure->subhead->ident->content);
-//
-//        // generate body
-//        if (code_gen_statement(pProcedure->body)) {
-//            // if body generated
-//            // out_code( %ret_tmp = load ret_type from %procedure.name )
-//            // out_code( ret ret_type: %ret_tmp )
-//            ir_builder.CreateRet(
-//                    ir_builder.CreateLoad(program_this[pProcedure->subhead->ident->content], "ret_tmp"));
-//
-//            llvm::verifyFunction(*fn);
-//            fn_pass_manager.run(*fn);
-//
-//            // pop 'this' from scope stack
-//            scope_stack = link.last;
-//            return fn;
-//        }
-//
-//        fn->eraseFromParent();
-//        // pop 'this' from scope stack
-//        scope_stack = link.last;
-        return nullptr;
-    }
-
-    Value *code_gen_function(const ast::Function *pFunction) {
-        switch (pFunction->type) {
-            // return gen_program() if function.type == program
-            case ast::Type::Program:
-                return code_gen_program(
-                        reinterpret_cast<const ast::Program *>(pFunction));
-                // else return gen_procedure() if function.type == procedure(with ret type or without)
-            case ast::Type::Subprogram:
-                return code_gen_procedure(
-                        reinterpret_cast<const ast::Subprogram *>(pFunction));
-            default:
-                assert(false);
-                return nullptr;
-        }
-    }
-
-    Value *code_gen_statement_block(const ast::StatementList *pBlock) {
-//        llvm::BasicBlock *cur_block = ir_builder.GetInsertBlock();
-        Value *block_value = nullptr;
-        for (auto stmt : pBlock->statement) {
-            // latest_value = gen_statement(statement)
-            block_value = code_gen_statement(stmt);
-            if (!block_value) {
-                return nullptr;
-            }
-        }
-
-        return block_value;
-    }
-
-    Value *code_gen_exp_call(const ast::ExpCall *pCall) {
-        // get function proto llvm_func
-        Function *calleeFunc = modules.getFunction(pCall->fn->content);
-        if (!calleeFunc) {
-            assert(false);
-            return nullptr;
-        }
-        if (calleeFunc->arg_size() != pCall->params->explist.size()) {
-            assert(false);
-            return nullptr;
-        }
-        std::vector<Value *> args;
-
-        // for
-        for (int i = 0; i < calleeFunc->arg_size(); i++) {
-            auto *argument_proto = calleeFunc->getArg(i);
-            Value *argument_value = nullptr;
-            if (argument_proto->getType()->isPointerTy()) {
-                // args[i] = gen_lvalue(call_stmt.args[i])
-                argument_value = get_lvalue_pointer(pCall->params->explist[i]);
-            } else {
-                // args[i] = gen_rvalue(call_stmt.args[i])
-                argument_value = code_gen(pCall->params->explist[i]);
-            }
-            if (argument_value == nullptr) {
-                assert(false);
-                return nullptr;
-            }
-            if (argument_proto->getType()->getTypeID() != argument_value->getType()->getTypeID()) {
-                assert(false);
-                return nullptr;
-            }
-            args.push_back(argument_value);
-        }
-
-        // out_code(%call_stmt.name = call ret_type @call_stmt.name(args))
-        return ir_builder.CreateCall(calleeFunc, args, pCall->fn->content);
-    }
+    Value *code_gen_exp_call(const ast::ExpCall *pCall);
 
     Value *code_gen_exec_statement(const ast::ExecStatement *pStatement) {
         return code_gen(pStatement->exp);
     }
 
-    Value *code_gen_if_else_statement(const ast::IfElseStatement *if_else_stmt) {
+    Value *code_gen_if_else_statement(const ast::IfElseStatement *if_else_stmt);
 
-        Value *cond = code_gen(if_else_stmt->expression);
-        if (!cond) {
-            return nullptr;
-        }
+    Value *code_gen_for_statement(const ast::ForStatement *for_stmt);
 
-        switch (cond->getType()->getTypeID()) {
-            case llvm::Type::TypeID::IntegerTyID:
-                cond = ir_builder.CreateICmpNE(
-                        cond, llvm::Constant::getIntegerValue(
-                                cond->getType(), llvm::APInt(cond->getType()->getIntegerBitWidth(), 0)), "if_cond");
-                break;
-            case llvm::Type::TypeID::DoubleTyID:
-                cond = ir_builder.CreateFCmpONE(
-                        cond, llvm::ConstantFP::get(cond->getType(), llvm::APFloat(double(0))), "if_cond");
-                break;
-            default:
-                assert(false);
-                return nullptr;
-        }
+    Value *code_gen_binary_exp(const ast::BiExp *pExp);
 
+    Value *code_gen_unary_exp(const ast::UnExp *pExp);
 
-        Function *cur_function = ir_builder.GetInsertBlock()->getParent();
-        llvm::BasicBlock *then_block = llvm::BasicBlock::Create(ctx, "then", cur_function);
-        llvm::BasicBlock *else_block = llvm::BasicBlock::Create(ctx, "else");
-        llvm::BasicBlock *merge_block = llvm::BasicBlock::Create(ctx, "follow_ie");
+    Value *code_gen_exp_assign(const ast::ExpAssign *pAssign);
 
-        // link before if to -> cond ? then_block : else_block
-        ir_builder.CreateCondBr(cond, then_block, else_block);
+    Value *assign_lvalue(const ast::Exp *lvalue, Value *rhs);
 
-        // already pushed then block
-        // build then block
-        ir_builder.SetInsertPoint(then_block);
-        Value *then_value = code_gen_statement(if_else_stmt->if_part);
-        if (!then_value)
-            return nullptr;
-        ir_builder.CreateBr(merge_block);
-        then_block = ir_builder.GetInsertBlock();
+    Value *get_lvalue_pointer(const ast::Exp *lvalue);
 
-        // push else block
-        cur_function->getBasicBlockList().push_back(else_block);
-        // build else block
-        ir_builder.SetInsertPoint(else_block);
-        Value *else_value = code_gen_statement(if_else_stmt->else_part);
-        if (!else_value)
-            return nullptr;
-        ir_builder.CreateBr(merge_block);
-        else_block = ir_builder.GetInsertBlock();
-
-        // push merge block
-        cur_function->getBasicBlockList().push_back(merge_block);
-        ir_builder.SetInsertPoint(merge_block);
-
-        if (then_value->getType()->getTypeID() == else_value->getType()->getTypeID()) {
-            //assuming equal
-
-            llvm::PHINode *merged_value = ir_builder.CreatePHI(
-                    then_value->getType(), 2, "ieb_eval");
-
-            merged_value->addIncoming(then_value, then_block);
-            merged_value->addIncoming(else_value, else_block);
-            return merged_value;
-        }
-
-        return else_value;
-    }
-
-    Value *code_gen_for_statement(const ast::ForStatement *for_stmt) {
-        Function *cur_function = ir_builder.GetInsertBlock()->getParent();
-
-        llvm::IRBuilder<> dfn_block(&cur_function->getEntryBlock(),
-                                    cur_function->getEntryBlock().begin());
-
-        Value *from_value = code_gen(for_stmt->express1);
-        Value *to_value = code_gen(for_stmt->express2);
-
-        if (from_value->getType()->getTypeID() != to_value->getType()->getTypeID()) {
-            assert(false);
-            return nullptr;
-        }
-
-        llvm::AllocaInst *loop_var = dfn_block.CreateAlloca(from_value->getType(), nullptr,
-                                                            for_stmt->id->content);
-        Value *step_value = nullptr;
-        switch (from_value->getType()->getTypeID()) {
-            case llvm::Type::IntegerTyID:
-                step_value = llvm::Constant::getIntegerValue(
-                        from_value->getType(), llvm::APInt(from_value->getType()->getIntegerBitWidth(), 1));
-                break;
-            default:
-                assert(false);
-                // todo
-                return nullptr;
-        }
-
-        llvm::AllocaInst *old_var = nullptr;
-        if (scope_stack->ctx->count(for_stmt->id->content)) {
-            old_var = scope_stack->ctx->at(for_stmt->id->content);
-        }
-        (*scope_stack->ctx)[for_stmt->id->content] = loop_var;
-
-        ir_builder.CreateStore(from_value, loop_var);
-
-
-        llvm::BasicBlock *loop_block = llvm::BasicBlock::Create(ctx, "loop", cur_function);
-        llvm::BasicBlock *loop_after_block =
-                llvm::BasicBlock::Create(ctx, "follow_lp");
-
-        Value *first_loop_cond = nullptr;
-        switch (from_value->getType()->getTypeID()) {
-            case llvm::Type::IntegerTyID:
-                //todo unsigned
-                first_loop_cond = ir_builder.CreateICmpSLE(
-                        from_value, to_value, "loop_cond");
-                break;
-            default:
-                assert(false);
-                // todo
-                return nullptr;
-        }
-
-        ir_builder.CreateCondBr(first_loop_cond, loop_block, loop_after_block);
-        ir_builder.SetInsertPoint(loop_block);
-
-        Value *loop_body = code_gen_statement(for_stmt->for_stmt);
-        if (loop_body == nullptr)
-            return nullptr;
-
-
-        Value *cur_value = ir_builder.CreateLoad(loop_var, for_stmt->id->content);
-        Value *next_value = nullptr;
-        switch (from_value->getType()->getTypeID()) {
-            case llvm::Type::IntegerTyID:
-                ir_builder.CreateStore(
-                        ir_builder.CreateAdd(cur_value, step_value, "next_tmp"), loop_var);
-                break;
-            default:
-                assert(false);
-                // todo
-                return nullptr;
-        }
-
-        Value *loop_cond = nullptr;
-        switch (from_value->getType()->getTypeID()) {
-            case llvm::Type::IntegerTyID:
-                //todo unsigned
-                loop_cond = ir_builder.CreateICmpSLE(
-                        ir_builder.CreateLoad(loop_var), to_value, "loop_cond");
-                break;
-            default:
-                assert(false);
-                // todo
-                return nullptr;
-        }
-
-        ir_builder.CreateCondBr(loop_cond, loop_block, loop_after_block);
-
-        cur_function->getBasicBlockList().push_back(loop_after_block);
-        ir_builder.SetInsertPoint(loop_after_block);
-
-        if (old_var != nullptr) {
-            (*scope_stack->ctx)[for_stmt->id->content] = loop_var;
-        } else {
-            scope_stack->ctx->erase(for_stmt->id->content);
-        }
-
-        return loop_body;
-    }
-
-    Value *code_gen_binary_exp(const ast::BiExp *pExp) {
-        auto lhs = code_gen(pExp->lhs);
-        if (lhs == nullptr) {
-            assert(false);
-            return nullptr;
-        }
-        auto rhs = code_gen(pExp->rhs);
-        if (rhs == nullptr) {
-            assert(false);
-            return nullptr;
-        }
-
-        if (lhs->getType()->getTypeID() != rhs->getType()->getTypeID()) {
-            assert(false);
-            return nullptr;
-        }
-
-        switch (pExp->marker->marker_type) {
-            case MarkerType::Add:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateAdd(lhs, rhs, "add_tmp");
-                }
-                assert(false);
-            case MarkerType::Sub:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateSub(lhs, rhs, "sub_tmp");
-                }
-                assert(false);
-            case MarkerType::Mul:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateMul(lhs, rhs, "mul_tmp");
-                }
-                assert(false);
-            case MarkerType::Div:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateSDiv(lhs, rhs, "div_tmp");
-                }
-                assert(false);
-            case MarkerType::Mod:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateSRem(lhs, rhs, "mod_tmp");
-                }
-                assert(false);
-
-                // a < b
-            case MarkerType::LT:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateICmpSLT(lhs, rhs, "lt_tmp");
-                }
-                assert(false);
-
-                // a <= b
-            case MarkerType::LE:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateICmpSLE(lhs, rhs, "le_tmp");
-                }
-                assert(false);
-
-                // a > b
-            case MarkerType::GT:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateICmpSGT(lhs, rhs, "gt_tmp");
-                }
-                assert(false);
-
-                // a >= b
-            case MarkerType::GE:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateICmpSGE(lhs, rhs, "ge_tmp");
-                }
-                assert(false);
-
-                // a = b
-            case MarkerType::EQ:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateICmpEQ(lhs, rhs, "eq_tmp");
-                }
-                assert(false);
-
-                // a <> b
-            case MarkerType::NEQ:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateICmpNE(lhs, rhs, "neq_tmp");
-                }
-                assert(false);
-
-            default:
-                assert(false);
-                return nullptr;
-        }
-    }
-
-    Value *code_gen_unary_exp(const ast::UnExp *pExp) {
-        auto lhs = code_gen(pExp->lhs);
-        if (lhs == nullptr) {
-            assert(false);
-            return nullptr;
-        }
-
-        switch (pExp->marker->marker_type) {
-            case MarkerType::Add:
-                return lhs;
-            case MarkerType::Sub:
-                if (lhs->getType()->isIntegerTy()) {
-                    return ir_builder.CreateNeg(lhs, "neg_tmp");
-                }
-                assert(false);
-            default:
-                assert(false);
-                return nullptr;
-        }
-    }
-
-    Value *code_gen_exp_assign(const ast::ExpAssign *pAssign) {
-        auto rhs = code_gen(pAssign->rhs);
-        if (rhs == nullptr) {
-            assert(false);
-            return nullptr;
-        }
-        return assign_lvalue(pAssign->lhs, rhs);
-    }
-
-    Value *assign_named_value(const char *content, Value *rhs) {
-        for (auto resolving_ctx = scope_stack;
-             resolving_ctx; resolving_ctx = resolving_ctx->last) {
-            auto &value_ctx = resolving_ctx->ctx;
-            if (value_ctx->count(content)) {
-                auto ptr = (*value_ctx)[content];
-                auto elemType = ptr->getType()->getElementType();
-
-                if (rhs->getType()->getTypeID() != elemType->getTypeID()) {
-                    assert(false);
-                    return nullptr;
-                }
-                if (elemType->getTypeID() == llvm::Type::IntegerTyID) {
-                    auto rhs_bit_width = rhs->getType()->getIntegerBitWidth();
-                    auto elem_type_bit_width = elemType->getIntegerBitWidth();
-                    if (rhs_bit_width > elem_type_bit_width) {
-                        rhs = ir_builder.CreateTrunc(rhs, elemType, "");
-                    } else {
-                        // todo zero ext
-                        rhs = ir_builder.CreateSExt(rhs, elemType, "");
-                    }
-
-                }
-
-                ir_builder.CreateStore(rhs, ptr);
-
-                // rhs or load(lhs) ?
-                return rhs;
-            }
-            auto &const_ctx = resolving_ctx->const_ctx;
-            if (const_ctx->count(content)) {
-                assert(false);
-                throw std::runtime_error("const value assigned");
-            }
-        }
-        return nullptr;
-    }
-
-    Value *assign_lvalue(const ast::Exp *lvalue, Value *rhs) {
-        switch (lvalue->type) {
-            case ast::Type::Ident:
-                return assign_named_value(
-                        reinterpret_cast<const ast::Ident *>(lvalue)->ident->content, rhs);
-            default:
-                assert(false);
-                return nullptr;
-        }
-    }
-
-    Value *get_lvalue_pointer(const ast::Exp *lvalue) {
-        switch (lvalue->type) {
-            case ast::Type::Ident:
-                return get_named_value_pointer(
-                        reinterpret_cast<const ast::Ident *>(lvalue)->ident->content);
-            default:
-                assert(false);
-                return nullptr;
-        }
-    }
-
-    Value *get_named_value_pointer(const char *name) {
-        for (auto resolving_ctx = scope_stack;
-             resolving_ctx; resolving_ctx = resolving_ctx->last) {
-            auto &value_ctx = resolving_ctx->ctx;
-            if (value_ctx->count(name)) {
-                auto ptr = ir_builder.CreateLoad((*value_ctx).at(name));
-                return ptr->getPointerOperand();
-            }
-            auto &const_ctx = resolving_ctx->const_ctx;
-            if (const_ctx->count(name)) {
-                assert(false);
-                throw std::runtime_error("const value is not addressable");
-            }
-        }
-        return nullptr;
-    }
+    Value *get_named_value_pointer(const char *name);
 
     Value *code_gen_exp_constant_integer(const ast::ExpConstantInteger *pInteger) {
         return llvm::Constant::getIntegerValue(
@@ -798,7 +245,9 @@ struct LLVMBuilder {
                 llvm::Type::getInt8Ty(ctx), llvm::APInt(8, pBoolean->value->attr));
     }
 
-    static Value *code_gen_exp_constant_string(const ast::ExpConstantString *) {
+    Value *code_gen_exp_constant_string(const ast::ExpConstantString *) {
+        errors.push_back(new PascalSSemanticError(__FUNCTION__,
+                                                  "code_gen_exp_constant_string 2"));
         assert(false);
         return nullptr;
     }
@@ -815,8 +264,24 @@ struct LLVMBuilder {
                 return const_ctx->at(pIdent->ident->content);
             }
         }
-        //todo: function call
-        return nullptr;
+        // get function proto llvm_func
+        Function *calleeFunc = modules.getFunction(pIdent->ident->content);
+        if (!calleeFunc) {
+            errors.push_back(new PascalSSemanticError(__FUNCTION__, "get callee error"));
+            assert(false);
+            return nullptr;
+        }
+        if (calleeFunc->arg_size() != 0) {
+            errors.push_back(new PascalSSemanticError(__FUNCTION__,
+                                                      "callee func param size does not match exp list size"));
+            assert(false);
+            return nullptr;
+        }
+        std::vector<Value *> args;
+
+
+        // out_code(%call_stmt.name = call ret_type @call_stmt.name(args))
+        return ir_builder.CreateCall(calleeFunc, args, pIdent->ident->content);
     }
 
 //    Value *code_gen_variable_list(const ast::VariableList *pList) {
@@ -834,6 +299,22 @@ struct LLVMBuilder {
 //    Value *code_gen_ident_list(const ast::IdentList *pList) {
 //        return nullptr;
 //    }
+
+    Value *code_gen_function(const ast::Function *pFunction) {
+        switch (pFunction->type) {
+            // return gen_program() if function.type == program
+            case ast::Type::Program:
+                return code_gen_program(
+                        reinterpret_cast<const ast::Program *>(pFunction));
+                // else return gen_procedure() if function.type == procedure(with ret type or without)
+            case ast::Type::Subprogram:
+                return code_gen_procedure(
+                        reinterpret_cast<const ast::Subprogram *>(pFunction));
+            default:
+                assert(false);
+                return nullptr;
+        }
+    }
 
     Value *code_gen_statement(const ast::Statement *stmt) {
         switch (stmt->type) {
@@ -947,8 +428,30 @@ struct LLVMBuilder {
 //            case ast::Type::ArrayTypeSpec:
 //                return code_gen_ArrayTypeSpec(
 //                        reinterpret_cast<const ast::ArrayTypeSpec*>(node));
+            case ast::Type::CompoundStatement:
+                return code_gen_statement_block(
+                        reinterpret_cast<const ast::CompoundStatement *>(node)->state);
+            case ast::Type::FormalParameter:
+                assert(false);
+                break;
+            case ast::Type::Variabele:
+                assert(false);
+                break;
+            case ast::Type::Expression:
+                assert(false);
+                break;
+            case ast::Type::SimpleExpression:
+                assert(false);
+                break;
+            case ast::Type::Procedure:
+                assert(false);
+                break;
+            case ast::Type::Exp:
+                assert(false);
+                break;
         }
     }
 };
+
 
 #endif //PASCAL_S_LLVM_H

@@ -34,6 +34,8 @@ ast::VarDecls *Parser<Lexer>::_parse_var_decls(ast::VarDecls *decls) {
             if (current_token->type == TokenType::Identifier) {
                 break;
             }
+            maybe_recover_keyword(KeywordType::Procedure)
+            maybe_recover_keyword(KeywordType::Function)
             maybe_recover_keyword(KeywordType::Begin)
 
             skip_error_token_s("expect new var decl or other token");

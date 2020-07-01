@@ -23,8 +23,14 @@ void ast::deleteAST(Node *node) {
         case Type::ProgramBody:
             delete reinterpret_cast<ProgramBody *>(node);
             break;
-        case Type::Procedure:
-            delete reinterpret_cast<Procedure *>(node);
+        case Type::Subprogram:
+            delete reinterpret_cast<Subprogram *>(node);
+            break;
+        case Type::SubprogramHead:
+            delete reinterpret_cast<SubprogramHead *>(node);
+            break;
+        case Type::SubprogramBody:
+            delete reinterpret_cast<SubprogramBody *>(node);
             break;
         case Type::ParamSpec:
             delete reinterpret_cast<ParamSpec *>(node);
@@ -68,6 +74,9 @@ void ast::deleteAST(Node *node) {
         case Type::IdentList:
             delete reinterpret_cast<IdentList *>(node);
             break;
+        case Type::SubprogramDecls:
+            delete reinterpret_cast<SubprogramDecls *>(node);
+            break;
         case Type::ConstDecl:
             delete reinterpret_cast<ConstDecl *>(node);
             break;
@@ -80,9 +89,6 @@ void ast::deleteAST(Node *node) {
         case Type::VarDecls:
             delete reinterpret_cast<VarDecls *>(node);
             break;
-        case Type::FunctionDecls:
-            delete reinterpret_cast<FunctionDecls *>(node);
-            break;
         case Type::ExpAssign:
             delete reinterpret_cast<ExpAssign *>(node);
             break;
@@ -91,6 +97,12 @@ void ast::deleteAST(Node *node) {
             break;
         case Type::BiExp:
             delete reinterpret_cast<BiExp *>(node);
+            break;
+        case Type::Read:
+            delete reinterpret_cast<Read *>(node);
+            break;
+        case Type::Write:
+            delete reinterpret_cast<Write *>(node);
             break;
         case Type::ExpConstantBoolean:
             delete reinterpret_cast<ExpConstantBoolean *>(node);
@@ -126,7 +138,7 @@ namespace ast {
     }
 }
 
-void ast::printAST(ast::Node *node, int dep) {
+void ast::printAST(const ast::Node *node, int dep) {
     if (node == nullptr) {
         put_tab(dep);
         printf("nullptr\n");
@@ -137,7 +149,7 @@ void ast::printAST(ast::Node *node, int dep) {
         case Type::Unknown:
             throw RuntimeReinterpretASTException(node);
         case Type::Program:
-#define cur_node (reinterpret_cast<ast::Program*>(node))
+#define cur_node (reinterpret_cast<const ast::Program*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -147,80 +159,99 @@ void ast::printAST(ast::Node *node, int dep) {
             // todo: remove const cast
             put_tab(dep + 1);
             printf("param(ids) = \n");
-            printAST(const_cast<IdentList *>(cur_node->programHead->idlist), dep + 1);
+            printAST(cur_node->programHead->idlist, dep + 1);
             put_tab(dep + 1);
             printf("const decls = \n");
-            printAST(const_cast<ConstDecls *>(cur_node->programBody->constdecls), dep + 1);
+            printAST(cur_node->programBody->constdecls, dep + 1);
             put_tab(dep + 1);
             printf("var decls = \n");
-            printAST(const_cast<VarDecls *>(cur_node->programBody->vardecls), dep + 1);
-//            printAST(const_cast<SubprogramDecls*>(cur_node->programBody->subprogram), dep+1);
+            printAST(cur_node->programBody->vardecls, dep + 1);
+            put_tab(dep + 1);
+            printf("subprogram decls = \n");
+            printAST(cur_node->programBody->subprogram, dep + 1);
             put_tab(dep + 1);
             printf("body = \n");
-            printAST(const_cast<CompoundStatement *>(cur_node->programBody->compound), dep + 1);
+            printAST(cur_node->programBody->compound, dep + 1);
 
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
+#define cur_node (reinterpret_cast<const ast::ParamSpec*>(node))
             break;
         case Type::ParamSpec:
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ParamSpec\n");
+            put_tab(dep + 1);
+            printf("var = \n");
+            printf("name = %s\n", convertToString(cur_node->keyword_var).c_str());
+            put_tab(dep + 1);
+            printf("body = \n");
+            printAST(cur_node->id_list, dep + 1);
+            put_tab(dep + 1);
+            printf("type spec = \n");
+            printAST(cur_node->spec, dep + 1);
+
 
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
             break;
-        case Type::Procedure:
-#define cur_node (reinterpret_cast<ast::Procedure*>(node))
+        case Type::SubprogramDecls:
+#define cur_node (reinterpret_cast<const ast::SubprogramDecls*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
-            printf("type = Procedure\n");
+            printf("type = SubprogramDecls\n");
+            for (auto c: cur_node->subprogram) {
+                printAST(c, dep + 1);
+            }
 
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
             break;
-        case Type::Function:
-            throw std::exception("todo function block");
-//#define cur_node (reinterpret_cast<ast::Function*>(node))
-//            put_tab(dep);
-//            printf("{\n");
-//            if (cur_node->fn_def->key_type == KeywordType::Program) {
-//#undef  cur_node
-//#define cur_node (reinterpret_cast<Program*>(node))
-//                put_tab(dep + 1);
-//                printf("type = Program\n");
-//                put_tab(dep + 1);
-//                printf("%s", convertToString(cur_node->name).c_str());
-//                put_tab(dep + 1);
-//                printf("body = \n");
-//                printAST(cur_node->body, dep + 1);
-//#undef  cur_node
-//            } else {
-//                assert(false);
-//            }
-//            put_tab(dep);
-//            printf("}\n");
-//            break;
+        case Type::Subprogram:
+#define cur_node (reinterpret_cast<const ast::Subprogram*>(node))
+            put_tab(dep);
+            printf("{\n");
+            put_tab(dep + 1);
+            printf("type = Subprogram\n");
+            put_tab(dep + 1);
+            printf("name = %s\n", convertToString(cur_node->subhead->name).c_str());
+            // todo: remove const cast
+            put_tab(dep + 1);
+            printf("param(ids) = \n");
+            printAST(cur_node->subhead->decls, dep + 1);
+            put_tab(dep + 1);
+            printf("const decls = \n");
+            printAST(cur_node->subbody->constdecls, dep + 1);
+            put_tab(dep + 1);
+            printf("var decls = \n");
+            printAST(cur_node->subbody->vardecls, dep + 1);
+            put_tab(dep + 1);
+            printf("body = \n");
+            printAST(cur_node->subbody->compound, dep + 1);
+            put_tab(dep);
+            printf("}\n");
+            break;
+#undef  cur_node
         case Type::CompoundStatement:
-#define cur_node (reinterpret_cast<ast::CompoundStatement*>(node))
+#define cur_node (reinterpret_cast<const ast::CompoundStatement*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
             printf("type = CompoundStatement\n");
             put_tab(dep + 1);
             printf("inner = \n");
-            printAST(const_cast<StatementList *>(cur_node->state), dep + 1);
+            printAST(cur_node->state, dep + 1);
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
             break;
         case Type::StatementList:
-#define cur_node (reinterpret_cast<ast::StatementList*>(node))
+#define cur_node (reinterpret_cast<const ast::StatementList*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -233,7 +264,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ExpCall:
-#define cur_node (reinterpret_cast<ast::ExpCall*>(node))
+#define cur_node (reinterpret_cast<const ast::ExpCall*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -253,14 +284,14 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ExecStatement:
-#define cur_node (reinterpret_cast<ast::ExecStatement*>(node))
+#define cur_node (reinterpret_cast<const ast::ExecStatement*>(node))
 //            printf("{\n");
             printAST(cur_node->exp, dep);
 //            put_tab(dep);  printf("}\n");
 #undef  cur_node
             break;
         case Type::IfElseStatement:
-#define cur_node (reinterpret_cast<ast::IfElseStatement*>(node))
+#define cur_node (reinterpret_cast<const ast::IfElseStatement*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -278,7 +309,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ForStatement:
-#define cur_node (reinterpret_cast<ast::ForStatement*>(node))
+#define cur_node (reinterpret_cast<const ast::ForStatement*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -289,7 +320,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::Ident:
-#define cur_node (reinterpret_cast<ast::Ident*>(node))
+#define cur_node (reinterpret_cast<const ast::Ident*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -302,18 +333,21 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ParamList:
-#define cur_node (reinterpret_cast<ast::ParamList*>(node))
+#define cur_node (reinterpret_cast<const ast::ParamList*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ParamList\n");
+            for (auto param: cur_node->params) {
+                printAST(param, dep + 1);
+            }
 
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
             break;
         case Type::VariableList:
-#define cur_node (reinterpret_cast<ast::VariableList*>(node))
+#define cur_node (reinterpret_cast<const ast::VariableList*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -324,7 +358,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::IdentList:
-#define cur_node (reinterpret_cast<ast::IdentList*>(node))
+#define cur_node (reinterpret_cast<const ast::IdentList*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -339,7 +373,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ConstDecl:
-#define cur_node (reinterpret_cast<ast::ConstDecl*>(node))
+#define cur_node (reinterpret_cast<const ast::ConstDecl*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -348,14 +382,14 @@ void ast::printAST(ast::Node *node, int dep) {
             printf("lhs  = %s\n", convertToString(cur_node->ident).c_str());
             put_tab(dep + 1);
             printf("rhs = \n");
-            printAST(const_cast<Exp *>(cur_node->rhs), dep + 1);
+            printAST(cur_node->rhs, dep + 1);
 
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
             break;
         case Type::ConstDecls:
-#define cur_node (reinterpret_cast<ast::ConstDecls*>(node))
+#define cur_node (reinterpret_cast<const ast::ConstDecls*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -369,7 +403,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::VarDecl:
-#define cur_node (reinterpret_cast<ast::VarDecl*>(node))
+#define cur_node (reinterpret_cast<const ast::VarDecl*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -387,7 +421,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::VarDecls:
-#define cur_node (reinterpret_cast<ast::VarDecls*>(node))
+#define cur_node (reinterpret_cast<const ast::VarDecls*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -401,7 +435,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::FunctionDecls:
-#define cur_node (reinterpret_cast<ast::FunctionDecls*>(node))
+#define cur_node (reinterpret_cast<const ast::FunctionDecls*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -412,7 +446,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ExpAssign:
-#define cur_node (reinterpret_cast<ast::ExpAssign*>(node))
+#define cur_node (reinterpret_cast<const ast::ExpAssign*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -429,7 +463,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::UnExp:
-#define cur_node (reinterpret_cast<ast::UnExp*>(node))
+#define cur_node (reinterpret_cast<const ast::UnExp*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -440,7 +474,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::BiExp:
-#define cur_node (reinterpret_cast<ast::BiExp*>(node))
+#define cur_node (reinterpret_cast<const ast::BiExp*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -451,7 +485,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ExpConstantBoolean:
-#define cur_node (reinterpret_cast<ast::ExpConstantBoolean*>(node))
+#define cur_node (reinterpret_cast<const ast::ExpConstantBoolean*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -464,7 +498,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ExpConstantChar:
-#define cur_node (reinterpret_cast<ast::ExpConstantChar*>(node))
+#define cur_node (reinterpret_cast<const ast::ExpConstantChar*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -477,7 +511,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ExpConstantInteger:
-#define cur_node (reinterpret_cast<ast::ExpConstantInteger*>(node))
+#define cur_node (reinterpret_cast<const ast::ExpConstantInteger*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -490,7 +524,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ExpConstantString:
-#define cur_node (reinterpret_cast<ast::ExpConstantString*>(node))
+#define cur_node (reinterpret_cast<const ast::ExpConstantString*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -503,7 +537,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ExpConstantReal:
-#define cur_node (reinterpret_cast<ast::ExpConstantReal*>(node))
+#define cur_node (reinterpret_cast<const ast::ExpConstantReal*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -516,7 +550,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::BasicTypeSpec:
-#define cur_node (reinterpret_cast<ast::BasicTypeSpec*>(node))
+#define cur_node (reinterpret_cast<const ast::BasicTypeSpec*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
@@ -528,7 +562,7 @@ void ast::printAST(ast::Node *node, int dep) {
 #undef  cur_node
             break;
         case Type::ArrayTypeSpec:
-#define cur_node (reinterpret_cast<ast::ArrayTypeSpec*>(node))
+#define cur_node (reinterpret_cast<const ast::ArrayTypeSpec*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);

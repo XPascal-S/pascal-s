@@ -58,7 +58,11 @@ file(GLOB PASCAL_S_RECURSIVE_PARSER_SOURCE_FILES recursive-parser/*.cpp)
 add_subdirectory(recursive-parser/test)
 
 # ast to targets
-add_subdirectory(target-llvm)
+
+if (ENABLE_LLVM)
+    add_subdirectory(target-llvm)
+endif ()
+
 add_subdirectory(target-nothing)
 add_subdirectory(target-c)
 
@@ -83,3 +87,7 @@ list(APPEND PASCAL_S_RECURSIVE_COMPILER_SOURCE_FILES
 add_subdirectory(compiler)
 
 add_subdirectory(test)
+
+
+add_subdirectory(py-module)
+
