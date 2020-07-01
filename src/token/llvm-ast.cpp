@@ -393,8 +393,10 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("type = Variabele\n");
             printf("name = %s\n", convertToString(cur_node->id).c_str());
             printf("exps =\n");
-            for (auto param: cur_node->id_var->explist) {
-                printAST(param, dep + 1);
+            if (cur_node->id_var) {
+                for (auto param: cur_node->id_var->explist) {
+                    printAST(param, dep + 1);
+                }
             }
 
             put_tab(dep);
