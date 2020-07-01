@@ -285,6 +285,9 @@ namespace target_c {
                 case MarkerType::Colon:
                     result = ":";
                     return OK;
+                case MarkerType::Mod:
+                    result = "%";
+                    return OK;
                 default:
                     //assert(false);
                     throw std::runtime_error("semantic error: no marker type match");
@@ -720,6 +723,8 @@ namespace target_c {
                     return code_gen_IfElseStatement(reinterpret_cast<const IfElseStatement *>(node), buffer);
                 case Type::ForStatement:
                     return code_gen_ForStatement(reinterpret_cast<const ForStatement *>(node), buffer);
+                case Type::CompoundStatement:
+                    return code_gen_CompoundStatement(reinterpret_cast<const CompoundStatement *>(node), buffer);
                 default:
                     assert(false);
                     throw std::runtime_error("semantic error: no statement type match");
@@ -906,6 +911,7 @@ namespace target_c {
                 }
                 buffer += " ";
             }
+            buffer.pop_back();
             buffer += "\"";
             for (auto x: node->var_list->params) {
                 buffer += std::string(", ") + x->id->content;
@@ -946,12 +952,15 @@ namespace target_c {
             check &= code_gen_exp(node->expression, buffer, ifType);
             buffer += "){\n";
             check &= code_gen_Statement(node->if_part, buffer);
-            buffer += ";\n";
+            if (node->if_part->type != Type::CompoundStatement)
+                buffer += ";\n";
             buffer += "}\n";
 
             if (node->else_part != nullptr) {
                 buffer += "else{\n";
                 code_gen_Statement(node->else_part, buffer);
+                if (node->else_part->type != Type::CompoundStatement)
+                    buffer += ";\n";
                 buffer += "}\n";
             }
             return check;
@@ -979,7 +988,8 @@ namespace target_c {
             buffer += fmt::format("{}++", node->id->content);
             buffer += "){\n";
             check &= code_gen_Statement(node->for_stmt, buffer);
-            buffer += ";\n";
+            if (node->type != Type::CompoundStatement)
+                buffer += ";\n";
             buffer += "}\n";
             return check;
         }
