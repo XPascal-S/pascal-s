@@ -6,18 +6,101 @@
 #include <target/c.h>
 #include <iostream>
 
+Program * test_gcd() {
+    auto *integer = new Keyword(KeywordType::Integer);
+    auto *intKeyWord = new ExpKeyword(integer);
+    auto *mainIdentifier = new Identifier("example");
+    auto *mainIdent = new Ident(mainIdentifier);
+    auto *mainHead = new ProgramHead(intKeyWord, mainIdent, nullptr);
+
+    auto *varDecls = new VarDecls;
+    auto identList = new IdentList;
+    identList->idents.push_back(new Identifier("x"));
+    identList->idents.push_back(new Identifier("y"));
+    varDecls->decls.push_back(new VarDecl(identList, new BasicTypeSpec(new Keyword(KeywordType::Integer))));
+
+    auto *subprogramDecls = new SubprogramDecls;
+    auto *gcdVar = new Variable;
+    gcdVar->id = new Identifier("gcd");
+    auto *varA = new Variable;
+    varA->id = new Identifier("a");
+    auto *varB = new Variable;
+    varB->id = new Identifier("b");
+
+    auto *gcdHead = new SubprogramHead;
+    auto *gcdVarDecls = new VarDecls;
+    auto *gcdVarIdentList = new IdentList;
+    gcdVarIdentList->idents.push_back(new Identifier("a"));
+    gcdVarIdentList->idents.push_back(new Identifier("b"));
+    auto *gcdVarDecl = new VarDecl(gcdVarIdentList, new BasicTypeSpec(new Keyword(KeywordType::Integer)));
+    gcdVarDecls->decls.push_back(gcdVarDecl);
+    auto *gcdFuncDecl = new FunctionDecl(new Identifier("gcd"), gcdVarDecls, new BasicTypeSpec(new Keyword(KeywordType::Integer)));
+    gcdHead->func = gcdFuncDecl;
+
+    auto *gcdStatList = new StatementList;
+
+    auto *gcdIfElseStat = new IfElseStatement;
+    auto *gcdIfElseJudgeExpLhs = new Variable;
+    gcdIfElseJudgeExpLhs->id = new Identifier("b");
+    auto *gcdIfElseJudgeExp = new BiExp(gcdIfElseJudgeExpLhs, new Marker(MarkerType::EQ), new ExpConstantInteger(new ConstantInteger(0)));
+    auto *gcdIfElseJudge = new ExecStatement(gcdIfElseJudgeExp);
+    gcdIfElseStat->expression = gcdIfElseJudge;
+    auto *gcdIfStatList = new StatementList;
+    auto *gcdIfAssign = new ExpAssign(gcdVar, varA);
+    auto *gcdIfStat = new ExecStatement(gcdIfAssign);
+    gcdIfStatList->statement.push_back(gcdIfStat);
+    gcdIfElseStat->if_part = gcdIfStatList;
+    auto *gcdElseStatList = new StatementList;
+    auto *gcdElseAssignRhsExpressList = new ExpressionList;
+    gcdElseAssignRhsExpressList->explist.push_back(varB);
+    gcdElseAssignRhsExpressList->explist.push_back(new BiExp(varA, new Marker(MarkerType::MOD), varB));
+    auto *gcdElseAssignRhs = new ExpCall(new Identifier("gcd"), gcdElseAssignRhsExpressList);
+    auto *gcdElseAssign = new ExpAssign(gcdVar, gcdElseAssignRhs);
+    auto *gcdElseStat = new ExecStatement(gcdElseAssign);
+    gcdElseStatList->statement.push_back(gcdElseStat);
+    gcdIfElseStat->else_part = gcdElseStatList;
+
+    gcdStatList->statement.push_back(gcdIfElseStat);
+    auto *gcdBody = new SubprogramBody(nullptr, nullptr, new CompoundStatement(gcdStatList));
+    auto *gcdSubprogram = new Subprogram(gcdHead, gcdBody);
+    subprogramDecls->subprogram.push_back(gcdSubprogram);
+
+    auto *mainStatList = new StatementList;
+    auto *readIdent = new Identifier("read_int64");
+    auto *writeIdent = new Identifier("write_int64");
+    auto *varX = new Variable;
+    varX->id = new Identifier("x");
+    auto *varY = new Variable;
+    varY->id = new Identifier("y");
+    auto *readExpressList1 = new ExpressionList;
+    readExpressList1->explist.push_back(varX);
+    mainStatList->statement.push_back(new ExecStatement(new ExpCall(readIdent, readExpressList1)));
+    auto *readExpressList2 = new ExpressionList;
+    readExpressList2->explist.push_back(varY);
+    mainStatList->statement.push_back(new ExecStatement(new ExpCall(readIdent, readExpressList2)));
+    auto *writeExpressList = new ExpressionList;
+    auto *gcdExpressList = new ExpressionList;
+    gcdExpressList->explist.push_back(varX);
+    gcdExpressList->explist.push_back(varY);
+    writeExpressList->explist.push_back(new ExpCall(new Identifier("gcd"), gcdExpressList));
+    mainStatList->statement.push_back(new ExecStatement(new ExpCall(writeIdent, writeExpressList)));
+
+    auto *mainBody = new ProgramBody(nullptr, varDecls, subprogramDecls, new CompoundStatement(mainStatList));
+    auto *mainProgram = new Program(mainHead, mainBody);
+    return mainProgram;
+}
 
 Program * test_if_else() {
     auto *integer = new Keyword(KeywordType::Integer);
     auto *intKeyWord = new ExpKeyword(integer);
     auto *mainIdentifier = new Identifier("main");
     auto *mainIdent = new Ident(mainIdentifier);
-    auto *promHead = new ProgramHead(intKeyWord, mainIdent, nullptr);
+    auto *mainHead = new ProgramHead(intKeyWord, mainIdent, nullptr);
 
     auto *varDecls = new VarDecls;
     auto identList = new IdentList;
     identList->idents.push_back(new Identifier("a"));
-    varDecls->decls.push_back(new VarDecl(identList, new TypeSpec(Type::BasicTypeSpec)));
+    varDecls->decls.push_back(new VarDecl(identList, new BasicTypeSpec(new Keyword(KeywordType::Integer))));
 
     auto *readInt = new Identifier("read_int64");
     auto *writeChar = new Identifier("write_char");
@@ -67,7 +150,7 @@ Program * test_if_else() {
     auto *mainCompoundStat = new CompoundStatement(mainStatementList);
     auto *mainBody = new ProgramBody(nullptr, varDecls, nullptr, mainCompoundStat);
 
-    auto *mainProgram = new Program(promHead, mainBody);
+    auto *mainProgram = new Program(mainHead, mainBody);
     return mainProgram;
 }
 
