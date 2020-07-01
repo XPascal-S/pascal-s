@@ -490,11 +490,11 @@ namespace target_c {
                 struct SymbolEntry se;
                 //se.newName = name + "_" + this->nowST_pointer->tableName;
                 if (node->type_spec->type == Type::BasicTypeSpec) {
-                    keyword2str(reinterpret_cast<const BasicTypeSpec *>(node)->keyword->key_type, se.typeDecl);
+                    keyword2str(reinterpret_cast<const BasicTypeSpec *>(node->type_spec)->keyword->key_type, se.typeDecl);
                     se.varType = ISBASIC;
                     buffer += fmt::format("{0} {1};\n", se.typeDecl, name);
                 } else if (node->type_spec->type == Type::ArrayTypeSpec) {
-                    se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(node);
+                    se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(node->type_spec);
                     se.varType = ISARRAY;
                     keyword2str(se.arrayInfo->keyword->key_type, se.typeDecl);
                     for(int i=0; i<se.arrayInfo->periods.size(); i++){
@@ -709,7 +709,7 @@ namespace target_c {
             check &= marker2str(node->marker->marker_type, markerStr);
             buffer += " " + markerStr + " ";
             check &= code_gen_exp(node->rhs, buffer, rhsType);
-            buffer += ";\n";
+            //buffer += ";\n";
             if (check) {
                 if (lhsType == rhsType) {
                     expType = lhsType;
