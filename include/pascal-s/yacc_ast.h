@@ -9,6 +9,7 @@
 #include <vector>
 #include <utility>
 #include <deque>
+#include <cmath>
 
 enum class Type : uint16_t {
 
@@ -64,7 +65,7 @@ enum class Type : uint16_t {
 
     VariableList, // variable list
 
-    Variabele, // variable
+    Variable, // variable
 
     IdVarpart, // id varpart
 
@@ -222,7 +223,7 @@ struct ParamSpec : public Node {
     ParamSpec(const Keyword* keyword_var, IdentList* id_list, TypeSpec* spec) : Node(Type::ParamSpec),
         keyword_var(keyword_var),
         id_list(id_list), spec(spec) {}
-
+    ParamSpec(IdentList* id_list, TypeSpec* spec) : Node(Type::ParamSpec), id_list(id_list), spec(spec) {}
 };
 
 struct ParamList : public Node {
@@ -261,7 +262,8 @@ struct Variable : public Exp {
 
     ExpressionList* id_var = nullptr;
 
-    explicit Variable() : Exp(Type::Variabele) {}
+    explicit Variable() : Exp(Type::Variable) {}
+    explicit Variable(Identifier* id, ExpressionList* id_var) : Exp(Type::Variable), id(id), id_var(id_var) {}
 };
 
 
@@ -357,6 +359,60 @@ struct VarDecls : public Node {
 
 };
 
+
+struct FunctionDecl : public Node {
+
+  const Identifier* name;
+
+  ParamList* decls;
+
+  BasicTypeSpec* basic;
+
+  FunctionDecl() :Node(Type::FunctionDecl) {}
+
+  FunctionDecl(Identifier* name, ParamList* decls, BasicTypeSpec* basic) : Node(Type::FunctionDecl), name(name), decls(decls), basic(basic) {}
+
+
+
+  ~FunctionDecl() {
+
+    deleteAST(decls);
+
+  }
+};
+
+
+
+struct FunctionDecls : public Node {
+
+  std::vector<FunctionDecl*> decls;
+
+  FunctionDecls() : Node(Type::FunctionDecls) {}
+
+
+
+  ~FunctionDecls() {
+
+    for (auto exp : decls) {
+
+      deleteAST(exp);
+
+    }
+
+  }
+};
+
+struct Procedure : public Function {
+
+  // Node fn_type;
+
+  const Identifier* name;
+
+  ParamList* decls;
+
+  Procedure(Identifier* name, ParamList* decls) : Function(Type::Procedure), name(name), decls(decls) {}
+
+};
 
 struct Ident : public Exp {
 
@@ -659,12 +715,14 @@ struct ProgramHead : public Node {
 
     Ident* id;
 
-    IdentList* idlist;
+    IdentList* idlist = nullptr;
 
     explicit ProgramHead(const ExpKeyword* programKeyword, Ident* id, IdentList* idlist) : Node(Type::ProgramHead),
         programKeyword(
             programKeyword),
         id(id), idlist(idlist) {}
+
+  explicit ProgramHead(const ExpKeyword* programKeyword, Ident* id) : Node(Type::ProgramHead), programKeyword(programKeyword),id(id) {}
 
 };
 

@@ -3,12 +3,12 @@
 #ifndef PASCAL_S_TOKEN
 #define PASCAL_S_TOKEN
 
-#include <map>
-#include <set>
 #include <vector>
-#include <cassert>
 #include "exception.h"
 #include "lib/stdtype.h"
+#include <string>
+#include <set>
+#include <cassert>
 
 enum class TokenType : pascal_s::token_type_underlying_type {
     Unknown = 0,
@@ -103,6 +103,8 @@ struct Token {
     pascal_s::length_t length;
     // 16 ~ 24字节
     pascal_s::offset_t offset;
+
+    virtual ~Token()=default;
 };
 
 
@@ -175,7 +177,6 @@ struct Marker : public Token {
 
     explicit Marker(MarkerType marker_type);
 
-    ~Marker();
 };
 
 void deleteToken(Token *pToken);

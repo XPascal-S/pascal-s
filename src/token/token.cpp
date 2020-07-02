@@ -170,4 +170,4 @@ Marker::Marker(MarkerType marker_type)
     this->type = TokenType::Marker;
 }
 
-Marker::~Marker() = default;
+// Marker::~Marker() = default;
