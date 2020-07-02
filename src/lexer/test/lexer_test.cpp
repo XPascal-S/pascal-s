@@ -200,7 +200,8 @@ INSTANTIATE_TEST_SUITE_P(ConstantCharRegex, GoodLexerGetAllTokensTest, testing::
         CaseExpectConstantChar("'\\t' ", '\t'),
         CaseExpectConstantChar("'\\v' ", '\v'),
         CaseExpectConstantChar("'\\'' ", '\''),
-        CaseExpectConstantChar("'\\\\' ", '\\')
+        CaseExpectConstantChar("'\\\\' ", '\\'),
+        CaseExpectConstantChar("' ' ", ' ')
 ));
 
 #undef CaseExpectConstantChar
