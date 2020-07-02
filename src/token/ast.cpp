@@ -1,13 +1,10 @@
-//
 // Created by kamiyoru on 2020/5/8.
 //
 
 #include <pascal-s/llvm-ast.h>
 #include <pascal-s/exception.h>
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
 #include <stdexcept>
+
 //
 //
 //void deleteAST(Node *node) {

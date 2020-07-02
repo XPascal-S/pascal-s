@@ -1,5 +1,5 @@
 #include <cstdlib>
-#include <pascal-s/AST.h>
+#include <pascal-s/yacc_ast.h>
 #include <pascal-s/mock.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -10,22 +10,22 @@
 extern "C" {
   Node *ParseToken() {
     std::vector<Token *> mocking_stream{
-                                        new Keyword("program", KeywordType::Program),
+                                        new Keyword(KeywordType::Program),
                                         new Identifier("test"),
-                                        new Marker(";", MarkerType::Semicolon),
-                                        new Keyword("const", KeywordType::Const),
+                                        new Marker(MarkerType::Semicolon),
+                                        new Keyword(KeywordType::Const),
                                         new Identifier("a"),
-                                        new Marker("=", MarkerType::EQ),
-                                        new ConstantInteger("2"),
-                                        new Marker(";", MarkerType::Semicolon),
-                                        new Keyword("var", KeywordType::Var),
+                                        new Marker(MarkerType::EQ),
+                                        new ConstantInteger(2),
+                                        new Marker(MarkerType::Semicolon),
+                                        new Keyword(KeywordType::Var),
                                         new Identifier("b"),
-                                        new Marker(":", MarkerType::Colon),
-                                        new Keyword("integer", KeywordType::Integer),
-                                        new Marker(";", MarkerType::Semicolon),
-                                        new Keyword("begin", KeywordType::Begin),
-                                        new Keyword("end", KeywordType::End),
-                                        new Marker(".", MarkerType::Dot)
+                                        new Marker(MarkerType::Colon),
+                                        new Keyword(KeywordType::Integer),
+                                        new Marker(MarkerType::Semicolon),
+                                        new Keyword(KeywordType::Begin),
+                                        new Keyword(KeywordType::End),
+                                        new Marker(MarkerType::Dot)
     };
 
     MockLexer lexer(mocking_stream);
@@ -54,7 +54,6 @@ PYBIND11_MODULE(py_ast, m) {
     .value("Program", Type::Program)
     .value("Procedure", Type::Procedure)
     .value("Function", Type::Function)
-    .value("StatementBlock", Type::StatementBlock)
     .value("Statement", Type::Statement)
     .value("ExpCall", Type::ExpCall)
     .value("IfElseStatement", Type::IfElseStatement)
@@ -89,6 +88,6 @@ PYBIND11_MODULE(py_ast, m) {
   pybind11::class_<Node>(m, "Node")
     .def(pybind11::init<Type>())
     .def_readonly("type", &Node::type)
-    .def_readonly("children", &Node::children)
-    .def("GetTokenSymbol", &Node::GetTokenSymbol);
+    .def_readonly("children", &Node::children);
+    // .def("GetTokenSymbol", &Node::GetTokenSymbol);
 }

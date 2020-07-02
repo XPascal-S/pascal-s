@@ -3,7 +3,6 @@
 
 #define YYDEBUG 1
 #include "parser.example.h"
-#include <algorithm>
 #include <cstdio>
 #include <pascal-s/interface.h>
 #include <pascal-s/mock.h>
@@ -38,13 +37,13 @@ private:
     }
     switch (token->type) {
     case TokenType::Keyword: {
-      auto keyword_token = dynamic_cast<const Keyword *>(token);
+      const Keyword* keyword_token = reinterpret_cast<const Keyword *>(token);
       printf("\ntoken keyword: %x\n",
              static_cast<int>(KEYWORDTYPE(keyword_token->key_type)));
       return static_cast<int>(KEYWORDTYPE(keyword_token->key_type));
     }
     case TokenType::Marker: {
-      auto marker_token = dynamic_cast<const Marker *>(token);
+      const Marker* marker_token = reinterpret_cast<const Marker *>(token);
       printf("\ntoken marker: %x\n",
              static_cast<int>(MARKERTYPE(marker_token->marker_type)));
       return static_cast<int>(MARKERTYPE(marker_token->marker_type));
@@ -55,30 +54,26 @@ private:
     return static_cast<int>(token->type);
   }
 
-  // void access_ast(void * ast) override {
-  //     parsed_result = (Node*)ast;
-  // }
   void access_ast(void *leaf_node) override {
-    astTreeStack.push_back((Node *)leaf_node);
+    // astTreeStack.push_back((Node *)leaf_node);
   }
-  // void ast_insert_leaf_node(void * leaf_node) {
-  //   astTreeStack.push_back((Node *)leaf_node);
-  // }
 
-  void ast_reduce_nodes(int k, Type type) override {
-    if (astTreeStack.size() < k) {
-      throw RuntimeReinterpretASTException(astTreeStack.back());
-    }
-    Node *par_node = new Node(type);
-    for (int i = 0; i < k; ++i) {
-      Node *n = astTreeStack.back();
-      astTreeStack.pop_back();
-      par_node->children.push_back(n);
-    }
-    reverse(par_node->children.begin(), par_node->children.end());
-    astTreeStack.push_back(par_node);
-    ast_root = par_node;
-    // printAST(ast_root);
+  Node* ast_reduce_nodes(int k, Type type) override {
+    // if (astTreeStack.size() < k) {
+    //   // Node* errNode = astTreeStack.back();
+    //   // throw RuntimeReinterpretASTException(*errNode);
+    // }
+    // Node *par_node = new Node(type);
+    // for (int i = 0; i < k; ++i) {
+    //   Node *n = astTreeStack.back();
+    //   astTreeStack.pop_back();
+    //   par_node->children.push_back(n);
+    // }
+    // reverse(par_node->children.begin(), par_node->children.end());
+    // astTreeStack.push_back(par_node);
+    // ast_root = par_node;
+    // // printAST(ast_root);
+    // return par_node;
   }
 };
 

@@ -7,23 +7,10 @@
 #include <set>
 #include <vector>
 #include <cassert>
+#include <string>
 #include "exception.h"
 #include "lib/stdtype.h"
-/*
 
-+ Unknown: 为了防止Token的默认值导致一些bug，我们直接让默认值为Unknown
-+ Keyword: 关键字，例如program, array, ...
-+ ConstantString: 字符串字面量，此Token暂时未使用
-+ ConstantChar: 字符字面量
-+ ConstantReal: 浮点数字面量
-+ ConstantInteger: 整数字面量
-+ ConstantBoolean: 布尔值字面量
-+ Identifier:
-+ Marker:
-+ Nullptr:
-+ ErrorToken:
-+ Comment:
-*/
 enum class TokenType : pascal_s::token_type_underlying_type {
     Unknown = 0,
     Keyword = 1,
