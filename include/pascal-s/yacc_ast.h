@@ -543,9 +543,9 @@ struct IfElseStatement : public Statement {
 
     Exp* expression = nullptr;
 
-    ExpressionList* if_part = nullptr;
+    Statement* if_part = nullptr;
 
-    ExpressionList* else_part = nullptr;
+    Statement* else_part = nullptr;
 
     IfElseStatement() : Statement(Type::IfElseStatement) {}
 
@@ -560,7 +560,7 @@ struct ForStatement : public Statement {
 
     Exp* express2 = nullptr;
 
-    ExpressionList* for_stmt = nullptr;
+    Statement* for_stmt = nullptr;
 
     ForStatement() : Statement(Type::ForStatement) {}
 
