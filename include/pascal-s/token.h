@@ -103,8 +103,6 @@ struct Token {
     pascal_s::length_t length;
     // 16 ~ 24字节
     pascal_s::offset_t offset;
-
-    virtual ~Token()=default;
 };
 
 
@@ -176,7 +174,7 @@ struct Marker : public Token {
     MarkerType marker_type;
 
     explicit Marker(MarkerType marker_type);
-
+    ~Marker();
 };
 
 void deleteToken(Token *pToken);

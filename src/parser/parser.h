@@ -37,13 +37,13 @@ private:
     }
     switch (token->type) {
     case TokenType::Keyword: {
-      auto keyword_token = dynamic_cast<const Keyword *>(token);
+      const Keyword* keyword_token = reinterpret_cast<const Keyword *>(token);
       printf("\ntoken keyword: %x\n",
              static_cast<int>(KEYWORDTYPE(keyword_token->key_type)));
       return static_cast<int>(KEYWORDTYPE(keyword_token->key_type));
     }
     case TokenType::Marker: {
-      auto marker_token = dynamic_cast<const Marker *>(token);
+      const Marker* marker_token = reinterpret_cast<const Marker *>(token);
       printf("\ntoken marker: %x\n",
              static_cast<int>(MARKERTYPE(marker_token->marker_type)));
       return static_cast<int>(MARKERTYPE(marker_token->marker_type));
