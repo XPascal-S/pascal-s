@@ -9,8 +9,31 @@
 #include <vector>
 #include <deque>
 #include "token.h"
+#include <pascal-s/lib/stdtype.h>
 
 namespace ast {
+
+    template<typename T, typename F>
+    void copy_pos_with_check(T *node, F *tok) {
+        assert(node != nullptr);
+        if (tok == nullptr) {
+            return;
+        }
+        pascal_s::copy_pos_any(node, tok);
+    }
+
+    template<typename P, typename F, typename T>
+    void copy_pos_between_tokens(P *target, F *fr, T *to) {
+        assert(target != nullptr);
+        if (fr == nullptr || to == nullptr) {
+            return;
+        }
+        assert(fr->offset <= to->offset);
+
+        pascal_s::copy_pos_any(target, fr);
+        target->length = to->offset + to->length - fr->offset;
+    }
+
     enum class Type : uint16_t {
 
         Unknown,
@@ -131,22 +154,23 @@ namespace ast {
     void printAST(const Node *node, int dep = 0);
 
 
-    struct Node {
+    struct Node : pascal_s::Pos {
 
         Type type;
-
-        pascal_s::line_t line = 0;
-        // 8 ~ 16字节
-        pascal_s::column_t column = 0;
-        pascal_s::length_t length = 0;
-        // 16 ~ 24字节
-        pascal_s::offset_t offset = 0;
 
         std::deque<Node *> children;
 
         explicit Node(Type type) : type(type) {}
 
         char *GetTokenSymbol();
+
+        pascal_s::Pos *visit_pos() {
+            return reinterpret_cast<pascal_s::Pos *>(this);
+        }
+
+        [[nodiscard]] const pascal_s::Pos *visit_pos() const {
+            return reinterpret_cast<const pascal_s::Pos *>(this);
+        }
 
     };
 
@@ -177,7 +201,9 @@ namespace ast {
 
         const Keyword *keyword;
 
-        explicit BasicTypeSpec(const Keyword *keyword) : TypeSpec(Type::BasicTypeSpec), keyword(keyword) {}
+        explicit BasicTypeSpec(const Keyword *keyword) : TypeSpec(Type::BasicTypeSpec), keyword(keyword) {
+            copy_pos_with_check(this, keyword);
+        }
 
     };
 
@@ -213,7 +239,15 @@ namespace ast {
 
         ParamSpec(const Keyword *keyword_var, IdentList *id_list, TypeSpec *spec) : Node(Type::ParamSpec),
                                                                                     keyword_var(keyword_var),
-                                                                                    id_list(id_list), spec(spec) {}
+                                                                                    id_list(id_list), spec(spec) {
+            if (keyword_var) {
+                copy_pos_between_tokens(this,
+                                        keyword_var, spec);
+            } else {
+                copy_pos_between_tokens(this,
+                                        id_list, spec);
+            }
+        }
 
     };
 
@@ -283,7 +317,9 @@ namespace ast {
         Exp *rhs;
 
 
-        ConstDecl(const Identifier *ident, Exp *rhs) : Node(Type::ConstDecl), ident(ident), rhs(rhs) {}
+        ConstDecl(const Identifier *ident, Exp *rhs) : Node(Type::ConstDecl), ident(ident), rhs(rhs) {
+            copy_pos_between_tokens(this, ident, rhs);
+        }
 
     };
 
@@ -317,7 +353,9 @@ namespace ast {
 
         VarDecl(IdentList *idents, TypeSpec *type_spec) : Node(Type::VarDecl),
 
-                                                          type_spec(type_spec), idents(idents) {}
+                                                          type_spec(type_spec), idents(idents) {
+            copy_pos_between_tokens(this, idents, type_spec);
+        }
 
         ~VarDecl() {
 
@@ -353,7 +391,9 @@ namespace ast {
         const Identifier *ident;
 
 
-        explicit Ident(const Identifier *ident) : Exp(Type::Ident), ident(ident) {}
+        explicit Ident(const Identifier *ident) : Exp(Type::Ident), ident(ident) {
+            copy_pos_with_check(this, ident);
+        }
 
     };
 
@@ -363,7 +403,9 @@ namespace ast {
         Exp *lhs, *rhs;
 
 
-        ExpAssign(Exp *lhs, Exp *rhs) : Exp(Type::ExpAssign), lhs(lhs), rhs(rhs) {}
+        ExpAssign(Exp *lhs, Exp *rhs) : Exp(Type::ExpAssign), lhs(lhs), rhs(rhs) {
+            copy_pos_between_tokens(this, lhs, rhs);
+        }
 
     };
 
@@ -375,7 +417,9 @@ namespace ast {
         const Marker *marker;
 
 
-        explicit UnExp(const Marker *marker, Exp *lhs) : Exp(Type::UnExp), lhs(lhs), marker(marker) {}
+        explicit UnExp(const Marker *marker, Exp *lhs) : Exp(Type::UnExp), lhs(lhs), marker(marker) {
+            copy_pos_between_tokens(this, marker, lhs);
+        }
 
         ~UnExp() {
 
@@ -394,7 +438,9 @@ namespace ast {
 
 
         explicit BiExp(Exp *lhs, const Marker *marker, Exp *rhs) : Exp(Type::BiExp), lhs(lhs), rhs(rhs),
-                                                                   marker(marker) {}
+                                                                   marker(marker) {
+            copy_pos_between_tokens(this, lhs, rhs);
+        }
 
         ~BiExp() {
 
@@ -414,7 +460,9 @@ namespace ast {
         ExpressionList *params;
 
 
-        explicit ExpCall(const Identifier *fn, ExpressionList *params) : Exp(Type::ExpCall), fn(fn), params(params) {}
+        explicit ExpCall(const Identifier *fn, ExpressionList *params) : Exp(Type::ExpCall), fn(fn), params(params) {
+            copy_pos_between_tokens(this, fn, params);
+        }
 
         ~ExpCall() {
 
@@ -435,7 +483,9 @@ namespace ast {
     struct ExecStatement : public Statement {
         Exp *exp;
 
-        explicit ExecStatement(Exp *exp) : Statement(Type::ExecStatement), exp(exp) {}
+        explicit ExecStatement(Exp *exp) : Statement(Type::ExecStatement), exp(exp) {
+            copy_pos_with_check(this, exp);
+        }
 
         ~ExecStatement() {
             deleteAST(exp);
@@ -451,17 +501,17 @@ namespace ast {
     };
 
 
-    struct Read : public Exp {
+    struct Read : public Statement {
         VariableList *var_list = nullptr;
 
-        explicit Read() : Exp(Type::Read) {}
+        explicit Read() : Statement(Type::Read) {}
     };
 
 
-    struct Write : public Exp {
+    struct Write : public Statement {
         ExpressionList *exp_list = nullptr;
 
-        explicit Write() : Exp(Type::Write) {}
+        explicit Write() : Statement(Type::Write) {}
     };
 
 
@@ -506,7 +556,9 @@ namespace ast {
         const ConstantInteger *value;
 
 
-        explicit ExpConstantInteger(const ConstantInteger *value) : Exp(Type::ExpConstantInteger), value(value) {}
+        explicit ExpConstantInteger(const ConstantInteger *value) : Exp(Type::ExpConstantInteger), value(value) {
+            copy_pos_with_check(this, value);
+        }
 
     };
 
@@ -516,7 +568,9 @@ namespace ast {
         const ConstantChar *value;
 
 
-        explicit ExpConstantChar(const ConstantChar *value) : Exp(Type::ExpConstantChar), value(value) {}
+        explicit ExpConstantChar(const ConstantChar *value) : Exp(Type::ExpConstantChar), value(value) {
+            copy_pos_with_check(this, value);
+        }
 
     };
 
@@ -526,7 +580,9 @@ namespace ast {
         const ConstantBoolean *value;
 
 
-        explicit ExpConstantBoolean(const ConstantBoolean *value) : Exp(Type::ExpConstantBoolean), value(value) {}
+        explicit ExpConstantBoolean(const ConstantBoolean *value) : Exp(Type::ExpConstantBoolean), value(value) {
+            copy_pos_with_check(this, value);
+        }
 
     };
 
@@ -536,7 +592,9 @@ namespace ast {
         const ConstantString *value;
 
 
-        explicit ExpConstantString(const ConstantString *value) : Exp(Type::ExpConstantString), value(value) {}
+        explicit ExpConstantString(const ConstantString *value) : Exp(Type::ExpConstantString), value(value) {
+            copy_pos_with_check(this, value);
+        }
 
     };
 
@@ -546,7 +604,9 @@ namespace ast {
         const ConstantReal *value;
 
 
-        explicit ExpConstantReal(const ConstantReal *value) : Exp(Type::ExpConstantReal), value(value) {}
+        explicit ExpConstantReal(const ConstantReal *value) : Exp(Type::ExpConstantReal), value(value) {
+            copy_pos_with_check(this, value);
+        }
 
     };
 
@@ -555,7 +615,9 @@ namespace ast {
         const Marker *value;
 
 
-        explicit ExpMarker(const Marker *value) : Exp(Type::ExpMarker), value(value) {}
+        explicit ExpMarker(const Marker *value) : Exp(Type::ExpMarker), value(value) {
+            copy_pos_with_check(this, value);
+        }
 
     };
 
@@ -563,7 +625,9 @@ namespace ast {
         const Keyword *value;
 
         explicit ExpKeyword(const Keyword *value)
-                : Exp(Type::ExpKeyword), value(value) {}
+                : Exp(Type::ExpKeyword), value(value) {
+            copy_pos_with_check(this, value);
+        }
 
     };
 
@@ -581,7 +645,9 @@ namespace ast {
 
         explicit CompoundStatement() : Statement(Type::CompoundStatement) {}
 
-        explicit CompoundStatement(StatementList *state) : Statement(Type::CompoundStatement), state(state) {}
+        explicit CompoundStatement(StatementList *state) : Statement(Type::CompoundStatement), state(state) {
+            copy_pos_with_check(this, state);
+        }
     };
 
 
@@ -598,7 +664,15 @@ namespace ast {
         SubprogramHead() : Node(Type::SubprogramHead) {}
 
         SubprogramHead(const Keyword *fn_def, const Identifier *name, ParamList *decls, BasicTypeSpec *ret_type) :
-                Node(Type::SubprogramHead), fn_def(fn_def), name(name), decls(decls), ret_type(ret_type) {}
+                Node(Type::SubprogramHead), fn_def(fn_def), name(name), decls(decls), ret_type(ret_type) {
+            if (ret_type != nullptr) {
+                copy_pos_between_tokens(this, fn_def, ret_type);
+            } else if (decls != nullptr) {
+                copy_pos_between_tokens(this, fn_def, decls);
+            } else {
+                copy_pos_between_tokens(this, fn_def, name);
+            }
+        }
 
         ~SubprogramHead() {
             deleteAST(decls);
@@ -618,7 +692,13 @@ namespace ast {
         explicit SubprogramBody() : Node(Type::SubprogramBody) {}
 
         explicit SubprogramBody(ConstDecls *constdecls, VarDecls *vardecls, CompoundStatement *compound) :
-                Node(Type::SubprogramBody), constdecls(constdecls), vardecls(vardecls), compound(compound) {}
+                Node(Type::SubprogramBody), constdecls(constdecls), vardecls(vardecls), compound(compound) {
+            Node *l = constdecls;
+            if (l == nullptr) l = vardecls;
+            if (l == nullptr) l = compound;
+
+            copy_pos_between_tokens(this, l, compound);
+        }
     };
 
 
@@ -654,7 +734,10 @@ namespace ast {
         explicit ProgramHead(const ExpKeyword *programKeyword, Ident *id, IdentList *idlist) : Node(Type::ProgramHead),
                                                                                                programKeyword(
                                                                                                        programKeyword),
-                                                                                               id(id), idlist(idlist) {}
+                                                                                               id(id), idlist(idlist) {
+            if (idlist) copy_pos_between_tokens(this, programKeyword, idlist);
+            else copy_pos_between_tokens(this, programKeyword, id);
+        }
 
     };
 
@@ -672,7 +755,14 @@ namespace ast {
         explicit ProgramBody(ConstDecls *constdecls, VarDecls *vardecls, SubprogramDecls *subprogram,
                              CompoundStatement *compound) :
                 Node(Type::ProgramBody), constdecls(constdecls), vardecls(vardecls), subprogram(subprogram),
-                compound(compound) {}
+                compound(compound) {
+            Node *l = constdecls;
+            if (l == nullptr) l = vardecls;
+            if (l == nullptr) l = subprogram;
+            if (l == nullptr) l = compound;
+
+            copy_pos_between_tokens(this, l, compound);
+        }
 
     };
 
@@ -692,7 +782,10 @@ namespace ast {
 
         explicit Program(ProgramHead *programHead, ProgramBody *programBody)
 
-                : Function(Type::Program), fn_type(Type::Program), programHead(programHead), programBody(programBody) {}
+                : Function(Type::Program), fn_type(Type::Program), programHead(programHead), programBody(programBody) {
+
+            copy_pos_between_tokens(this, programHead, programBody);
+        }
 
 
         ~Program() {

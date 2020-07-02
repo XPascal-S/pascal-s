@@ -32,6 +32,9 @@ void deleteToken(Token *pToken) {
         case TokenType::ErrorToken:
             delete reinterpret_cast<ErrorToken *>(pToken);
             break;
+        case TokenType::Comment:
+            delete reinterpret_cast<Comment *>(pToken);
+            break;
         default:
             throw RuntimeReinterpretTokenException(pToken);
     }

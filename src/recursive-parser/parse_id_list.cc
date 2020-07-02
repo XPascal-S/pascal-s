@@ -8,6 +8,7 @@ ast::IdentList *Parser<Lexer>::parse_id_list_with_paren() {
 
     // lparen
     expected_enum_type(predicate::is_lparen, predicate::marker_lparen);
+    auto lp = current_token;
     next_token();
 
     // id list
@@ -18,15 +19,24 @@ ast::IdentList *Parser<Lexer>::parse_id_list_with_paren() {
 
     // rparen
     expected_enum_type(predicate::is_rparen, predicate::marker_rparen);
+    auto rp = current_token;
     next_token();
 
+    ast::copy_pos_between_tokens(ident_list, lp, rp);
     return ident_list;
 }
 
 template<typename Lexer>
 ast::IdentList *Parser<Lexer>::parse_id_list() {
     // allocate
-    return _parse_id_list(new ast::IdentList);
+    ast::IdentList *id_list = _parse_id_list(new ast::IdentList);
+    if (id_list->idents.empty()) {
+        ast::copy_pos_with_check(id_list, current_token);
+        id_list->length = 0;
+    } else {
+        ast::copy_pos_between_tokens(id_list, id_list->idents.front(), id_list->idents.back());
+    }
+    return id_list;
 }
 
 template<typename Lexer>

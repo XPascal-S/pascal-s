@@ -82,6 +82,10 @@ public:
 
     ast::Statement *parse_if_else_statement(std::set<const Token *> *till = nullptr);
 
+    ast::Statement *parse_read_statement(std::set<const Token *> *till = nullptr);
+
+    ast::Statement *parse_write_statement(std::set<const Token *> *till = nullptr);
+
     ast::Exp *parse_const_exp(const std::set<const Token *> *till = nullptr);
 
     ast::Exp *parse_const_fac(const std::set<const Token *> *till = nullptr);

@@ -68,10 +68,27 @@ INSTANTIATE_TEST_SUITE_P(Simple, FacTest, testing::Values( /* NOLINT */
 
 
 INSTANTIATE_TEST_SUITE_P(Variable, FacTest, testing::Values( /* NOLINT */
-// todo: id [ expression_list ]
         ParserTestCase{
                 {
                         new Identifier("a"),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Identifier("a"),
+                        new Marker(MarkerType::LBracket),
+                        new Identifier("a"),
+                        new Marker(MarkerType::RBracket),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Identifier("a"),
+                        new Marker(MarkerType::LBracket),
+                        new Identifier("a"),
+                        new Marker(MarkerType::Comma),
+                        new Identifier("a"),
+                        new Marker(MarkerType::RBracket),
                 }
         }
 ));
@@ -108,6 +125,16 @@ INSTANTIATE_TEST_SUITE_P(Assign, ExpTest, testing::Values( /* NOLINT */
                         new Identifier("a"),
                         new Marker(MarkerType::Add),
                         new Identifier("a"),
+                }
+        },
+        ParserTestCase{
+                {
+                        new Identifier("x"),
+                        new Marker(MarkerType::Assign),
+                        new Identifier("a"),
+                        new Marker(MarkerType::LBracket),
+                        new Identifier("i"),
+                        new Marker(MarkerType::RBracket),
                 }
         }
 ));

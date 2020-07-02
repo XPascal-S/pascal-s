@@ -171,3 +171,8 @@ Marker::Marker(MarkerType marker_type)
 }
 
 Marker::~Marker() = default;
+
+Comment::Comment(const char *content) {
+    this->type = TokenType::Comment;
+    this->content = copy_string(content);
+}

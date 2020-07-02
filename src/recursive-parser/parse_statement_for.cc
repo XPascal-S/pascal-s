@@ -12,6 +12,7 @@ ast::Statement *Parser<Lexer>::parse_for_statement(std::set<const Token *> *till
 
     // for
     expected_enum_type_r(predicate::is_for, predicate::keyword_for, for_stmt);
+    auto for_tok = current_token;
     next_token();
 
     // id
@@ -67,7 +68,7 @@ ast::Statement *Parser<Lexer>::parse_for_statement(std::set<const Token *> *till
     // for statement body
     for_stmt->for_stmt = parse_statement(till);
 
-
+    ast::copy_pos_between_tokens(for_stmt, for_tok, for_stmt->for_stmt);
     return for_stmt;
 #undef loop_var
 #undef from_exp

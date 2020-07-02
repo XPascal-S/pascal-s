@@ -39,6 +39,7 @@ ast::Variable *Parser<Lexer>::parse_variable(const std::set<const Token *> *till
 
     auto variable = new ast::Variable();
     variable->id = ident;
+    ast::copy_pos_with_check(variable, ident);
 
     if (!predicate::is_lbracket(current_token)) {
         for (;;) {
@@ -70,5 +71,6 @@ ast::Variable *Parser<Lexer>::parse_variable(const std::set<const Token *> *till
     }
 
     variable->id_var = parse_expression_list_with_bracket();
+    variable->length = variable->id_var->length + variable->offset - variable->offset;
     return variable;
 }

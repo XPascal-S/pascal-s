@@ -6,24 +6,20 @@
 template<typename Lexer>
 ast::Program *Parser<Lexer>::parse_program() {
 
-    auto program = new ast::Program(nullptr, nullptr);
-
     // program head
-    program->programHead = parse_program_head();
-    if (program->programHead == nullptr) {
-        return program;
+    auto ph = parse_program_head();
+    if (ph == nullptr) {
+        return nullptr;
     }
 
     // ;
-    expected_enum_type_r(predicate::is_semicolon, predicate::marker_semicolon, program);
-    program->semicolon = reinterpret_cast<const Marker *>(current_token);
+    expected_enum_type_r(predicate::is_semicolon, predicate::marker_semicolon,
+                         new ast::Program(ph, nullptr));
+    auto semicolon = reinterpret_cast<const Marker *>(current_token);
     next_token();
 
     // program body
-    program->programBody = parse_program_body();
-    if (program->programBody == nullptr) {
-        return program;
-    }
-
+    auto program = new ast::Program(ph, parse_program_body());
+    program->semicolon = semicolon;
     return program;
 }

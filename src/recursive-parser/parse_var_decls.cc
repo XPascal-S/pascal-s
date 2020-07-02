@@ -8,11 +8,19 @@ ast::VarDecls *Parser<Lexer>::parse_var_decls() {
 
     //var
     expected_enum_type(predicate::is_var, predicate::keyword_var);
+    auto var_tok = current_token;
     next_token();
 
     // look ahead
     expected_type_r(TokenType::Identifier, nullptr);
-    return _parse_var_decls(new ast::VarDecls);
+    auto decls = _parse_var_decls(new ast::VarDecls);
+    assert(decls != nullptr);
+    if (decls->decls.empty()) {
+        ast::copy_pos_with_check(decls, var_tok);
+    } else {
+        ast::copy_pos_between_tokens(decls, var_tok, decls->decls.back());
+    }
+    return decls;
 }
 
 template<typename Lexer>

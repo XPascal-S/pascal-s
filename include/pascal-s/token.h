@@ -9,7 +9,21 @@
 #include <cassert>
 #include "exception.h"
 #include "lib/stdtype.h"
+/*
 
++ Unknown: 为了防止Token的默认值导致一些bug，我们直接让默认值为Unknown
++ Keyword: 关键字，例如program, array, ...
++ ConstantString: 字符串字面量，此Token暂时未使用
++ ConstantChar: 字符字面量
++ ConstantReal: 浮点数字面量
++ ConstantInteger: 整数字面量
++ ConstantBoolean: 布尔值字面量
++ Identifier:
++ Marker:
++ Nullptr:
++ ErrorToken:
++ Comment:
+*/
 enum class TokenType : pascal_s::token_type_underlying_type {
     Unknown = 0,
     Keyword = 1,
@@ -22,7 +36,8 @@ enum class TokenType : pascal_s::token_type_underlying_type {
     Marker = 8,
     Nullptr = 9,
     ErrorToken = 10,
-    Length = 11,
+    Comment = 11,
+    Length = 12,
     ConstRangeL = ConstantString,
     ConstRangeR = ConstantBoolean,
 };
@@ -94,15 +109,17 @@ enum class MarkerType : pascal_s::marker_type_underlying_type {
     Colon = 0x64, // :
 };
 
-struct Token {
+struct Token : pascal_s::Pos {
     // 0 ~ 8字节
-    TokenType type;
-    pascal_s::line_t line;
-    // 8 ~ 16字节
-    pascal_s::column_t column;
-    pascal_s::length_t length;
-    // 16 ~ 24字节
-    pascal_s::offset_t offset;
+    TokenType type = TokenType::Unknown;
+
+    const pascal_s::Pos *visit_pos() const {
+        return reinterpret_cast<const pascal_s::Pos *>(this);
+    }
+
+    pascal_s::Pos *visit_pos() {
+        return reinterpret_cast<pascal_s::Pos *>(this);
+    }
 };
 
 
@@ -126,7 +143,12 @@ struct Keyword : public Token {
 };
 
 struct ConstantString : public Token {
-    const char *attr;
+    const char *attr = nullptr;
+};
+
+struct Comment : public Token {
+    const char *content;
+    explicit Comment(const char *content);
 };
 
 struct ConstantReal : public Token {
@@ -289,6 +311,10 @@ extern const cls cls_lower ##_## lower;
     pascal_s_predicator(Keyword, keyword, do, Do)
 
     pascal_s_predicator(Keyword, keyword, of, Of)
+
+    pascal_s_predicator(Keyword, keyword, read, Read)
+
+    pascal_s_predicator(Keyword, keyword, write, Write)
 
 #undef pascal_s_predicator
 

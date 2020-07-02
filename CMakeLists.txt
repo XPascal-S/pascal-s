@@ -15,6 +15,7 @@ endif ()
 
 option(ENABLE_LLVM "enable llvm related targets"
         OFF)
+set(LLVM_PATH "C:/work/cpp/llvm-tutorial/lib/build-llvm/lib/cmake/llvm" CACHE STRING "path to llvm lib")
 
 # include files (header, configuration, and others can include)
 include_directories(include)
@@ -23,7 +24,7 @@ include_directories(include)
 add_subdirectory(vendor)
 
 if (ENABLE_LLVM)
-    set(LLVM_DIR C:/work/cpp/llvm-tutorial/lib/build-llvm/lib/cmake/llvm)
+    set(LLVM_DIR ${LLVM_PATH})
     find_package(LLVM REQUIRED CONFIG)
 
     message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")

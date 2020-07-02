@@ -10,6 +10,7 @@ ast::Statement *Parser<Lexer>::parse_if_else_statement(std::set<const Token *> *
 
     // if
     expected_enum_type_r(predicate::is_if, predicate::keyword_if, if_else);
+    auto if_tok = current_token;
     next_token();
 
     // if cond
@@ -56,6 +57,7 @@ ast::Statement *Parser<Lexer>::parse_if_else_statement(std::set<const Token *> *
         if_else->else_part = parse_statement(till);
     }
 
+    ast::copy_pos_between_tokens(if_else, if_tok, if_else->else_part ? if_else->else_part : if_else->if_part);
     return if_else;
 #undef cond
 }

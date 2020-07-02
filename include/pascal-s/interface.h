@@ -27,6 +27,10 @@
         proxy_field = p.proxy_field;\
         return *this; }
 
+#define DefineVisitProperty(obj, prop_type, prop) [[maybe_unused]] [[nodiscard]] prop_type visit_ ##prop() const {\
+    return obj.prop;\
+}
+
 // auto generated LexerProxy struct
 // you can partially specialize a specified type to change proxy behavior
 template<typename Lexer>
@@ -120,26 +124,15 @@ template<typename Error>
 struct ErrorProxy {
     DefaultProxyConstructor(ErrorProxy, Error, err)
 
-    [[maybe_unused]] [[nodiscard]] pascal_s::line_t visit_line() const {
-        return err.line;
-    }
+    DefineVisitProperty(err, pascal_s::line_t, line)
 
-    [[maybe_unused]] [[nodiscard]] pascal_s::column_t visit_column() const {
-        return err.column;
-    }
+    DefineVisitProperty(err, pascal_s::column_t, column)
 
-    [[maybe_unused]] [[nodiscard]] pascal_s::length_t visit_length() const {
-        return err.length;
-    }
+    DefineVisitProperty(err, pascal_s::length_t, length)
 
-    [[maybe_unused]] [[nodiscard]] pascal_s::offset_t visit_offset() const {
-        return err.offset;
-    }
-
+    DefineVisitProperty(err, pascal_s::offset_t, offset)
     // 如果没有hint，为nullptr
-    [[maybe_unused]] const char *visit_hint() {
-        return err.hint;
-    }
+    DefineVisitProperty(err, const char *, hint)
 };
 
 template<typename Parser>
