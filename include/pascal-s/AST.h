@@ -134,12 +134,12 @@ struct Node {
 
     Type type;
 
-    line_t line = 0;
+    pascal_s::line_t line = 0;
     // 8 ~ 16字节
-    column_t column = 0;
-    length_t length = 0;
+    pascal_s::column_t column = 0;
+    pascal_s::length_t length = 0;
     // 16 ~ 24字节
-    offset_t offset = 0;
+    pascal_s::offset_t offset = 0;
 
     std::deque<Node *> children;
 

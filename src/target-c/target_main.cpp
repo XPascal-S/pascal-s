@@ -1,12 +1,14 @@
 //
 // Created by kamiyoru on 2020/5/12.
 //
-#include <pascal-s/AST.h>
+#include <pascal-s/llvm-ast.h>
 #include <pascal-s/token.h>
 #include <target/c.h>
 #include <iostream>
 
 #include <target/task.h>
+
+using namespace ast;
 
 Program * test_gcd() {
     auto *integer = new Keyword(KeywordType::Integer);
@@ -307,7 +309,7 @@ end
 
 int main()
 {
-    Program *mainProgram = test_for();
+    Program *mainProgram = test_write_char();
     target_c::Buffer tempBuffer(std::cout);
     std::vector<std::string> include_files;
     target_c::CBuilder theBuilder(include_files, tempBuffer);
