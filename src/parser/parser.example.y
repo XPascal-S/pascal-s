@@ -97,6 +97,7 @@
 
 programstruct:  program_head semicolon program_body dot {
   $$ = new Program((ProgramHead*)$1, (ProgramBody*)$3);
+  access_ast($$);
   /* Program *node = reinterpret_cast<Program*> (ast_reduce_nodes(4, Type::Program)); */
   /* node->programHead = (ProgramHead*)(node->children.front()); */
   /* node->children.pop_front(); */
