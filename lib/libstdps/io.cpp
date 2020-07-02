@@ -27,6 +27,10 @@ int read_int64(int64_t *s) {
     return scanf(LL_FMT, s);
 }
 
+int read_int32(int32_t *s) {
+    return scanf("%d", s);
+}
+
 int read_real(double *s) {
     return scanf("%lf", s);
 }
@@ -41,6 +45,10 @@ int write_bool(char s) {
 
 int write_int64(int64_t s) {
     return printf(LL_FMT, s);
+}
+
+int write_int32(int32_t s) {
+    return printf("%d", s);
 }
 
 int write_real(double s) {

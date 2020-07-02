@@ -69,6 +69,9 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_write_statement(const ast::Write *stmt
             case llvm::Type::IntegerTyID:
                 if (res->getType()->getIntegerBitWidth() == 64) {
                     calleeFunc = modules.getFunction("write_int64");
+                }
+                if (res->getType()->getIntegerBitWidth() == 32) {
+                    calleeFunc = modules.getFunction("write_int32");
                 } else if (res->getType()->getIntegerBitWidth() == 8) {
                     calleeFunc = modules.getFunction("write_char");
                 } else if (res->getType()->getIntegerBitWidth() == 1) {

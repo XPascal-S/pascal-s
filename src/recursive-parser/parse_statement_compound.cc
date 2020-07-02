@@ -58,34 +58,30 @@ ast::CompoundStatement *Parser<Lexer>::_parse_compound_statement(std::set<const 
         for (;;) {
             if (current_token == nullptr) {
                 sl->statement.swap(stmts);
-                return fall_expect_s("end statement"), block;
+                return fall_expect_s("keyword 'end' or marker ';'"), block;
             }
             // look ahead
 
-            if (current_token->type == TokenType::Identifier) {
-                break;
-            }
-
             maybe_recover_keyword(KeywordType::End)
-            maybe_recover_keyword(KeywordType::Begin)
-            maybe_recover_keyword(KeywordType::For)
-            maybe_recover_keyword(KeywordType::If)
-            maybe_recover_keyword(KeywordType::Read)
-            maybe_recover_keyword(KeywordType::Write)
-
             if (predicate::is_semicolon(current_token)) {
                 break;
             }
 
-            skip_error_token_s("end statement");
+            skip_any_but_eof_token_s("keyword 'end' or marker ';'");
             sl->statement.swap(stmts);
-            return fall_expect_s("end statement"), block;
+            return fall_expect_s("keyword 'end' or marker ';'"), block;
+        }
+
+        if (predicate::is_end(current_token)) {
+            continue;
         }
 
         // eat ; if possible
-        if (predicate::is_semicolon(current_token)) {
-            next_token();
+
+        if (!predicate::is_semicolon(current_token)) {
+            return fall_expect_v(&predicate::marker_semicolon), block;
         }
+        next_token();
     }
 
     // end

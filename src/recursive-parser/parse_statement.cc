@@ -8,13 +8,13 @@ template<typename Lexer>
 ast::Statement *Parser<Lexer>::parse_statement(std::set<const Token *> *till) {
     for (;;) {
         if (current_token == nullptr) {
-            return fall_expect_s("exp call or complex statement keywords");
+            return nullptr;
         }
         if (predicate::is_semicolon(current_token)) {
-            return fall_expect_s("exp call or complex statement keywords");
+            return nullptr;
         }
         if (predicate::is_end(current_token)) {
-            return fall_expect_s("exp call or complex statement keywords");
+            return nullptr;
         }
         if (current_token->type == TokenType::Identifier) {
             break;

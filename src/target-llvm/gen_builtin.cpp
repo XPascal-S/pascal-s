@@ -29,6 +29,13 @@ void LLVMBuilder::prepend_lib_standard_pascal_s() {
 
     prototype = llvm::FunctionType::get(
             llvm::Type::getInt32Ty(ctx), {
+                    llvm::Type::getInt32PtrTy(ctx),
+            }, false);
+    Function::Create(prototype, Function::ExternalLinkage,
+                     "read_int32", modules);
+
+    prototype = llvm::FunctionType::get(
+            llvm::Type::getInt32Ty(ctx), {
                     llvm::Type::getDoublePtrTy(ctx),
             }, false);
     Function::Create(prototype, Function::ExternalLinkage,
@@ -54,6 +61,13 @@ void LLVMBuilder::prepend_lib_standard_pascal_s() {
             }, false);
     Function::Create(prototype, Function::ExternalLinkage,
                      "write_int64", modules);
+
+    prototype = llvm::FunctionType::get(
+            llvm::Type::getInt32Ty(ctx), {
+                    llvm::Type::getInt32Ty(ctx),
+            }, false);
+    Function::Create(prototype, Function::ExternalLinkage,
+                     "write_int32", modules);
 
     prototype = llvm::FunctionType::get(
             llvm::Type::getInt32Ty(ctx), {
