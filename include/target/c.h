@@ -453,7 +453,7 @@ namespace target_c {
                         se.typeDecl += "*"; //数组类型 example：char**
                     }
                     for (auto x : se.arrayInfo->periods) {
-                        buffer += "[" + std::to_string(x.second) + "]";
+                        buffer += "[" + std::to_string(x.second - x.first + 1) + "]";
                     }
                     buffer += ";\n";
                 } else {
