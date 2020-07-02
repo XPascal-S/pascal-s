@@ -15,6 +15,7 @@ struct Parser<MockLexer>;
 #ifdef WITH_PASCAL_LEXER_FILES
 
 #include <pascal-s/lexer.h>
+#include <pascal-s/lib/stdtype.h>
 
 template
 struct Parser<FullInMemoryLexer>;
@@ -155,12 +156,6 @@ ast::Node *Parser<Lexer>::parse() {
     return parse_program();
 }
 
-void copy_pos_info(Token *dst, const Token *src) {
-    dst->length = src->length;
-    dst->offset = src->offset;
-    dst->line = src->line;
-    dst->column = src->column;
-}
 
 template<typename Lexer>
 bool Parser<Lexer>::guess_keyword(KeywordType k) {
@@ -195,7 +190,7 @@ bool Parser<Lexer>::guess_keyword(KeywordType k) {
 
 template<typename Lexer>
 void Parser<Lexer>::update_guess(Token *new_tok) {
-    copy_pos_info(new_tok, current_token);
+    copy_pos_any(new_tok, current_token);
     current_token = new_tok;
     this->guessing_token.push_back(new_tok);
 }

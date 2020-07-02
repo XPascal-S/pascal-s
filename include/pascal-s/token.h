@@ -94,15 +94,17 @@ enum class MarkerType : pascal_s::marker_type_underlying_type {
     Colon = 0x64, // :
 };
 
-struct Token {
+struct Token : pascal_s::Pos {
     // 0 ~ 8字节
     TokenType type;
-    pascal_s::line_t line;
-    // 8 ~ 16字节
-    pascal_s::column_t column;
-    pascal_s::length_t length;
-    // 16 ~ 24字节
-    pascal_s::offset_t offset;
+
+    const pascal_s::Pos *visit_pos() const {
+        return reinterpret_cast<const pascal_s::Pos *>(this);
+    }
+
+    pascal_s::Pos *visit_pos() {
+        return reinterpret_cast<pascal_s::Pos *>(this);
+    }
 };
 
 

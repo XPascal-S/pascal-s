@@ -38,6 +38,8 @@ ast::SubprogramDecls *Parser<Lexer>::_parse_subprogram_decls(ast::SubprogramDecl
     subprogram->semicolon = reinterpret_cast<const Marker *>(current_token);
     next_token();
 
+    ast::copy_pos_between_tokens(subprogram, subprogram->subhead, subprogram->semicolon);
+
     // look ahead
     if (predicate::is_function(current_token) || predicate::is_procedure(current_token)) {
         return _parse_subprogram_decls(decls);

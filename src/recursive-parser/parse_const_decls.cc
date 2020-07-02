@@ -10,10 +10,18 @@ ast::ConstDecls *Parser<Lexer>::parse_const_decls() {
     // const
     expected_enum_type_r_e(predicate::is_const, predicate::keyword_const, nullptr,
                            || predicate::is_var(current_token));
+    auto const_tok = current_token;
     next_token();
 
     // declarations
-    return _parse_const_decls(new ast::ConstDecls);
+    ast::ConstDecls *decls = _parse_const_decls(new ast::ConstDecls);
+    assert(decls != nullptr);
+    if (decls->decls.empty()) {
+        ast::copy_pos_with_check(decls, const_tok);
+    } else {
+        ast::copy_pos_between_tokens(decls, const_tok, decls->decls.back());
+    }
+    return decls;
 }
 
 template<typename Lexer>

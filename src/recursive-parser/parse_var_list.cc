@@ -8,6 +8,7 @@ ast::VariableList *Parser<Lexer>::parse_variable_list_with_paren() {
 
     // (
     expected_enum_type(predicate::is_lparen, predicate::marker_lparen);
+    auto lp = current_token;
     next_token();
 
     // variable list
@@ -22,8 +23,10 @@ ast::VariableList *Parser<Lexer>::parse_variable_list_with_paren() {
         errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, &predicate::marker_rparen, current_token));
         return nullptr;
     }
+    auto rp = current_token;
     next_token();
 
+    ast::copy_pos_between_tokens(var_list, lp, rp);
     return var_list;
 }
 
@@ -35,7 +38,7 @@ ast::VariableList *Parser<Lexer>::parse_variable_list() {
         for (;;) {
             // look ahead
             if (predicate::is_rparen(current_token)) {
-                return ret;
+                goto parse_end;
             }
             if (current_token != nullptr && current_token->type == TokenType::Identifier) {
                 break;
@@ -62,9 +65,16 @@ ast::VariableList *Parser<Lexer>::parse_variable_list() {
 
             // want FOLLOW(variable) = {)}
         } else if (!predicate::is_rparen(current_token)) {
-            return ret;
+            goto parse_end;
         }
     }
-    return nullptr;
+    parse_end:
+    if (ret->params.empty()) {
+        ast::copy_pos_with_check(ret, current_token);
+        ret->length = 0;
+    } else {
+        ast::copy_pos_between_tokens(ret, ret->params.front(), ret->params.back());
+    }
+    return ret;
 }
 

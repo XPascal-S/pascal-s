@@ -66,19 +66,23 @@ ast::Statement *Parser<Lexer>::parse_statement(std::set<const Token *> *till) {
 template<typename Lexer>
 ast::Statement *Parser<Lexer>::parse_read_statement(std::set<const Token *> *till) {
     assert(predicate::is_read(current_token));
+    auto read_tok = current_token;
     next_token();
 
     auto stmt = new ast::Read();
     stmt->var_list = parse_variable_list_with_paren();
+    ast::copy_pos_between_tokens(stmt, read_tok, stmt->var_list);
     return stmt;
 }
 
 template<typename Lexer>
 ast::Statement *Parser<Lexer>::parse_write_statement(std::set<const Token *> *till) {
     assert(predicate::is_write(current_token));
+    auto write_tok = current_token;
     next_token();
 
     auto stmt = new ast::Write();
     stmt->exp_list = parse_expression_list_with_paren();
+    ast::copy_pos_between_tokens(stmt, write_tok, stmt->exp_list);
     return stmt;
 }

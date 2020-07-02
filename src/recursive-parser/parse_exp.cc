@@ -199,6 +199,7 @@ ast::Exp *Parser<Lexer>::parse_fac() {
                 variable->id = ident;
                 // will not eat [, just parse [ expression list ]
                 variable->id_var = parse_expression_list_with_bracket();
+                ast::copy_pos_between_tokens(variable, ident, variable->id_var);
                 return variable;
             }
         }

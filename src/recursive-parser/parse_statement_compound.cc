@@ -92,5 +92,11 @@ ast::CompoundStatement *Parser<Lexer>::_parse_compound_statement(std::set<const 
     auto end_tok = reinterpret_cast<const Keyword *>(current_token);
     next_token();
     sl->statement.swap(stmts);
+    if (sl->statement.empty()) {
+        ast::copy_pos_with_check(sl, begin_tok);
+    } else {
+        ast::copy_pos_between_tokens(sl, begin_tok, sl->statement.back());
+    }
+    ast::copy_pos_with_check(block, sl);
     return block;
 }

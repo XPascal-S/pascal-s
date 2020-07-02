@@ -9,3 +9,4 @@ function(add_token_test test_name)
 endfunction()
 
 add_token_test(token_format_test)
+add_token_test(ast_pos_test)

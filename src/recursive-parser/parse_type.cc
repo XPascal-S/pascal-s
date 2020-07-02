@@ -184,6 +184,7 @@ ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array
             ) {
         next_token();
         arr_type_spec->keyword = basic;
+        ast::copy_pos_between_tokens(arr_type_spec, keyword_array, basic);
         return arr_type_spec;
     }
 

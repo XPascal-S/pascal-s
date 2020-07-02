@@ -8,6 +8,7 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_paren() {
 
     // (
     expected_enum_type(predicate::is_lparen, predicate::marker_lparen);
+    auto lp = current_token;
     next_token();
 
     // expression list
@@ -18,8 +19,9 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_paren() {
 
     // )
     expected_enum_type(predicate::is_rparen, predicate::marker_rparen);
+    auto rp = current_token;
     next_token();
-
+    ast::copy_pos_between_tokens(exp_list, lp, rp);
     return exp_list;
 }
 
@@ -28,6 +30,7 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_bracket() {
 
     // [
     expected_enum_type(predicate::is_lbracket, predicate::marker_lbracket);
+    auto lp = current_token;
     next_token();
 
     // expression list
@@ -39,8 +42,10 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_bracket() {
 
     // ]
     expected_enum_type(predicate::is_rbracket, predicate::marker_rbracket);
+    auto rp = current_token;
     next_token();
 
+    ast::copy_pos_between_tokens(exp_list, lp, rp);
     return exp_list;
 }
 

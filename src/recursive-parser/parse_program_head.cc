@@ -13,12 +13,11 @@ ast::ProgramHead *Parser<Lexer>::parse_program_head() {
     expected_type(TokenType::Identifier);
     next_token();
 
-    ast::ProgramHead *hd = new ast::ProgramHead(new ast::ExpKeyword(program), new ast::Ident(ident), nullptr);
-
     // maybe ( id list )
+    ast::IdentList *il = nullptr;
     if (predicate::is_lparen(current_token)) {
-        hd->idlist = parse_id_list_with_paren();
+        il = parse_id_list_with_paren();
     }
 
-    return hd;
+    return new ast::ProgramHead(new ast::ExpKeyword(program), new ast::Ident(ident), il);
 }

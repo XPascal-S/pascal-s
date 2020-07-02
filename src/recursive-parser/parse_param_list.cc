@@ -8,6 +8,7 @@ ast::ParamList *Parser<Lexer>::parse_param_list_with_paren() {
 
     // (
     expected_enum_type(predicate::is_lparen, predicate::marker_lparen);
+    auto lp = current_token;
     next_token();
 
     // param list
@@ -22,15 +23,24 @@ ast::ParamList *Parser<Lexer>::parse_param_list_with_paren() {
         errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, &predicate::marker_rparen, current_token));
         return nullptr;
     }
+    auto rp = current_token;
     next_token();
 
+    ast::copy_pos_between_tokens(param_list, lp, rp);
     return param_list;
 }
 
 template<typename Lexer>
 ast::ParamList *Parser<Lexer>::parse_param_list() {
     //look ahead
-    return _parse_param_list(new ast::ParamList);
+    ast::ParamList *pl = _parse_param_list(new ast::ParamList);
+    if (pl->params.empty()) {
+        ast::copy_pos_with_check(pl, current_token);
+        pl->length = 0;
+    } else {
+        ast::copy_pos_between_tokens(pl, pl->params.front(), pl->params.back());
+    }
+    return pl;
 }
 
 
