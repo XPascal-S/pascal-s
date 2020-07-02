@@ -113,6 +113,9 @@ void deleteAST(Node *node) {
         case Type::ExpVoid:
             delete reinterpret_cast<ExpVoid *>(node);
             break;
+        case Type::Variabele:
+            delete reinterpret_cast<Variable *>(node);
+            break;
     }
 }
 

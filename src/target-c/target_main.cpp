@@ -161,8 +161,6 @@ Program * test_write_char(){
     return mainProgram;
 }
 
-
-
 Program * test_if_else() {
     auto *integer = new Keyword(KeywordType::Integer);
     auto *intKeyWord = new ExpKeyword(integer);
@@ -236,6 +234,62 @@ Program * test_if_else() {
     return mainProgram;
 }
 
+Program * test_for()
+{
+    Keyword *integer = new Keyword(KeywordType::Integer);
+    ExpKeyword *intKeyWord = new ExpKeyword(integer);
+    Identifier *mainIdentifier = new Identifier("main");
+    Ident *mainIdent = new Ident(mainIdentifier);
+    ProgramHead *promHead = new ProgramHead(intKeyWord, mainIdent, nullptr);
+    StatementList *mainStatementList = new StatementList;
+
+    auto *cname = new Identifier("c");
+    auto  *helloString = new ConstantString;
+    helloString->attr = "hello";
+    auto *contring = new ExpConstantString(helloString);
+    auto *cConstString = new ConstDecl(cname, contring);
+    auto *cConstStrings = new ConstDecls;
+    cConstStrings->decls.push_back(cConstString);
+
+    auto *forstat = new ForStatement();
+    forstat->id = new Identifier("i");
+    forstat->express1 = new ExpConstantInteger(new ConstantInteger(0));
+    forstat->express2 = new ExpConstantInteger(new ConstantInteger(5));
+
+    //  write_char('h') --- write_char('0')
+    Write *writeStat = new Write;
+    ExpressionList *writeExpression = new ExpressionList;
+    auto *writeChar = new Variable;
+    writeChar->id = new Identifier("c");
+    auto *arrayPer = new ExpressionList;
+    auto *iVariable = new Variable();
+    iVariable->id = new Identifier("i");
+    arrayPer->explist.push_back(iVariable);
+    writeChar->id_var = arrayPer;
+    writeExpression->explist.push_back(writeChar);
+    writeStat->exp_list = writeExpression;
+    ExecStatement *statement1 = new ExecStatement(writeStat);
+
+    forstat->for_stmt = statement1;
+    mainStatementList->statement.push_back(forstat);
+
+    //主函数内容
+    Variable *mainFunc = new Variable();
+    mainFunc->id = mainIdentifier;
+    ConstantInteger *return1 = new ConstantInteger(1);
+    ConstantInteger *return0 = new ConstantInteger(0);
+    ExpConstantInteger *returnvalue = new ExpConstantInteger(return0);
+    ExpAssign *returnStat = new ExpAssign(mainFunc, returnvalue); // main := 0
+    ExecStatement *statement2 = new ExecStatement(returnStat);
+    mainStatementList->statement.push_back(statement2);
+    CompoundStatement *mainCompoundStatement = new CompoundStatement(mainStatementList);
+
+
+    ProgramBody *mainBody = new ProgramBody(cConstStrings, nullptr, nullptr, mainCompoundStatement);
+
+    Program *mainProgram = new Program(promHead, mainBody);
+    return mainProgram;
+}
 
 /*
 program main;
@@ -252,7 +306,7 @@ end
 
 int main()
 {
-    Program *mainProgram = test_if_else();
+    Program *mainProgram = test_for();
     target_c::Buffer tempBuffer(std::cout);
     std::vector<std::string> include_files;
     target_c::CBuilder theBuilder(include_files, tempBuffer);

@@ -393,29 +393,35 @@ namespace target_c {
             switch (node->rhs->type) {
                 case Type::ExpConstantInteger:
                     se.typeDecl = "int";
-                    se.value = std::to_string(reinterpret_cast<const ExpConstantInteger *>(node)->value->attr);
+                    se.value = std::to_string(reinterpret_cast<const ExpConstantInteger *>(node->rhs)->value->attr);
                     break;
                 case Type::ExpConstantString:
                     se.typeDecl = "char*";
-                    se.value = std::string(reinterpret_cast<const ExpConstantString *>(node)->value->attr);
+                    se.value = reinterpret_cast<const ExpConstantString *>(node->rhs)->value->attr;
                     break;
                 case Type::ExpConstantReal:
                     se.typeDecl = "double";
-                    se.value = std::to_string(reinterpret_cast<const ExpConstantReal *>(node)->value->attr);
+                    se.value = std::to_string(reinterpret_cast<const ExpConstantReal *>(node->rhs)->value->attr);
                     break;
                 case Type::ExpConstantChar:
                     se.typeDecl = "char";
-                    se.value = ("'" + std::string(1, reinterpret_cast<const ExpConstantChar *>(node)->value->attr) +
+                    se.value = ("'" + std::string(1, reinterpret_cast<const ExpConstantChar *>(node->rhs)->value->attr) +
                                 "'");
                     break;
                 case Type::ExpConstantBoolean:
                     se.typeDecl = "int";
-                    se.value = std::to_string(reinterpret_cast<const ExpConstantBoolean *>(node)->value->attr);
+                    se.value = std::to_string(reinterpret_cast<const ExpConstantBoolean *>(node->rhs)->value->attr);
                     break;
                 default:
                     assert(false);
                     addErrMsg(node, "no constant type match");
                     return TranslateFailed;
+            }
+
+            if(se.typeDecl == "char*"){
+                auto *arrayType = new ArrayTypeSpec(new Keyword(KeywordType::Char));
+                arrayType->periods.push_back(std::pair<int, int>(0, se.value.size()));
+                se.arrayInfo = arrayType;
             }
             this->nowST_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(lhs, se));
             printTab(buffer);
@@ -967,6 +973,11 @@ namespace target_c {
             printTab(buffer);
             buffer += fmt::format("for (int {} = ", node->id->content);
             std::string expType;
+            //将for循环变量i加入符号表。
+            SymbolEntry se;
+            se.typeDecl = "int";
+            se.varType = ISBASIC;
+            this->nowST_pointer->content.insert(std::pair<std::string, SymbolEntry>(node->id->content, se));
             check &= code_gen_exp(node->express1, buffer, expType);
             buffer += "; ";
             if (expType != "int") {
@@ -993,6 +1004,7 @@ namespace target_c {
             this->tabNum -= 1;
             printTab(buffer);
             buffer += "}\n";
+            this->nowST_pointer->content.erase(node->id->content);
             return check;
         }
 
