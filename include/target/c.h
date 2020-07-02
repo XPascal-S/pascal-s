@@ -771,6 +771,7 @@ namespace target_c {
                 }
             }
 
+            bool check = true;
             if (varFind) {
                 buffer += fmt::format("{0}", node->id->content);
                 if(expType.find("*") != std::string::npos) {
@@ -778,18 +779,20 @@ namespace target_c {
                     for(auto arrayInfo : node->id_var->explist){
                         expType.pop_back(); // int* --> int
                         buffer += "[";
-                        code_gen_exp(arrayInfo, buffer, periodType);
+                        check &= code_gen_exp(arrayInfo, buffer, periodType);
                         if(periodType != "int"){
+                            addErrMsg(node, "array range must be int");
+                            check = false;
                             assert(false);
                         }
                         buffer += "]";
                     }
                 }
-            }else {
-                throw std::runtime_error("semantic error: var not found in current symbol table and its parent");
-                return TranslateFailed;
+            } else {
+                addErrMsg(node, "var not found in current symbol table and its parent");
+                check = false;
             }
-            return OK;
+            return check;
         }
 
         int code_gen_ExpAssign(const ExpAssign *node, std::string &buffer, std::string &expType) {
