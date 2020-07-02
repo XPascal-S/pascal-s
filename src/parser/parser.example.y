@@ -231,9 +231,9 @@ const_declaration:
     /* node->children.pop_front(); */
   }
 |id eq const_value  {
-  ConstDecl* cdecl = new ConstDecl((const Identifier*)$1, (Exp*)$3);
+  ConstDecl* constDecl = new ConstDecl((const Identifier*)$1, (Exp*)$3);
   $$ = new ConstDecls();
-  ((ConstDecls*)$$)->decls.push_back(cdecl);
+  ((ConstDecls*)$$)->decls.push_back(constDecl);
     /* ConstDecls* node = reinterpret_cast<ConstDecls*> (ast_reduce_nodes(3, Type::ConstDecls)); */
 
     /* Identifier* ident = (Identifier*)(node->children.front()); */
@@ -407,7 +407,7 @@ period comma num range num        {
 }
 | num range num                    {
   $$ = new ArrayTypeSpec();
-  ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_tnn)$1, (int64_t)$3));
+  ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)$1, (int64_t)$3));
   //ast_reduce_nodes(3, Type::ArrayTypeSpec);
 }
 ;

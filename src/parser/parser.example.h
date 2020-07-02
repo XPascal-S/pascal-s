@@ -1293,9 +1293,9 @@ namespace yy {
   case 14:
 #line 233 "parser.example.y" // lalr1.cc:859
     {
-  ConstDecl* cdecl = new ConstDecl((const Identifier*)(yystack_[2].value), (Exp*)(yystack_[0].value));
+  ConstDecl* constDecl = new ConstDecl((const Identifier*)(yystack_[2].value), (Exp*)(yystack_[0].value));
   (yylhs.value) = new ConstDecls();
-  ((ConstDecls*)(yylhs.value))->decls.push_back(cdecl);
+  ((ConstDecls*)(yylhs.value))->decls.push_back(constDecl);
     /* ConstDecls* node = reinterpret_cast<ConstDecls*> (ast_reduce_nodes(3, Type::ConstDecls)); */
 
     /* Identifier* ident = (Identifier*)(node->children.front()); */
