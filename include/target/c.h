@@ -77,6 +77,8 @@ namespace target_c {
         std::vector<std::string> callRecordBuff; //记录函数调用顺序，用于debug
         struct SymbolTable *startST_pointer; //符号表入口指针
         struct SymbolTable *nowST_pointer; //当前符号表指针
+        std::vector<std::string> errMsg; //错误信息
+        int tabNum = 0;
 
         CBuilder(std::vector<std::string> &include_files,
                  Buffer &buf) : include_files(std::move(include_files)), outputBuff(buf) {
@@ -114,12 +116,17 @@ namespace target_c {
             }
             int code = code_gen_node(node);
             if (code == TranslateFailed) {
+                for (auto msg: errMsg) {
+                    outputBuff.writeln(msg);
+                }
                 return TranslateFailed;
             }
 
+            this->tabNum = 0;
             //输出头文件
             for (const auto &f : include_files) {
                 outputBuff.writeln(fmt::format("#include <{}>", f));
+//                outputBuff.writeTab(this->tabNum);
             }
 
             //输出全局变量定义
@@ -154,23 +161,23 @@ namespace target_c {
                 x.second.formalPara.pop_back();
                 this->outputBuff.writeln(
                         x.second.returnType + " " + x.second.funcName + "("
-                        + x.second.formalPara + "){"
+                        + x.second.formalPara + ") {"
                 );
                 this->outputBuff.write(x.second.funcBody);
-                this->outputBuff.write("}\n");
+//                this->outputBuff.writeTab(this->tabNum);
+                this->outputBuff.writeln("}");
+//                this->outputBuff.writeTab(this->tabNum);
             }
 
             //输出主函数内容
-            outputBuff
-                    .writeln("int main(){")
-                    .write(fmt::format("{}", this->mainBuff))
-                    //.writeln("return 0;")
-                    .writeln("}");
+            outputBuff.writeln("int main() {").write(fmt::format("{}", this->mainBuff));
+//            this->outputBuff.writeTab(this->tabNum);
+            outputBuff.writeln("}");
             return code;
         }
 
-        int constType2str(const Type type, std::string &result) {
-            switch (type) {
+        int constType2str(const Node *node, std::string &result) {
+            switch (node->type) {
                 case Type::ExpConstantInteger:
                     result = "int";
                     return 1;
@@ -178,7 +185,7 @@ namespace target_c {
                     result = "char";
                     return 1;
                 case Type::ExpConstantBoolean:
-                    result = "bool";
+                    result = "int";
                     return 1;
                 case Type::ExpConstantReal:
                     result = "double";
@@ -187,8 +194,8 @@ namespace target_c {
                     result = "char*";
                     return 1;
                 default:
+                    addErrMsg(node, "no const type match");
                     assert(false);
-                    throw std::runtime_error("semantic error: no const type match");
                     return 0;
             }
         }
@@ -196,7 +203,7 @@ namespace target_c {
         int keyword2str(const KeywordType kt, std::string &result) {
             switch (kt) {
                 case KeywordType::Boolean:
-                    result = "bool";
+                    result = "int";
                     return 1;
                 case KeywordType::Integer:
                     result = "int";
@@ -295,17 +302,26 @@ namespace target_c {
             }
         }
 
+        void addErrMsg(const Node *node, const std::string msg) {
+            this->errMsg.push_back(fmt::format("{}:{}: semantic error: {}", node->line, node->column + 1, msg));
+        }
+
+        void printTab(std::string &buffer) {
+            for (int i = 0; i < this->tabNum; i++)
+                buffer += '\t';
+        }
+
         int code_gen_node(const Node *node) {
             if(node == NULL)
                 return OK;
             switch (node->type) {
                 default:
+                    addErrMsg(node, "no node type match");
                     assert(false);
-                    throw std::runtime_error("semantic error: no node type match");
                     return TranslateFailed;
                 case Type::Unknown:
+                    addErrMsg(node, "unknown node type");
                     assert(false);
-                    throw std::runtime_error("semantic error: unknown node type");
                     return TranslateFailed;
                 case Type::Program:
                     return code_gen_program(
@@ -410,7 +426,7 @@ namespace target_c {
         }
 
         int code_gen_programHead(const ProgramHead *node) {
-            // Currently there has no corresponding relation
+            // Currently there is no corresponding relation
             // from pascal head to C head
             return OK;
         }
@@ -427,12 +443,13 @@ namespace target_c {
         int code_gen_program(const Program *node) {
             // in fmt::format {{ = {, }} = }
             //
-            bool check = true;
-            check &= code_gen_node(node->programHead);
-            check &= code_gen_node(node->programBody);
             //buf.writeln(fmt::format("int {}(){{", node->name->content));
             //buf.writeln("printf(\"hello world\");");
             //buf.writeln("}");
+            bool check = true;
+            check &= code_gen_node(node->programHead);
+            this->tabNum += 1;
+            check &= code_gen_node(node->programBody);
             return check;
         }
 
@@ -470,15 +487,16 @@ namespace target_c {
                                 "'");
                     break;
                 case Type::ExpConstantBoolean:
-                    se.typeDecl = "bool";
+                    se.typeDecl = "int";
                     se.value = std::to_string(reinterpret_cast<const ExpConstantBoolean *>(node)->value->attr);
                     break;
                 default:
                     assert(false);
-                    throw std::runtime_error("semantic error: no constant rvalue type match");
+                    addErrMsg(node, "no constant type match");
                     return TranslateFailed;
             }
             this->nowST_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(lhs, se));
+            printTab(buffer);
             buffer += fmt::format("const {0} {1} = {2};\n", se.typeDecl, lhs, se.value);
             return OK;
         }
@@ -501,6 +519,7 @@ namespace target_c {
                 if (node->type_spec->type == Type::BasicTypeSpec) {
                     keyword2str(reinterpret_cast<const BasicTypeSpec *>(node->type_spec)->keyword->key_type, se.typeDecl);
                     se.varType = ISBASIC;
+                    printTab(buffer);
                     buffer += fmt::format("{0} {1};\n", se.typeDecl, name);
                 } else if (node->type_spec->type == Type::ArrayTypeSpec) {
                     se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(node->type_spec);
@@ -509,14 +528,15 @@ namespace target_c {
                     for(int i=0; i<se.arrayInfo->periods.size(); i++){
                         se.typeDecl += "*"; //数组类型 example：char**
                     }
+                    printTab(buffer);
                     buffer += fmt::format("{0} {1}", se.typeDecl, name);
                     for (auto x : se.arrayInfo->periods) {
                         buffer += "[" + std::to_string(x.second) + "]";
                     }
                     buffer += ";\n";
                 } else {
+                    addErrMsg(node, "no var type match");
                     assert(false);
-                    throw std::runtime_error("semantic error: no var type match");
                     return TranslateFailed;
                 }
                 this->nowST_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(name, se));
@@ -569,8 +589,8 @@ namespace target_c {
                         se.varType = ISARRAY;
                         se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(param->spec);
                     } else {
+                        addErrMsg(node, "no var type match");
                         assert(false);
-                        throw std::runtime_error("semantic error: no var type match");
                         return TranslateFailed;
                     }
 
@@ -653,8 +673,8 @@ namespace target_c {
         int code_gen_SubprogramBody(const SubprogramBody *node) {
             auto iter = this->functionBuff.find(this->nowST_pointer->tableName);
             if (iter == this->functionBuff.end()) {
+                addErrMsg(node, "func or proc not found in functionBuff");
                 assert(false); //未找到函数
-                throw std::runtime_error("semantic error: func or proc not found in functionBuff");
                 return TranslateFailed;
             }
             bool check = true;
@@ -668,10 +688,11 @@ namespace target_c {
         int code_gen_CompoundStatement(const CompoundStatement *node, std::string &buffer) {
             bool check = true;
             for (auto x : node->state->statement) {
+                if(x->type != Type::IfElseStatement && x->type != Type::ForStatement)
+                    printTab(buffer);
                 check &= code_gen_Statement(x, buffer);
-                if(x->type == Type::IfElseStatement || x->type == Type::ForStatement)
-                    continue;
-                buffer += ";\n";
+                if(x->type != Type::IfElseStatement && x->type != Type::ForStatement)
+                    buffer += ";\n";
             }
             return check;
         }
@@ -726,8 +747,8 @@ namespace target_c {
                 case Type::CompoundStatement:
                     return code_gen_CompoundStatement(reinterpret_cast<const CompoundStatement *>(node), buffer);
                 default:
+                    addErrMsg(node, "no statement type match");
                     assert(false);
-                    throw std::runtime_error("semantic error: no statement type match");
                     return TranslateFailed;
             }
         }
@@ -748,6 +769,7 @@ namespace target_c {
                 }
                 else {
                     check = false;
+                    addErrMsg(node, "left type does not match right type");
                 }
             }
             return check;
@@ -758,8 +780,8 @@ namespace target_c {
             //TODO
 
             if (iter == this->functionBuff.end()) {
+                addErrMsg(node, "no func or proc found in functionBuff");
                 assert(false); //未找到函数
-                throw std::runtime_error("semantic error: no func or proc found in functionBuff");
                 return TranslateFailed;
             }
 
@@ -801,8 +823,8 @@ namespace target_c {
                         auto iterFunc = this->functionBuff.find(funcName);
                         if (iterFunc == this->functionBuff.end()) {
                             //没找到函数定义
+                            addErrMsg(node, "func or proc not found in functionBuff");
                             assert(false);
-                            throw std::runtime_error("semantic error: func or proc not found in functionBuff");
                             return TranslateFailed;
                         }
                         expType = iterTable->second.typeDecl;
@@ -823,8 +845,8 @@ namespace target_c {
                 buffer += fmt::format("{0}", node->id->content);
                 return OK;
             } else {
+                addErrMsg(node, "var not found in current symbol table and its parent");
                 assert(false);
-                throw std::runtime_error("semantic error: var not found in current symbol table and its parent");
                 return TranslateFailed;
             }
         }
@@ -844,11 +866,11 @@ namespace target_c {
                     auto funcIter = this->functionBuff.find(this->nowST_pointer->tableName);
                     if(funcIter->second.returnType != rhsType){
                         //函数返回值类型不符
+                        addErrMsg(node, "type of return value does not match func");
                         assert(false);
-                        throw std::runtime_error("semantic error: type of return value does not match func");
                         return TranslateFailed;
                     }
-                    expType = "return";
+                    expType = rhsType;
                     return OK;
                 }
             }
@@ -863,9 +885,9 @@ namespace target_c {
                     expType = lhsType;
                 }
                 else {
+                    addErrMsg(node, "left type does not match right type in assign");
                     check = false;
                     assert(false);
-                    throw std::runtime_error("semantic error: lvalue type does not match rvalue type in assign");
                 }
             }
             return check;
@@ -890,7 +912,7 @@ namespace target_c {
             }else if(typeStr == "char"){
                 result = "%c";
             }else{
-                throw std::runtime_error("semantic error: no var type match");
+                assert(false);
                 return TranslateFailed;
             }
             return OK;
@@ -911,13 +933,11 @@ namespace target_c {
                     readBuffer += x->id->content;
                 }
                 else {
+                    addErrMsg(node, "no var type match");
                     assert(false);
-                    throw std::runtime_error("semantic error: no var type match");
                     return TranslateFailed;
                 }
-                buffer += " ";
             }
-            buffer.pop_back();
             buffer += "\"";
             buffer += readBuffer;
             buffer += ")";
@@ -936,8 +956,8 @@ namespace target_c {
                     buffer += ioType;
                 }
                 else {
+                    addErrMsg(node, "no var type match");
                     assert(false);
-                    throw std::runtime_error("semantic error: no var type match");
                     return TranslateFailed;
                 }
             }
@@ -950,19 +970,32 @@ namespace target_c {
         int code_gen_IfElseStatement(const IfElseStatement *node, std::string &buffer) {
             bool check = true;
             std::string ifType;
+            printTab(buffer);
             buffer += "if (";
             check &= code_gen_exp(node->expression, buffer, ifType);
-            buffer += "){\n";
+            buffer += ") {\n";
+
+            this->tabNum += 1;
+            if (node->if_part->type != Type::CompoundStatement)
+                printTab(buffer);
             check &= code_gen_Statement(node->if_part, buffer);
             if (node->if_part->type != Type::CompoundStatement)
                 buffer += ";\n";
+            this->tabNum -= 1;
+            printTab(buffer);
             buffer += "}\n";
 
             if (node->else_part != nullptr) {
-                buffer += "else{\n";
+                printTab(buffer);
+                buffer += "else {\n";
+                this->tabNum += 1;
+                if (node->else_part->type != Type::CompoundStatement)
+                    printTab(buffer);
                 code_gen_Statement(node->else_part, buffer);
                 if (node->else_part->type != Type::CompoundStatement)
                     buffer += ";\n";
+                this->tabNum -= 1;
+                printTab(buffer);
                 buffer += "}\n";
             }
             return check;
@@ -970,59 +1003,65 @@ namespace target_c {
 
         int code_gen_ForStatement(const ForStatement *node, std::string &buffer) {
             bool check = true;
+            printTab(buffer);
             buffer += fmt::format("for (int {} = ", node->id->content);
             std::string expType;
             check &= code_gen_exp(node->express1, buffer, expType);
             buffer += "; ";
             if (expType != "int") {
+                addErrMsg(node, "initial value must be int");
                 check = false;
                 assert(false);
-                throw std::runtime_error("semantic error: initial value must be int");
             }
             buffer += fmt::format("{} <= ", node->id->content);
             check &= code_gen_exp(node->express2, buffer, expType);
             buffer += "; ";
             if (expType != "int") {
+                addErrMsg(node, "final value must be int");
                 check = false;
                 assert(false);
-                throw std::runtime_error("semantic error: final value must be int");
             }
             buffer += fmt::format("{}++", node->id->content);
-            buffer += "){\n";
+            buffer += ") {\n";
+            this->tabNum += 1;
+            if (node->type != Type::CompoundStatement)
+                printTab(buffer);
             check &= code_gen_Statement(node->for_stmt, buffer);
             if (node->type != Type::CompoundStatement)
                 buffer += ";\n";
+            this->tabNum -= 1;
+            printTab(buffer);
             buffer += "}\n";
             return check;
         }
 
         int code_gen_ExpConstantBoolean(const ExpConstantBoolean *node, std::string &buffer, std::string &expType) {
             buffer += std::to_string(node->value->attr);
-            return constType2str(node->type, expType);
+            return constType2str(node, expType);
         }
 
         int code_gen_ExpConstantChar(const ExpConstantChar *node, std::string &buffer, std::string &expType) {
             buffer += "'";
             buffer += node->value->attr;
             buffer += "'";
-            return constType2str(node->type, expType);
+            return constType2str(node, expType);
         }
 
         int code_gen_ExpConstantReal(const ExpConstantReal *node, std::string &buffer, std::string &expType) {
             buffer += node->value->content;
-            return constType2str(node->type, expType);
+            return constType2str(node, expType);
         }
 
         int code_gen_ExpConstantInteger(const ExpConstantInteger *node, std::string &buffer, std::string &expType) {
             buffer += std::to_string(node->value->attr);
-            return constType2str(node->type, expType);
+            return constType2str(node, expType);
         }
 
         int code_gen_ExpConstantString(const ExpConstantString *node, std::string &buffer, std::string &expType) {
             buffer += "\"";
             buffer += node->value->attr;
             buffer += "\"";
-            return constType2str(node->type, expType);
+            return constType2str(node, expType);
         }
 
         /*

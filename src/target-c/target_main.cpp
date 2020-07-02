@@ -237,7 +237,7 @@ end
 
 int main()
 {
-    Program *mainProgram = test_gcd();
+    Program *mainProgram = test_write_char();
     target_c::Buffer tempBuffer(std::cout);
     std::vector<std::string> include_files;
     target_c::CBuilder theBuilder(include_files, tempBuffer);
