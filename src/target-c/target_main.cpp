@@ -18,8 +18,13 @@ Program * test_gcd() {
     auto identList = new IdentList;
     identList->idents.push_back(new Identifier("x"));
     identList->idents.push_back(new Identifier("y"));
-    varDecls->decls.push_back(new VarDecl(identList, new BasicTypeSpec(new Keyword(KeywordType::Integer))));
+    auto arrayidentlist = new IdentList;
+    arrayidentlist->idents.push_back(new Identifier("c"));
+    auto *arrayTypesp = new ArrayTypeSpec(new Keyword(KeywordType::Integer));
+    arrayTypesp->periods.push_back(std::pair<int, int>(0, 10));
 
+    varDecls->decls.push_back(new VarDecl(identList, new BasicTypeSpec(new Keyword(KeywordType::Integer))));
+    varDecls->decls.push_back(new VarDecl(arrayidentlist, arrayTypesp));
     auto *subprogramDecls = new SubprogramDecls;
     auto *gcdVar = new Variable;
     gcdVar->id = new Identifier("gcd");
@@ -66,6 +71,16 @@ Program * test_gcd() {
     gcdIfElseStat->else_part = gcdElseStat;
 
     gcdStatList->statement.push_back(gcdIfElseStat);
+    //
+    auto *varC = new Variable;
+    varC->id = new Identifier("c");
+    auto *arrayExp = new ExpressionList;
+    arrayExp->explist.push_back(new ExpConstantInteger(new ConstantInteger(2)));
+    varC->id_var = arrayExp;
+    auto *c_exp = new BiExp(varC, new Marker(MarkerType::Assign), new ExpConstantInteger(new ConstantInteger(1)));
+    auto *c_statement = new ExecStatement(c_exp);
+    gcdStatList->statement.push_back(c_statement);
+    //
     auto *gcdBody = new SubprogramBody(nullptr, nullptr, new CompoundStatement(gcdStatList));
     auto *gcdSubprogram = new Subprogram(gcdHeader, gcdBody);
     subprogramDecls->subprogram.push_back(gcdSubprogram);
