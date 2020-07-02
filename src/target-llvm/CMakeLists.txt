@@ -36,15 +36,13 @@ set(llvm_components support core irreader mc native)
 #x86asmparser x86codegen x86desc x86disassembler x86info
 
 llvm_map_components_to_libnames(LLVMLIBS ${llvm_components})
-#message(${LLVM_DYLIB_COMPONENTS})
 
 add_definitions(${LLVM_DEFINITIONS})
-
-add_executable(target-llvm_test target_test.cpp)
 
 file(GLOB PASCAL_S_TARGET_LLVM_SOURCE_FILES **.cpp)
 
 add_library(target-llvm ${PASCAL_S_TARGET_LLVM_SOURCE_FILES})
+#target_include_llvm(target-llvm)
 target_link_libraries(target-llvm ${LLVMLIBS})
 
 

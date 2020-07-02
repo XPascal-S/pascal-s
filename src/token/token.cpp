@@ -15,8 +15,42 @@ char *copy_string(const char *content) {
     return copy_string(content, strlen(content));
 }
 
+const char *convertToString(TokenType tt) {
+    switch (tt) {
+        case TokenType::Keyword:
+            return "TokenType::Keyword";
+        case TokenType::Unknown:
+            return "TokenType::Unknown";
+        case TokenType::ConstantString:
+            return "TokenType::ConstantString";
+        case TokenType::ConstantChar:
+            return "TokenType::ConstantChar";
+        case TokenType::ConstantReal:
+            return "TokenType::ConstantReal";
+        case TokenType::ConstantInteger:
+            return "TokenType::ConstantInteger";
+        case TokenType::ConstantBoolean:
+            return "TokenType::ConstantBoolean";
+        case TokenType::Identifier:
+            return "TokenType::Identifier";
+        case TokenType::Marker:
+            return "TokenType::Marker";
+        case TokenType::Nullptr:
+            return "TokenType::Nullptr";
+        case TokenType::ErrorToken:
+            return "TokenType::ErrorToken";
+        case TokenType::Length:
+            return "TokenType::Length";
+        default:
+            assert(false);
+    }
+}
 
 std::string convertToString(const Token *pToken) {
+    if (pToken == nullptr) {
+        return "nullptr";
+    }
+
     switch (pToken->type) {
         case TokenType::Keyword:
             return fmt::format("{{ .type = Keyword .key_type = {} }}",
@@ -70,6 +104,14 @@ ErrorToken::ErrorToken(const char *content, const char *hint)
     this->hint = hint;
 }
 
+ErrorToken::ErrorToken(const char *content, int len, const char *hint)
+        : Token() {
+    this->type = TokenType::ErrorToken;
+    this->length = len;
+    this->content = copy_string(content);
+    this->hint = hint;
+}
+
 ErrorToken::~ErrorToken() {
     delete[] this->content;
     this->content = nullptr;
@@ -92,7 +134,7 @@ ConstantReal::~ConstantReal() {
     this->content = nullptr;
 }
 
-ConstantInteger::ConstantInteger(pascal_s_integer_t attr) : Token() {
+ConstantInteger::ConstantInteger(pascal_s::pascal_s_integer_t attr) : Token() {
     this->type = TokenType::ConstantInteger;
     this->attr = attr;
 }
