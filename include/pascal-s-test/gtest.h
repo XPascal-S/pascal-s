@@ -38,6 +38,16 @@ static testing::AssertionResult CompareIdentifier(const char *lhs_expression,
     return AssertionSuccess();
 }
 
+static testing::AssertionResult CompareComment(const char *lhs_expression,
+                                                  const char *rhs_expression, const Comment *lhs,
+                                                  const Comment *rhs) {
+    using namespace testing;
+
+    str_equal_field(lhs->content, rhs->content);
+
+    return AssertionSuccess();
+}
+
 static testing::AssertionResult CompareConstantChar(const char *lhs_expression,
                                                     const char *rhs_expression, const ConstantChar *lhs,
                                                     const ConstantChar *rhs) {
@@ -145,6 +155,10 @@ static testing::AssertionResult CompareToken(const char *lhs_expression,
             return CompareErrorToken(lhs_expression, rhs_expression,
                                      reinterpret_cast<const ErrorToken *>(lhs),
                                      reinterpret_cast<const ErrorToken *>(rhs));
+        case TokenType::Comment:
+            return CompareComment(lhs_expression, rhs_expression,
+                                     reinterpret_cast<const Comment *>(lhs),
+                                     reinterpret_cast<const Comment *>(rhs));
         default:
             return AssertionFailure() << fmt::format("unknown token type {}", lhs->type);
     }

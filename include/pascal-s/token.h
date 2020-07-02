@@ -22,7 +22,8 @@ enum class TokenType : pascal_s::token_type_underlying_type {
     Marker = 8,
     Nullptr = 9,
     ErrorToken = 10,
-    Length = 11,
+    Comment = 11,
+    Length = 12,
     ConstRangeL = ConstantString,
     ConstRangeR = ConstantBoolean,
 };
@@ -96,7 +97,7 @@ enum class MarkerType : pascal_s::marker_type_underlying_type {
 
 struct Token : pascal_s::Pos {
     // 0 ~ 8字节
-    TokenType type;
+    TokenType type = TokenType::Unknown;
 
     const pascal_s::Pos *visit_pos() const {
         return reinterpret_cast<const pascal_s::Pos *>(this);
@@ -128,7 +129,12 @@ struct Keyword : public Token {
 };
 
 struct ConstantString : public Token {
-    const char *attr;
+    const char *attr = nullptr;
+};
+
+struct Comment : public Token {
+    const char *content;
+    explicit Comment(const char *content);
 };
 
 struct ConstantReal : public Token {

@@ -124,9 +124,14 @@ namespace char_spec {
 
             // \n, \t, \r, \\
 
+            inner['a'] = '\a';
+            inner['b'] = '\b';
+            inner['f'] = '\f';
             inner['n'] = '\n';
-            inner['t'] = '\t';
             inner['r'] = '\r';
+            inner['t'] = '\t';
+            inner['v'] = '\v';
+            inner['\''] = '\'';
             inner['\\'] = '\\';
 
             // \0 ~ \9
@@ -271,3 +276,21 @@ int Lexer::recordNewLine() {
     return static_cast<lexer_action_code_underlying_type>(LexerActionCode::AuxFunctionCalled);
 }
 
+char *removeSkipRule(char *content, int yyleng) {
+    int j = 0;
+    for (int i = 0; i < yyleng; i++, j++) {
+        if (content[i] == '\\') {
+            i++;
+        }
+        content[j] = content[i];
+    }
+    content[j] = 0;
+    return content;
+}
+
+int Lexer::addComment() {
+    if (option_mask & LexerOptionLexComment) {
+        return addToken(new Comment(removeSkipRule(yytext, yyleng)));
+    }
+    return static_cast<lexer_action_code_underlying_type>(LexerActionCode::AuxFunctionCalled);
+}

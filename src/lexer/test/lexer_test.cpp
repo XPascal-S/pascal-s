@@ -54,6 +54,7 @@ GetNextTokenTest(FullInMemoryLexer);
 struct LexerGetAllTokensTestCase {
     const char *input;
     std::vector<Token *> *expected;
+    uint16_t lo;
 };
 
 class LexerGetAllTokensTest : public testing::TestWithParam<LexerGetAllTokensTestCase> {
@@ -71,13 +72,22 @@ class LexerGetAllTokensTest : public testing::TestWithParam<LexerGetAllTokensTes
 class GoodLexerGetAllTokensTest : public LexerGetAllTokensTest {
 };
 
-TEST_P(GoodLexerGetAllTokensTest, WillNotThrowException) /* NOLINT */
-{
+
+void out_tokens(Lexer::token_container &vec) {
+    for (auto i : vec) {
+        std::cout << convertToString(i) << " ";
+    }
+}
+
+
+TEST_P(GoodLexerGetAllTokensTest, WillNotThrowException) /* NOLINT */ {
     auto &&param = GetParam();
     std::stringstream in(param.input);
     FullInMemoryLexer lexer(&in);
+    lexer.setOption(param.lo);
     auto tokens = lexer.get_all_tokens();
-    ASSERT_EQ(tokens.size(), param.expected->size());
+    if (tokens.size() - param.expected->size()) out_tokens(tokens);
+    ASSERT_EQ(tokens.size(), param.expected->size()) ;
     for (size_t i = 0; i < tokens.size(); i++) {
         ASSERT_TOKEN_EQUAL(tokens[i], (*param.expected)[i]);
     }
@@ -181,7 +191,16 @@ INSTANTIATE_TEST_SUITE_P(ConstantCharRegex, GoodLexerGetAllTokensTest, testing::
         CaseExpectConstantChar("'\\11' ", '\x11'),
         CaseExpectConstantChar("'\\99' ", '\x99'),
         CaseExpectConstantChar("'\\xff' ", '\xff'),
-        CaseExpectConstantChar("'\\cf' ", '\xcf')
+        CaseExpectConstantChar("'\\cf' ", '\xcf'),
+        CaseExpectConstantChar("'\\a' ", '\a'),
+        CaseExpectConstantChar("'\\b' ", '\b'),
+        CaseExpectConstantChar("'\\f' ", '\f'),
+        CaseExpectConstantChar("'\\n' ", '\n'),
+        CaseExpectConstantChar("'\\r' ", '\r'),
+        CaseExpectConstantChar("'\\t' ", '\t'),
+        CaseExpectConstantChar("'\\v' ", '\v'),
+        CaseExpectConstantChar("'\\'' ", '\''),
+        CaseExpectConstantChar("'\\\\' ", '\\')
 ));
 
 #undef CaseExpectConstantChar
@@ -224,6 +243,27 @@ INSTANTIATE_TEST_SUITE_P(ConstantBooleanRegex, GoodLexerGetAllTokensTest, testin
 
 #undef CaseExpectConstantBoolean
 
+#define CaseExpectComment(source) LexerGetAllTokensTestCase{source, new std::vector<Token *>()}
+#define CaseExpectNoSkipComment(source, matched) LexerGetAllTokensTestCase{\
+    source, new std::vector<Token *>({new Comment(matched)}), Lexer::LexerOptionLexComment}
+
+INSTANTIATE_TEST_SUITE_P(ConstantCommentRegex, GoodLexerGetAllTokensTest, testing::Values( /* NOLINT */
+        CaseExpectComment("{{ \\} \\} \\\\\\}  }} "),
+        CaseExpectComment("{} "),
+//        CaseExpectComment("{\x00} "),
+        CaseExpectComment("{{}} "),
+        CaseExpectComment("{{\\}}} "),
+        CaseExpectComment("{ efg { abc \a }} "),
+        CaseExpectNoSkipComment("{{ \\} \\} \\\\\\}  }} ", "{{ } } \\}  }}"),
+        CaseExpectNoSkipComment("{} ", "{}"),
+//        CaseExpectNoSkipComment("{\x00} ", "{\x00}"),
+        CaseExpectNoSkipComment("{{}} ", "{{}}"),
+        CaseExpectNoSkipComment("{{\\}}}", "{{}}}"),
+        CaseExpectNoSkipComment("{ efg { abc \a }} ", "{ efg { abc \a }}")
+));
+
+#undef CaseExpectComment
+
 //enum class TokenType {
 //    ConstantString = 2,
 //    Nullptr = 9,
@@ -257,7 +297,39 @@ INSTANTIATE_TEST_SUITE_P(Stream, GoodLexerGetAllTokensTest, testing::Values( /* 
                                 new Marker(get_marker_type("or")),
                                 new Marker(get_marker_type("not")),
                                 new Keyword(get_keyword_type("write")),
-                                new Keyword(get_keyword_type("read"))})}
+                                new Keyword(get_keyword_type("read"))})},
+        LexerGetAllTokensTestCase{"'a''a'", new std::vector<Token *>(
+                {
+                        new ConstantChar('a'),
+                        new ConstantChar('a'),
+                })},
+        LexerGetAllTokensTestCase{"{}}", new std::vector<Token *>(
+                {
+                        new ErrorToken("}"),
+                })},
+        LexerGetAllTokensTestCase{"{\\\\}}", new std::vector<Token *>(
+                {
+                        new ErrorToken("}"),
+                })},
+        LexerGetAllTokensTestCase{"{\\}}", new std::vector<Token *>(
+                {
+                })},
+        LexerGetAllTokensTestCase{"read('h', 'e', 'l', 'l', 'o');", new std::vector<Token *>(
+                {
+                        new Keyword(KeywordType::Read),
+                        new Marker(MarkerType::LBracket),
+                        new ConstantChar('h'),
+                        new Marker(MarkerType::Comma),
+                        new ConstantChar('e'),
+                        new Marker(MarkerType::Comma),
+                        new ConstantChar('l'),
+                        new Marker(MarkerType::Comma),
+                        new ConstantChar('l'),
+                        new Marker(MarkerType::Comma),
+                        new ConstantChar('o'),
+                        new Marker(MarkerType::RBracket),
+                        new Marker(MarkerType::Semicolon),
+                })}
 ));
 
 class BadLexerGetAllTokensTest : public LexerGetAllTokensTest {

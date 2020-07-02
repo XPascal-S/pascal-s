@@ -18,13 +18,22 @@ enum class LexerActionCode : lexer_action_code_underlying_type {
 };
 
 class Lexer : public yyFlexLexer {
+
 public:
+    enum LexerOptionEnum : uint16_t {
+        LexerOptionLexComment = 1U << 1U,
+    };
+
+    uint16_t option_mask = 0;
+
     using token_container = std::vector<Token *>;
     using error_references = std::vector<ErrorToken *>;
 
     explicit Lexer(std::istream *in = nullptr, std::ostream *out = nullptr);
 
     ~Lexer() override;
+
+    void setOption(uint16_t om) { this->option_mask = om; }
 
     virtual void reset_cursor() = 0;
 
@@ -51,6 +60,7 @@ protected:
     virtual void addError(ErrorToken *token) = 0;
 
 private:
+    int comment_embed = 0;
 
     int addIdentifier();
 
@@ -63,6 +73,8 @@ private:
     int addKeyword();
 
     int addMarker();
+
+    int addComment();
 
     int addASCIIChar();
 
