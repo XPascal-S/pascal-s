@@ -839,11 +839,17 @@ namespace target_c {
 
         int code_gen_Read(const Read *node, std::string &buffer) {
             buffer += "scanf(\"";
+            std::string readBuffer;
             for (auto x: node->var_list->params) {
                 auto var_type = this->nowST_pointer->content[x->id->content].typeDecl;
                 std::string io_type;
                 if (typeStr2ioStr(var_type, io_type)) {
                     buffer += io_type;
+                    readBuffer += ", ";
+                    if (io_type != "%s") {
+                        readBuffer += "&";
+                    }
+                    readBuffer += x->id->content;
                 }
                 else {
                     assert(false);
@@ -854,11 +860,8 @@ namespace target_c {
             }
             buffer.pop_back();
             buffer += "\"";
-            for (auto x: node->var_list->params) {
-                buffer += std::string(", ") + x->id->content;
-            }
+            buffer += readBuffer;
             buffer += ")";
-            //buffer += ");\n";
             return OK;
         }
 
@@ -867,8 +870,8 @@ namespace target_c {
             std::string writeBuffer = "";
             bool check = true;
             for (auto x: node->exp_list->explist) {
-                std::string expType, ioType;
                 writeBuffer += ", ";
+                std::string expType, ioType;
                 check &= code_gen_exp(x, writeBuffer, expType);
                 if (typeStr2ioStr(expType, ioType)) {
                     buffer += ioType;
@@ -882,7 +885,6 @@ namespace target_c {
             buffer += "\"";
             buffer += writeBuffer;
             buffer += ")";
-            //buffer += ");\n";
             return check;
         }
 
