@@ -237,7 +237,6 @@ end
 
 int main()
 {
-
     Program *mainProgram = test_gcd();
     target_c::Buffer tempBuffer(std::cout);
     std::vector<std::string> include_files;
