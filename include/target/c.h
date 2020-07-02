@@ -344,84 +344,6 @@ namespace target_c {
                 case Type::SubprogramBody:
                     return code_gen_SubprogramBody(
                             reinterpret_cast<const SubprogramBody *>(node));
-//                case Type::Procedure:
-//                    return code_gen_procedure(
-//                            reinterpret_cast<const Procedure *>(node));
-//                case Type::Function:
-//                    return code_gen_function(
-//                            reinterpret_cast<const Function *>(node));
-//                case Type::StatementBlock:
-//                    return code_gen_statement_block(
-//                            reinterpret_cast<const StatementBlock *>(node));
-//                case Type::ExpCall:
-//                    return code_gen_exp_call(
-//                            reinterpret_cast<const ExpCall *>(node));
-//                case Type::ExecStatement:
-//                    return code_gen_exec_statement(
-//                            reinterpret_cast<const ExecStatement *>(node));
-//                case Type::IfElseStatement:
-//                    return code_gen_if_else_statement(
-//                            reinterpret_cast<const IfElseStatement *>(node));
-//                case Type::ForStatement:
-//                    return code_gen_for_statement(
-//                            reinterpret_cast<const ForStatement *>(node));
-//                case Type::ExpConstantInteger:
-//                    return code_gen_exp_constant_integer(
-//                            reinterpret_cast<const ExpConstantInteger *>(node));
-//                case Type::ExpConstantChar:
-//                    return code_gen_exp_constant_char(
-//                            reinterpret_cast<const ExpConstantChar *>(node));
-//                case Type::ExpConstantBoolean:
-//                    return code_gen_exp_constant_boolean(
-//                            reinterpret_cast<const ExpConstantBoolean *>(node));
-//                case Type::ExpConstantString:
-//                    return code_gen_exp_constant_string(
-//                            reinterpret_cast<const ExpConstantString *>(node));
-//                case Type::ExpConstantReal:
-//                    return code_gen_exp_constant_real(
-//                            reinterpret_cast<const ExpConstantReal *>(node));
-//                case Type::Ident:
-//                    return code_gen_ident(
-//                            reinterpret_cast<const Ident *>(node));
-//            case Type::ParamList:
-//                return code_gen_param_list(
-//                        reinterpret_cast<const ParamList *>(node));
-//            case Type::VariableList:
-//                return code_gen_variable_list(
-//                        reinterpret_cast<const VariableList *>(node));
-//            case Type::IdentList:
-//                return code_gen_ident_list(
-//                        reinterpret_cast<const IdentList *>(node));
-//                case Type::ConstDecl:
-//                    return code_gen_const_decl(
-//                            reinterpret_cast<const ConstDecl *>(node));
-//            case Type::ConstDecls:
-//                return code_gen_const_decls(
-//                        reinterpret_cast<const ConstDecls *>(node));
-//            case Type::VarDecl:
-//                return code_gen_var_decl(
-//                        reinterpret_cast<const VarDecl *>(node));
-//            case Type::VarDecls:
-//                return code_gen_var_decls(
-//                        reinterpret_cast<const VarDecls *>(node));
-//            case Type::FunctionDecls:
-//                return code_gen_function_decls(
-//                        reinterpret_cast<const FunctionDecls *>(node));
-//                case Type::ExpAssign:
-//                    return code_gen_exp_assign(
-//                            reinterpret_cast<const ExpAssign *>(node));
-//                case Type::UnExp:
-//                    return code_gen_unary_exp(
-//                            reinterpret_cast<const UnExp *>(node));
-//                case Type::BiExp:
-//                    return code_gen_binary_exp(
-//                            reinterpret_cast<const BiExp *>(node));
-//            case Type::BasicTypeSpec:
-//                return code_gen_BasicTypeSpec(
-//                        reinterpret_cast<const BasicTypeSpec*>(node))
-//                case Type::ArrayTypeSpec:
-//                    return code_gen_ArrayTypeSpec(
-//                            reinterpret_cast<const ArrayTypeSpec *>(node));
             }
         }
 
@@ -525,11 +447,11 @@ namespace target_c {
                     se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(node->type_spec);
                     se.varType = ISARRAY;
                     keyword2str(se.arrayInfo->keyword->key_type, se.typeDecl);
+                    printTab(buffer);
+                    buffer += fmt::format("{0} {1}", se.typeDecl, name);
                     for(int i=0; i<se.arrayInfo->periods.size(); i++){
                         se.typeDecl += "*"; //数组类型 example：char**
                     }
-                    printTab(buffer);
-                    buffer += fmt::format("{0} {1}", se.typeDecl, name);
                     for (auto x : se.arrayInfo->periods) {
                         buffer += "[" + std::to_string(x.second) + "]";
                     }
@@ -730,6 +652,7 @@ namespace target_c {
                     assert(false);
                     return TranslateFailed;
             }
+            return OK;
         }
 
         int code_gen_Statement(const Statement *node, std::string &buffer) {
@@ -770,6 +693,7 @@ namespace target_c {
                 else {
                     check = false;
                     addErrMsg(node, "left type does not match right type");
+                    assert(false);
                 }
             }
             return check;
@@ -814,7 +738,8 @@ namespace target_c {
                 varFind = true;
             }
             else {
-                while (theTable->prev != NULL) { //在当前符号表找不到变量。向上层符号表寻找。
+                theTable = theTable->prev;
+                while (theTable != NULL) { //在当前符号表找不到变量。向上层符号表寻找。
                     auto iterTable = theTable->content.find(node->id->content);
                     if (iterTable != theTable->content.end()) {
                         varFind = true;
@@ -828,8 +753,13 @@ namespace target_c {
                             return TranslateFailed;
                         }
                         expType = iterTable->second.typeDecl;
-                        iterFunc->second.formalPara += fmt::format(
-                                "{0} {1}, ", iterTable->second.typeDecl, iterTable->first);
+                        if(expType.find("*") == std::string::npos) {
+                            iterFunc->second.formalPara += fmt::format(
+                                    "{0} &{1}, ", iterTable->second.typeDecl, iterTable->first);
+                        }else{
+                            iterFunc->second.formalPara += fmt::format(
+                                    "{0} {1}, ", iterTable->second.typeDecl, iterTable->first);
+                        }
                         iterFunc->second.additionPara += fmt::format("{0}, ", iterTable->first);
                         iterFunc->second.paraType.push_back(iterTable->second.typeDecl);
                         //在函数形参表添加完变量之后，在当前符号表内加上该变量的定义。
@@ -843,12 +773,23 @@ namespace target_c {
 
             if (varFind) {
                 buffer += fmt::format("{0}", node->id->content);
-                return OK;
-            } else {
-                addErrMsg(node, "var not found in current symbol table and its parent");
-                assert(false);
+                if(expType.find("*") != std::string::npos) {
+                    std::string periodType;
+                    for(auto arrayInfo : node->id_var->explist){
+                        expType.pop_back(); // int* --> int
+                        buffer += "[";
+                        code_gen_exp(arrayInfo, buffer, periodType);
+                        if(periodType != "int"){
+                            assert(false);
+                        }
+                        buffer += "]";
+                    }
+                }
+            }else {
+                throw std::runtime_error("semantic error: var not found in current symbol table and its parent");
                 return TranslateFailed;
             }
+            return OK;
         }
 
         int code_gen_ExpAssign(const ExpAssign *node, std::string &buffer, std::string &expType) {
@@ -1063,65 +1004,6 @@ namespace target_c {
             buffer += "\"";
             return constType2str(node, expType);
         }
-
-        /*
-        int search_for_symbol(const std::string &symbol, std::string &value) {
-            LinkedContext *now_ctx = current_linkedCtx;
-            while (now_ctx != NULL) {
-                if (now_ctx->content->count(symbol) > 0) {
-                    value = now_ctx->content->find(symbol)->second;
-                    return OK;
-                } else {
-                    now_ctx = current_linkedCtx->last;
-                }
-            }
-            throw std::runtime_error(fmt::format("symbol {} not found", symbol));
-            return TranslateFailed;
-        }
-
-
-        void insert_const_decls(std::map<std::string, std::string> &map, ConstDecls *pDecls) {
-            if (pDecls != nullptr) {
-                for (auto decl : pDecls->decls) {
-                }
-            }
-        }
-
-        int convert_exp_to_str(const Exp *expression, std::string &result) {
-            switch (expression->type) {
-                case Type::UnExp:
-                    result += reinterpret_cast<const UnExp *>(expression)->marker->content;
-                    return convert_exp_to_str(reinterpret_cast<const UnExp *>(expression)->lhs, result);
-                case Type::BiExp:
-                    convert_exp_to_str(reinterpret_cast<const BiExp *>(expression)->lhs, result);
-                    result += std::string(" ") + reinterpret_cast<const BiExp *>(expression)->marker->content +
-                              std::string(" ");
-                    return convert_exp_to_str(reinterpret_cast<const BiExp *>(expression)->rhs, result);
-                case Type::ExpConstantInteger:
-                    result += reinterpret_cast<const ExpConstantInteger *>(expression)->value->content;
-                    return OK;
-                case Type::ExpConstantChar:
-                    result += reinterpret_cast<const ExpConstantChar *>(expression)->value->content;
-                    return OK;
-                case Type::ExpConstantBoolean:
-                    if (reinterpret_cast<const ExpConstantBoolean *>(expression)->value->attr == 1)
-                        result += "1";
-                    else if (reinterpret_cast<const ExpConstantBoolean *>(expression)->value->attr == 0)
-                        result += "0";
-                    else
-                        return TranslateFailed;
-                    return OK;
-                case Type::ExpConstantString:
-                    result += reinterpret_cast<const ExpConstantString *>(expression)->value->content;
-                    return OK;
-                case Type::ExpConstantReal:
-                    result += reinterpret_cast<const ExpConstantString *>(expression)->value->content;
-                    return OK;
-                default:
-                    throw std::runtime_error("expression_to_str error");
-            }
-        }
-         */
     };
 }
 #endif //PASCAL_S_TARGET_C_H
