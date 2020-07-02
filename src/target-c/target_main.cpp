@@ -6,6 +6,7 @@
 #include <target/c.h>
 #include <iostream>
 
+#include <target/task.h>
 
 Program * test_gcd() {
     auto *integer = new Keyword(KeywordType::Integer);
@@ -314,4 +315,10 @@ int main()
 
     return 0;
 }
+
+[[maybe_unused]] int target_compile(int, const char **, CompilerTargetTask *) {
+    printf("target c main function invoked");
+    return 0;
+}
+
 
