@@ -193,12 +193,14 @@ struct Period : public TypeSpec {
 
 struct ArrayTypeSpec : public TypeSpec {
 
-    const Keyword* keyword;
+    const Keyword* keyword = nullptr;
 
-    Period* period;
+    std::vector<std::pair<int64_t, int64_t>> periods;
+    // Period* period;
 
     explicit ArrayTypeSpec(const Keyword* keyword) : TypeSpec(Type::ArrayTypeSpec), keyword(keyword) {}
 
+    explicit ArrayTypeSpec() : TypeSpec(Type::ArrayTypeSpec) {}
 };
 
 
