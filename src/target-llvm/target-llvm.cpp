@@ -165,7 +165,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen(const ast::Node *node) {
         case ast::Type::FormalParameter:
             assert(false);
             break;
-        case ast::Type::Variabele:
+        case ast::Type::Variable:
             return code_gen_variable(
                     reinterpret_cast<const ast::Variable *>(node));
         case ast::Type::Expression:

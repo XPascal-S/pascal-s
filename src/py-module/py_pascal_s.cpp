@@ -164,7 +164,7 @@ PYBIND11_MODULE(py_pascal_s, m) {
             .value("Statement", ast::Type::Statement)
             .value("ElsePart", ast::Type::ElsePart)
             .value("VariableList", ast::Type::VariableList)
-            .value("Variabele", ast::Type::Variabele)
+            .value("Variable", ast::Type::Variable)
             .value("IdVarpart", ast::Type::IdVarpart)
             .value("ExpressionList", ast::Type::ExpressionList)
             .value("Expression", ast::Type::Expression)

@@ -13,7 +13,7 @@ llvm::Value *LLVMBuilder::get_lvalue_pointer(const ast::Exp *lvalue) {
         case ast::Type::Ident:
             content = reinterpret_cast<const ast::Ident *>(lvalue)->ident->content;
             break;
-        case ast::Type::Variabele:
+        case ast::Type::Variable:
             content = reinterpret_cast<const ast::Variable *>(lvalue)->id->content;
             exp_list = reinterpret_cast<const ast::Variable *>(lvalue)->id_var;
             break;

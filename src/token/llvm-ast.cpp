@@ -62,7 +62,7 @@ void ast::deleteAST(Node *node) {
         case Type::ParamList:
             delete reinterpret_cast<ParamList *>(node);
             break;
-        case Type::Variabele:
+        case Type::Variable:
             delete reinterpret_cast<Variable *>(node);
             break;
         case Type::ExpressionList:
@@ -385,12 +385,12 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
-        case Type::Variabele:
+        case Type::Variable:
 #define cur_node (reinterpret_cast<const ast::Variable*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
-            printf("type = Variabele\n");
+            printf("type = Variable\n");
             printf("name = %s\n", convertToString(cur_node->id).c_str());
             printf("exps =\n");
             if (cur_node->id_var) {
