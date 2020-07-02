@@ -167,6 +167,7 @@ namespace target_c {
 //                this->outputBuff.writeTab(this->tabNum);
                 this->outputBuff.writeln("}");
 //                this->outputBuff.writeTab(this->tabNum);
+                this->outputBuff.writeln("");
             }
 
             //输出主函数内容
@@ -713,8 +714,14 @@ namespace target_c {
             const struct FuncInfo callInfo = iter->second;
             buffer += node->fn->content;
             buffer += "(";
-            for (auto x : node->params->explist) {
+            for (int i = 0; i < node->params->explist.size(); i++) {
+                auto x = node->params->explist[i];
                 check &= code_gen_exp(x, buffer, expType);
+                if (expType != callInfo.paraType[i]) {
+                    check = false;
+                    addErrMsg(node, "type of parameter passed in does not match the formal parameter");
+                    return TranslateFailed;
+                }
                 buffer += ", ";
             }
             expType = callInfo.returnType;
