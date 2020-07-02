@@ -454,7 +454,7 @@ namespace target_c {
                         se.typeDecl += "*"; //数组类型 example：char**
                     }
                     for (auto x : se.arrayInfo->periods) {
-                        buffer += "[" + std::to_string(x.second) + "]";
+                        buffer += "[" + std::to_string(x.second - x.first + 1) + "]";
                     }
                     buffer += ";\n";
                 } else {
@@ -747,7 +747,7 @@ namespace target_c {
             else {
                 theTable = theTable->prev;
                 while (theTable != NULL) { //在当前符号表找不到变量。向上层符号表寻找。
-                    auto iterTable = theTable->content.find(node->id->content);
+                    iterTable = theTable->content.find(node->id->content);
                     if (iterTable != theTable->content.end()) {
                         varFind = true;
                         //对在上层符号表找到的变量，追加函数调用参数。
@@ -781,18 +781,35 @@ namespace target_c {
             bool check = true;
             if (varFind) {
                 buffer += fmt::format("{0}", node->id->content);
+
                 if(expType.find("*") != std::string::npos) {
                     std::string periodType;
-                    for(auto arrayInfo : node->id_var->explist){
+                    if (iterTable->second.arrayInfo->periods.size() != node->id_var->explist.size()){
+                        assert(false); // 定义数组维数与下标不符
+                        return TranslateFailed;
+                    }
+                    auto *arraySubInt = new ConstantInteger(0);
+                    auto *arraySubIntExp = new ExpConstantInteger(arraySubInt);
+                    auto *subMarker = new Marker(MarkerType::Sub);
+                    auto *tempExp = new BiExp(nullptr,
+                                              subMarker, nullptr);
+
+                    for(int i=0; i<node->id_var->explist.size(); i++){
                         expType.pop_back(); // int* --> int
                         buffer += "[";
-                        check &= code_gen_exp(arrayInfo, buffer, periodType);
+                        arraySubInt->attr = iterTable->second.arrayInfo->periods[i].first;
+                        arraySubIntExp->value = arraySubInt;
+                        tempExp->lhs = node->id_var->explist.at(i);
+                        tempExp->rhs = arraySubIntExp;
+                        check &= code_gen_exp(tempExp, buffer, periodType);
                         if(periodType != "int"){
                             addErrMsg(node, "array range must be int");
                             check = false;
                             assert(false);
                         }
                         buffer += "]";
+                        delete tempExp; // delete tempExp会删除lhs和rhs
+                        delete subMarker;
                     }
                 }
             } else {
