@@ -735,7 +735,8 @@ namespace ast {
                                                                                                programKeyword(
                                                                                                        programKeyword),
                                                                                                id(id), idlist(idlist) {
-            copy_pos_between_tokens(this, programKeyword, idlist);
+            if (idlist) copy_pos_between_tokens(this, programKeyword, idlist);
+            else copy_pos_between_tokens(this, programKeyword, id);
         }
 
     };
