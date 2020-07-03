@@ -48,9 +48,7 @@
 
 //                 MARKER   =       0x200  +  type
 %token  MARKER_RANGE      0x200
-%token  MARKER_LOGICAND   0x201
-%token  MARKER_LOGICOR    0x202
-%token  MARKER_LOGICNOT   0x203
+%token  MARKER_LOGICNOT   0x201
 %token  MARKER_NEQ        0x211
 %token  MARKER_LE         0x212
 %token  MARKER_GE         0x213
@@ -59,9 +57,11 @@
 %token  MARKER_GT         0x216
 %token  MARKER_ADD        0x220
 %token  MARKER_SUB        0x221
+%token  MARKER_LOGICOR    0x222
 %token  MARKER_MUL        0x230
 %token  MARKER_DIV        0x231
 %token  MARKER_MOD        0x232
+%token  MARKER_LOGICAND   0x233
 %token  MARKER_LPAREN     0x240
 %token  MARKER_RPAREN     0x241
 %token  MARKER_LBRACKET   0x250
@@ -71,22 +71,6 @@
 %token  MARKER_DOT        0x262
 %token  MARKER_SEMICOLON  0x263
 %token  MARKER_COLON      0x264
-
-/*  // TODO */
-/* %token  MARKER_AND         0xfff0 */
-/* %token  MARKER_OR          0xfff1 */
-/* %token  MARKER_MOD         0xfff2 */
-/* %token  MARKER_QUO         0xfff3 */
-
-
-/*  // TODO */
-/* %token  READ               0xffff0 */
-/* %token  WRITE              0xffff1 */
-
-/* %token char 3 */
-/* %token real 4 */
-/* %token int 5 */
-/* %token boolean 6 */
 
  // %nonassoc IFX
  // %nonassoc ELSE
@@ -814,15 +798,7 @@ comma : MARKER_COMMA {
 
 expression : simple_expression relop simple_expression {
   $$ = new ExpAssign((Exp*)$1, (Exp*)$3);
-  // ast_reduce_nodes(3, Type::ExpAssign);
 }
-// simple_expression relop simple_expression
-// simple_expression '<' simple_expression {printf("expression relop<\n"); $$ = $1;}
-// | simple_expression "<=" simple_expression {printf("expression relop<=\n"); }
-// | simple_expression '=' simple_expression {printf("expression relop=\n"); $$ = $1;}
-// | simple_expression "<>" simple_expression {printf("expression relop<>\n"); }
-// | simple_expression '>' simple_expression {printf("expression relop>\n"); }
-// | simple_expression ">=" simple_expression {printf("expression relop>=\n"); }
 | simple_expression { $$ = $1; }
 ;
 
@@ -848,6 +824,7 @@ factor:
   $$ = new UnExp((const Marker*)$1, (Exp*)$2);
 }
 | const_value {
+  printf("const value\n\n");
   $$ = $1;
   }
 
@@ -880,6 +857,7 @@ mulop : MARKER_MUL {
   $$ = new ExpMarker((const Marker *)($1));
   }
 | MARKER_LOGICAND {
+  printf("logicand\n\n");
   $$ = new ExpMarker((const Marker *)($1));
   }
 
