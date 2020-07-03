@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::Program *Parser<Lexer>::parse_program() {
+ast::Program *RecursiveParser<Lexer>::parse_program() {
 
     // program head
     auto ph = parse_program_head();

@@ -3,8 +3,10 @@
 //
 //maybe_fall_eof
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::TypeSpec *Parser<Lexer>::parse_type() {
+ast::TypeSpec *RecursiveParser<Lexer>::parse_type() {
     // next token == array | basic_type, all belong to keyword
     if (current_token == nullptr || current_token->type != TokenType::Keyword) {
         for (;;) {
@@ -53,7 +55,7 @@ ast::TypeSpec *Parser<Lexer>::parse_type() {
 #define ps_bad_reduced_array (ast::copy_pos_with_check(arr_type_spec, keyword_array), arr_type_spec)
 
 template<typename Lexer>
-ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array) {
+ast::ArrayTypeSpec *RecursiveParser<Lexer>::parse_array_type(const Keyword *keyword_array) {
     auto arr_type_spec = new ast::ArrayTypeSpec(keyword_array);
 
     // [

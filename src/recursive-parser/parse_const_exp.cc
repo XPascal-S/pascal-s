@@ -4,9 +4,10 @@
 
 
 #include <pascal-s/parser.h>
+#include <pascal-s/parser_recursive.h>
 
 template<typename Lexer>
-ast::Exp *Parser<Lexer>::parse_const_exp(const std::set<const Token *> *till) {
+ast::Exp *RecursiveParser<Lexer>::parse_const_exp(const std::set<const Token *> *till) {
 
     auto *maybe_lhs = parse_const_fac(till);
     if (maybe_lhs == nullptr) {
@@ -23,7 +24,7 @@ ast::Exp *Parser<Lexer>::parse_const_exp(const std::set<const Token *> *till) {
 }
 
 template<typename Lexer>
-ast::Exp *Parser<Lexer>::parse_const_fac(const std::set<const Token *> *till) {
+ast::Exp *RecursiveParser<Lexer>::parse_const_fac(const std::set<const Token *> *till) {
     if (current_token == nullptr) {
         return fall_expect_s("const value");
     }

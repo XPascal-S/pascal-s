@@ -3,6 +3,7 @@
 //
 
 #include <target/llvm.h>
+#include <fmt/core.h>
 
 
 llvm::Value *LLVMBuilder::get_lvalue_pointer(const ast::Exp *lvalue) {
@@ -40,7 +41,8 @@ llvm::Value *LLVMBuilder::get_lvalue_pointer(const ast::Exp *lvalue) {
                         return ir_builder.CreateGEP(ptr, offset, "gep_tmp");
                     }
                 } else {
-                    llvm_pascal_s_report_semantic_error_n(lvalue, "array does not indexed");
+                    llvm_pascal_s_report_semantic_error_n(
+                            lvalue, fmt::format("lvalue is a array, but index operator [] is missing"));
                     return nullptr;
                 }
             }

@@ -185,6 +185,7 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("type = ParamSpec\n");
             put_tab(dep + 1);
             printf("var = \n");
+            put_tab(dep + 1);
             printf("name = %s\n", convertToString(cur_node->keyword_var).c_str());
             put_tab(dep + 1);
             printf("body = \n");
@@ -223,17 +224,19 @@ void ast::printAST(const ast::Node *node, int dep) {
             // todo: remove const cast
             put_tab(dep + 1);
             printf("param(ids) = \n");
-            printAST(cur_node->subhead->decls, dep + 1);
+            if (cur_node->subhead) printAST(cur_node->subhead->decls, dep + 1);
             put_tab(dep + 1);
-            printf("const decls = \n");
-            printAST(cur_node->subbody->constdecls, dep + 1);
-            put_tab(dep + 1);
-            printf("var decls = \n");
-            printAST(cur_node->subbody->vardecls, dep + 1);
-            put_tab(dep + 1);
-            printf("body = \n");
-            printAST(cur_node->subbody->compound, dep + 1);
-            put_tab(dep);
+            if (cur_node->subbody) {
+                printf("const decls = \n");
+                printAST(cur_node->subbody->constdecls, dep + 1);
+                put_tab(dep + 1);
+                printf("var decls = \n");
+                printAST(cur_node->subbody->vardecls, dep + 1);
+                put_tab(dep + 1);
+                printf("body = \n");
+                printAST(cur_node->subbody->compound, dep + 1);
+                put_tab(dep);
+            }
             printf("}\n");
             break;
 #undef  cur_node
@@ -355,6 +358,17 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = ForStatement\n");
+            put_tab(dep + 1);
+            printf("loop_var = %s\n", convertToString(cur_node->id).c_str());
+            put_tab(dep + 1);
+            printf("from_exp = \n");
+            printAST(cur_node->express1, dep + 1);
+            put_tab(dep + 1);
+            printf("to_exp = \n");
+            printAST(cur_node->express2, dep + 1);
+            put_tab(dep + 1);
+            printf("body = \n");
+            printAST(cur_node->for_stmt, dep + 1);
 
             put_tab(dep);
             printf("}\n");
@@ -393,7 +407,9 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = Variable\n");
+            put_tab(dep + 1);
             printf("name = %s\n", convertToString(cur_node->id).c_str());
+            put_tab(dep + 1);
             printf("exps =\n");
             if (cur_node->id_var) {
                 for (auto param: cur_node->id_var->explist) {
@@ -617,6 +633,7 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = BasicTypeSpec\n");
+            put_tab(dep + 1);
             printf("key_type = %s\n", convertToString(cur_node->keyword).c_str());
 
             put_tab(dep);

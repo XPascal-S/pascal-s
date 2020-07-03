@@ -77,6 +77,10 @@ std::string convertToString(const Token *pToken) {
             return fmt::format(
                     "{{ .type = ConstantChar .attr = {} }}",
                     reinterpret_cast<const ConstantChar *>(pToken)->attr);
+        case TokenType::ConstantBoolean:
+            return fmt::format(
+                    "{{ .type = ConstantBoolean .attr = {} }}",
+                    reinterpret_cast<const ConstantBoolean *>(pToken)->attr);
         case TokenType::Identifier:
             return fmt::format(
                     "{{ .type = Identifier .content = {} }}",

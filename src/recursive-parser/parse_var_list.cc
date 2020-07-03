@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::VariableList *Parser<Lexer>::parse_variable_list_with_paren() {
+ast::VariableList *RecursiveParser<Lexer>::parse_variable_list_with_paren() {
 
     // (
     expected_enum_type(predicate::is_lparen, predicate::marker_lparen);
@@ -31,7 +33,7 @@ ast::VariableList *Parser<Lexer>::parse_variable_list_with_paren() {
 }
 
 template<typename Lexer>
-ast::VariableList *Parser<Lexer>::parse_variable_list() {
+ast::VariableList *RecursiveParser<Lexer>::parse_variable_list() {
     auto *ret = new ast::VariableList;
     for (;;) {
 

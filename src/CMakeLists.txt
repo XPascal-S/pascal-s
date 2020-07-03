@@ -54,6 +54,7 @@ file(GLOB PASCAL_S_PARSER_SOURCE_FILES parser/*.cpp parser/*.cc)
 add_subdirectory(parser)
 
 # recursive parser source files
+file(GLOB PASCAL_S_RECURSIVE_PARSER_ONLY_MOCK_SOURCE_FILES recursive-parser/*.cpp)
 file(GLOB PASCAL_S_RECURSIVE_PARSER_SOURCE_FILES recursive-parser/*.cpp)
 add_subdirectory(recursive-parser/test)
 

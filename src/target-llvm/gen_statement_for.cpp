@@ -3,6 +3,7 @@
 //
 
 #include <target/llvm.h>
+#include <fmt/core.h>
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_for_statement(const ast::ForStatement *for_stmt) {
     Function *cur_function = ir_builder.GetInsertBlock()->getParent();
@@ -13,27 +14,18 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_for_statement(const ast::ForStatement 
     Value *from_value = code_gen(for_stmt->express1);
     Value *to_value = code_gen(for_stmt->express2);
 
-    if (from_value == nullptr) {
-        llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "gen express1 error");
-    }
-
-    if (to_value == nullptr) {
-        llvm_pascal_s_report_semantic_error_n(for_stmt->express2, "gen express2 error");
-    }
-
     if (from_value == nullptr || to_value == nullptr) {
         return nullptr;
     }
 
-    if (from_value->getType()->getTypeID() != to_value->getType()->getTypeID()) {
-        // todo: implicit type conversion feature
-        llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "from to type conflict error");
+    if (from_value->getType() != to_value->getType() && !check_extend_type(
+            for_stmt->express1, from_value, to_value, true)) {
         return nullptr;
     }
 
     llvm::AllocaInst *loop_var = dfn_block.CreateAlloca(from_value->getType(), nullptr,
                                                         for_stmt->id->content);
-    Value *step_value = nullptr;
+    Value *step_value;
     switch (from_value->getType()->getTypeID()) {
         case llvm::Type::IntegerTyID:
             step_value = llvm::Constant::getIntegerValue(
@@ -44,7 +36,9 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_for_statement(const ast::ForStatement 
                     from_value->getType(), llvm::APFloat(1.0));
             break;
         default:
-            llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "type invalid error");
+            llvm_pascal_s_report_semantic_error_n(for_stmt->id,
+                                                  fmt::format("iter type invalid error, from-to-exp type = {}",
+                                                              format_type(from_value->getType())));
             return nullptr;
     }
 
@@ -74,7 +68,10 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_for_statement(const ast::ForStatement 
                     from_value, to_value, "loop_cond");
             break;
         default:
-            llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "type invalid error");
+            llvm_pascal_s_report_semantic_error_n(
+                    for_stmt->express1,
+                    fmt::format("could not perform binary calc <= on lhs and rhs, lhs type = {}, rhs type = {}",
+                                format_type(from_value->getType()), format_type(to_value->getType())));
             return nullptr;
     }
 
@@ -97,26 +94,36 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_for_statement(const ast::ForStatement 
                     ir_builder.CreateFAdd(cur_value, step_value, "next_tmp_d"), loop_var);
             break;
         default:
-            llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "store type invalid error");
+            llvm_pascal_s_report_semantic_error_n(
+                    for_stmt->id,
+                    fmt::format("could not perform binary calc + on lhs and rhs, lhs type = {}, rhs type = {}",
+                                format_type(cur_value->getType()), format_type(step_value->getType())));
             return nullptr;
     }
     if (si == nullptr)
         return nullptr;
 
-    Value *loop_cond = nullptr;
+    Value *loop_cond = ir_builder.CreateLoad(loop_var);
+    if (!loop_cond) {
+        llvm_pascal_s_report_semantic_error_n(for_stmt->id, "internal load invalid error");
+        return nullptr;
+    }
     switch (from_value->getType()->getTypeID()) {
         case llvm::Type::IntegerTyID:
             // todo: signed/unsigned integer type feature
             loop_cond = ir_builder.CreateICmpSLE(
-                    ir_builder.CreateLoad(loop_var), to_value, "loop_cond");
+                    loop_cond, to_value, "loop_cond");
             break;
         case llvm::Type::DoubleTyID:
             // todo: ordered or unordered
             loop_cond = ir_builder.CreateFCmpOLE(
-                    ir_builder.CreateLoad(loop_var), to_value, "loop_cond");
+                    loop_cond, to_value, "loop_cond");
             break;
         default:
-            llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "cmp jump type invalid error");
+            llvm_pascal_s_report_semantic_error_n(
+                    for_stmt->id,
+                    fmt::format("could not perform binary calc <= on lhs and rhs, lhs type = {}, rhs type = {}",
+                                format_type(loop_cond->getType()), format_type(to_value->getType())));
             return nullptr;
     }
 

@@ -3,6 +3,7 @@
 //
 
 #include <target/llvm.h>
+#include <fmt/core.h>
 
 LLVMBuilder::LLVMBuilder() :
         ir_builder(ctx), modules("llvm-pascal-s", ctx), fn_pass_manager(&modules), scope_stack(nullptr) {
@@ -189,6 +190,12 @@ LLVMBuilder::Value *LLVMBuilder::code_gen(const ast::Node *node) {
 void LLVMBuilder::report_semantic_error(const char *fn, const pascal_s::Pos *pos, std::string &&msg) {
     errors.push_back(new PascalSSemanticError(fn, pos,
                                               "semantic error: at function" + (fn + (": " + msg))));
+}
+
+
+void LLVMBuilder::report_semantic_warning(const char *fn, const pascal_s::Pos *pos, std::string &&msg) {
+    errors.push_back(new PascalSSemanticError(fn, pos,
+                                              "semantic warning: at function" + (fn + (": " + msg))));
 }
 
 

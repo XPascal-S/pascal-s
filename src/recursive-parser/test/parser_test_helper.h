@@ -9,8 +9,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <pascal-s/token.h>
-#include <pascal-s/mock.h>
-#include <pascal-s/parser.h>
+#include <pascal-s/lexer_mock.h>
+#include <pascal-s/parser_recursive.h>
 
 struct ParserTestCase {
 
@@ -31,7 +31,7 @@ struct ParserTest : public testing::TestWithParam<ParserTestCase> {
     auto &&param = GetParam(); \
     MockLexer lexer(param.token_stream); \
     LexerProxy <MockLexer> lexer_proxy(lexer); \
-    Parser parser(lexer_proxy); \
+    RecursiveParser parser(lexer_proxy); \
     auto ast = parser.ParseRespFunc(); \
     ASSERT_EQ(lexer.current_token_cursor, lexer.token_stream.size()) <<  "not consumed " \
         << lexer.current_token_cursor << " " << lexer.token_stream.size(); \
@@ -50,7 +50,7 @@ struct ParserTest : public testing::TestWithParam<ParserTestCase> {
     auto &&param = GetParam(); \
     MockLexer lexer(param.token_stream); \
     LexerProxy <MockLexer> lexer_proxy(lexer); \
-    Parser parser(lexer_proxy); \
+    RecursiveParser parser(lexer_proxy); \
     parser.next_token();\
     auto ast = parser.ParseRespFunc(); \
     ASSERT_EQ(lexer.current_token_cursor, lexer.token_stream.size()) <<  "not consumed " \
@@ -69,7 +69,7 @@ struct ParserTest : public testing::TestWithParam<ParserTestCase> {
     auto &&param = GetParam(); \
     MockLexer lexer(param.token_stream); \
     LexerProxy <MockLexer> lexer_proxy(lexer); \
-    Parser parser(lexer_proxy); \
+    RecursiveParser parser(lexer_proxy); \
     parser.next_token();\
     auto ast = parser.ParseRespFunc(); \
     ASSERT_EQ(lexer.current_token_cursor, lexer.token_stream.size()) <<  "not consumed " \

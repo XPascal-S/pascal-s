@@ -4,8 +4,10 @@
 
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::Statement *Parser<Lexer>::parse_statement(std::set<const Token *> *till) {
+ast::Statement *RecursiveParser<Lexer>::parse_statement(std::set<const Token *> *till) {
     for (;;) {
         if (current_token == nullptr) {
             return nullptr;
@@ -64,7 +66,7 @@ ast::Statement *Parser<Lexer>::parse_statement(std::set<const Token *> *till) {
 }
 
 template<typename Lexer>
-ast::Statement *Parser<Lexer>::parse_read_statement(std::set<const Token *> *till) {
+ast::Statement *RecursiveParser<Lexer>::parse_read_statement(std::set<const Token *> *till) {
     assert(predicate::is_read(current_token));
     auto read_tok = current_token;
     next_token();
@@ -76,7 +78,7 @@ ast::Statement *Parser<Lexer>::parse_read_statement(std::set<const Token *> *til
 }
 
 template<typename Lexer>
-ast::Statement *Parser<Lexer>::parse_write_statement(std::set<const Token *> *till) {
+ast::Statement *RecursiveParser<Lexer>::parse_write_statement(std::set<const Token *> *till) {
     assert(predicate::is_write(current_token));
     auto write_tok = current_token;
     next_token();
