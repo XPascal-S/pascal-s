@@ -3,6 +3,7 @@
 //
 
 #include <target/llvm.h>
+#include <fmt/core.h>
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_binary_exp(const ast::BiExp *pExp) {
     auto lhs = code_gen(pExp->lhs);
@@ -11,12 +12,10 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_binary_exp(const ast::BiExp *pExp) {
         return nullptr;
     }
 
-    if (lhs->getType()->getTypeID() != rhs->getType()->getTypeID()) {
-        // todo: signed/unsigned integer type feature
-        llvm_pascal_s_report_semantic_warning_n(pExp,
-                                                "code_gen_binary_exp type conflict error");
+    if (!check_extend_type(pExp->visit_pos(), lhs, rhs, true)) {
         return nullptr;
     }
+
     switch (lhs->getType()->getTypeID()) {
         case llvm::Type::IntegerTyID:
             switch (pExp->marker->marker_type) {
@@ -63,7 +62,9 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_binary_exp(const ast::BiExp *pExp) {
                 case MarkerType::NEQ:
                     return ir_builder.CreateICmpNE(lhs, rhs, "neq_tmp");
                 default:
-                    llvm_pascal_s_report_semantic_error_n(pExp->marker, "code_gen_binary_exp marker error");
+                    llvm_pascal_s_report_semantic_error_n(
+                            pExp->marker,
+                            fmt::format("not valid binary marker {}", convertToString(pExp->marker)));
                     return nullptr;
             }
         case llvm::Type::DoubleTyID:
@@ -107,11 +108,18 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_binary_exp(const ast::BiExp *pExp) {
                 case MarkerType::NEQ:
                     return ir_builder.CreateFCmpONE(lhs, rhs, "neq_tmp");
                 default:
-                    llvm_pascal_s_report_semantic_error_n(pExp->marker, "code_gen_binary_exp marker error");
+                    llvm_pascal_s_report_semantic_error_n(
+                            pExp->marker,
+                            fmt::format("not valid binary marker {}",
+                                        get_marker_type_reversed(pExp->marker->marker_type)));
                     return nullptr;
             }
         default:
-            llvm_pascal_s_report_semantic_error_n(pExp->marker, "code_gen_binary_exp llvm type error");
+            llvm_pascal_s_report_semantic_error_n(
+                    pExp,
+                    fmt::format("could not perform binary calc {} on lhs and rhs, lhs type = {}, rhs type = {}",
+                                get_marker_type_reversed(pExp->marker->marker_type),
+                                format_type(lhs->getType()), format_type(rhs->getType())));
             return nullptr;
     }
 }

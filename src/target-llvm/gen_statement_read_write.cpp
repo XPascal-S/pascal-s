@@ -3,6 +3,7 @@
 //
 
 #include <target/llvm.h>
+#include <fmt/core.h>
 
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_read_statement(const ast::Read *stmt) {
@@ -12,15 +13,20 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_read_statement(const ast::Read *stmt) 
     for (auto ptr_proto: stmt->var_list->params) {
         auto res = get_lvalue_pointer(ptr_proto);
         if (res == nullptr) {
-            return nullptr;
+            ret_value = nullptr;
+            continue;
         }
 
         // get function proto llvm_func
         Function *calleeFunc = nullptr;
         switch (res->getType()->getPointerElementType()->getTypeID()) {
             default:
-                llvm_pascal_s_report_semantic_error_n(ptr_proto, "type invalid error");
-                return nullptr;
+                llvm_pascal_s_report_semantic_error_n(
+                        ptr_proto,
+                        fmt::format("could not read a variable with type {}",
+                                    format_type(res->getType())));
+                ret_value = nullptr;
+                break;
             case llvm::Type::DoubleTyID:
                 calleeFunc = modules.getFunction("read_real");
                 break;
@@ -28,6 +34,8 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_read_statement(const ast::Read *stmt) 
                 auto bw = res->getType()->getPointerElementType()->getIntegerBitWidth();
                 if (bw == 64) {
                     calleeFunc = modules.getFunction("read_int64");
+                } else if (bw == 32) {
+                    calleeFunc = modules.getFunction("read_int32");
                 } else if (bw == 8) {
                     calleeFunc = modules.getFunction("read_char");
                 } else if (bw == 1) {
@@ -36,8 +44,12 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_read_statement(const ast::Read *stmt) 
                 break;
         }
         if (!calleeFunc) {
-            llvm_pascal_s_report_semantic_error_n(ptr_proto, "read function not found");
-            return nullptr;
+            llvm_pascal_s_report_semantic_error_n(
+                    ptr_proto,
+                    fmt::format("could not read a variable with type {}, read callee not found",
+                                format_type(res->getType())));
+            ret_value = nullptr;
+            continue;
         }
         assert(calleeFunc->arg_size() == 1);
         std::vector<Value *> args;
@@ -46,7 +58,8 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_read_statement(const ast::Read *stmt) 
         args.push_back(res);
 
         // out_code(%call_stmt.name = call ret_type @call_stmt.name(args))
-        ret_value = ir_builder.CreateAdd(ret_value, ir_builder.CreateCall(calleeFunc, args, "read_tmp"));
+        if (ret_value)
+            ret_value = ir_builder.CreateAdd(ret_value, ir_builder.CreateCall(calleeFunc, args, "read_tmp"));
     }
     return ret_value;
 }
@@ -59,7 +72,8 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_write_statement(const ast::Write *stmt
     for (auto exp_proto: stmt->exp_list->explist) {
         auto res = code_gen(exp_proto);
         if (res == nullptr) {
-            return nullptr;
+            ret_value = nullptr;
+            continue;
         }
 
         // get function proto llvm_func
@@ -68,8 +82,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_write_statement(const ast::Write *stmt
             case llvm::Type::IntegerTyID:
                 if (res->getType()->getIntegerBitWidth() == 64) {
                     calleeFunc = modules.getFunction("write_int64");
-                }
-                if (res->getType()->getIntegerBitWidth() == 32) {
+                } else if (res->getType()->getIntegerBitWidth() == 32) {
                     calleeFunc = modules.getFunction("write_int32");
                 } else if (res->getType()->getIntegerBitWidth() == 8) {
                     calleeFunc = modules.getFunction("write_char");
@@ -81,12 +94,20 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_write_statement(const ast::Write *stmt
                 calleeFunc = modules.getFunction("write_real");
                 break;
             default:
-                llvm_pascal_s_report_semantic_error_n(exp_proto, "type invalid error");
-                return nullptr;
+                llvm_pascal_s_report_semantic_error_n(
+                        exp_proto,
+                        fmt::format("could not write a variable with type {}",
+                                    format_type(res->getType())));
+                ret_value = nullptr;
+                break;
         }
         if (!calleeFunc) {
-            llvm_pascal_s_report_semantic_error_n(exp_proto, "write function not found");
-            return nullptr;
+            llvm_pascal_s_report_semantic_error_n(
+                    exp_proto,
+                    fmt::format("could not write a variable with type {}, write callee not found",
+                                format_type(res->getType())));
+            ret_value = nullptr;
+            continue;
         }
         assert(calleeFunc->arg_size() == 1);
         std::vector<Value *> args;
@@ -95,7 +116,8 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_write_statement(const ast::Write *stmt
         args.push_back(res);
 
         // out_code(%call_stmt.name = call ret_type @call_stmt.name(args))
-        ret_value = ir_builder.CreateAdd(ret_value, ir_builder.CreateCall(calleeFunc, args, "write_tmp"));
+        if (ret_value)
+            ret_value = ir_builder.CreateAdd(ret_value, ir_builder.CreateCall(calleeFunc, args, "write_tmp"));
     }
     return ret_value;
 }

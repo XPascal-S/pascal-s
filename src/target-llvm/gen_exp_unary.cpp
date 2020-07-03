@@ -3,11 +3,11 @@
 //
 
 #include <target/llvm.h>
+#include <fmt/core.h>
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_unary_exp(const ast::UnExp *pExp) {
     auto lhs = code_gen(pExp->lhs);
     if (lhs == nullptr) {
-        llvm_pascal_s_report_semantic_error_n(pExp->lhs, "gen exp error");
         return nullptr;
     }
 
@@ -22,7 +22,11 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_unary_exp(const ast::UnExp *pExp) {
                     return ir_builder.CreateNot(ir_builder.CreateFCmpONE(
                             lhs, llvm::ConstantFP::get(lhs->getType(), llvm::APFloat(0.))), "neg_f_tmp");
                 default:
-                    llvm_pascal_s_report_semantic_error_n(pExp->lhs, "llvm type error");
+                    llvm_pascal_s_report_semantic_error_n(
+                            pExp,
+                            fmt::format("could not perform unary calc {} on lhs, lhs type = {}",
+                                        get_marker_type_reversed(pExp->marker->marker_type),
+                                        format_type(lhs->getType())));
                     return nullptr;
             }
         case MarkerType::Add:
@@ -34,11 +38,18 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_unary_exp(const ast::UnExp *pExp) {
                 case llvm::Type::DoubleTyID:
                     return ir_builder.CreateFNeg(lhs, "neg_f_tmp");
                 default:
-                    llvm_pascal_s_report_semantic_error_n(pExp->lhs, "llvm type error");
+                    llvm_pascal_s_report_semantic_error_n(
+                            pExp,
+                            fmt::format("could not perform unary calc {} on lhs, lhs type = {}",
+                                        get_marker_type_reversed(pExp->marker->marker_type),
+                                        format_type(lhs->getType())));
                     return nullptr;
             }
         default:
-            llvm_pascal_s_report_semantic_error_n(pExp->marker, "marker type error");
+            llvm_pascal_s_report_semantic_error_n(
+                    pExp->marker,
+                    fmt::format("not valid unary marker {}",
+                                get_marker_type_reversed(pExp->marker->marker_type)));
             return nullptr;
     }
 }

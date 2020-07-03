@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::VarDecls *Parser<Lexer>::parse_var_decls() {
+ast::VarDecls *RecursiveParser<Lexer>::parse_var_decls() {
 
     //var
     expected_enum_type(predicate::is_var, predicate::keyword_var);
@@ -24,7 +26,7 @@ ast::VarDecls *Parser<Lexer>::parse_var_decls() {
 }
 
 template<typename Lexer>
-ast::VarDecls *Parser<Lexer>::_parse_var_decls(ast::VarDecls *decls) {
+ast::VarDecls *RecursiveParser<Lexer>::_parse_var_decls(ast::VarDecls *decls) {
 
     for (;;) {
         // declaration
@@ -56,7 +58,7 @@ ast::VarDecls *Parser<Lexer>::_parse_var_decls(ast::VarDecls *decls) {
 }
 
 template<typename Lexer>
-ast::VarDecl *Parser<Lexer>::parse_var_decl() {
+ast::VarDecl *RecursiveParser<Lexer>::parse_var_decl() {
 
     // id list
     auto id_list = parse_id_list();

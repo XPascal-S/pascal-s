@@ -3,23 +3,11 @@
 //
 
 #include <pascal-s/mock.h>
-#include <pascal-s/parser.h>
+#include <pascal-s/parser_recursive.h>
 #include <set>
 #include <fmt/core.h>
 
-#ifdef WITH_MOCK
-template
-struct Parser<MockLexer>;
-#endif
-
-#ifdef WITH_PASCAL_LEXER_FILES
-
-#include <pascal-s/lexer.h>
-#include <pascal-s/lib/stdtype.h>
-
-template
-struct Parser<FullInMemoryLexer>;
-#endif
+#include "pascal_s_parser_adaptor.cc"
 
 #define maybe_recover_keyword(K) if (guess_keyword(K)) {\
         break;\
@@ -142,23 +130,23 @@ namespace predicate {
 }
 
 template<typename Lexer>
-Parser<Lexer>::Parser(LexerProxy<Lexer> lexer) : lexer(std::move(lexer)) {}
+RecursiveParser<Lexer>::RecursiveParser(LexerProxy<Lexer> lexer) : lexer(std::move(lexer)) {}
 
 template<typename Lexer>
-const Token *Parser<Lexer>::next_token() {
+const Token *RecursiveParser<Lexer>::next_token() {
     current_token = lexer.next_token();
     return current_token;
 }
 
 template<typename Lexer>
-ast::Node *Parser<Lexer>::parse() {
+ast::Node *RecursiveParser<Lexer>::parse() {
     next_token();
     return parse_program();
 }
 
 
 template<typename Lexer>
-bool Parser<Lexer>::guess_keyword(KeywordType k) {
+bool RecursiveParser<Lexer>::guess_keyword(KeywordType k) {
 
     if (current_token == nullptr) {
         return false;
@@ -189,19 +177,19 @@ bool Parser<Lexer>::guess_keyword(KeywordType k) {
 }
 
 template<typename Lexer>
-void Parser<Lexer>::update_guess(Token *new_tok) {
+void RecursiveParser<Lexer>::update_guess(Token *new_tok) {
     copy_pos_any(new_tok, current_token);
     current_token = new_tok;
     this->guessing_token.push_back(new_tok);
 }
 
 template<typename Lexer>
-bool Parser<Lexer>::has_error() {
+bool RecursiveParser<Lexer>::has_error() {
     return !errors.empty();
 }
 
 template<typename Lexer>
-Parser<Lexer>::~Parser() {
+RecursiveParser<Lexer>::~RecursiveParser() {
     for (auto e: errors) {
         delete e;
     }

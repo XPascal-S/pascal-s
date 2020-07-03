@@ -4,14 +4,16 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::CompoundStatement *Parser<Lexer>::parse_compound_statement(std::set<const Token *> *till) {
+ast::CompoundStatement *RecursiveParser<Lexer>::parse_compound_statement(std::set<const Token *> *till) {
     expected_enum_type(predicate::is_begin, predicate::keyword_begin);
     return _parse_compound_statement(till);
 }
 
 template<typename Lexer>
-ast::CompoundStatement *Parser<Lexer>::_parse_compound_statement(std::set<const Token *> *till) {
+ast::CompoundStatement *RecursiveParser<Lexer>::_parse_compound_statement(std::set<const Token *> *till) {
     auto begin_tok = reinterpret_cast<const Keyword *>(current_token);
     next_token();
 

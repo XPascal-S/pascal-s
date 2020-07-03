@@ -3,6 +3,7 @@
 //
 
 #include <target/llvm.h>
+#include <fmt/core.h>
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_exp_constant_integer(const ast::ExpConstantInteger *pInteger) {
     return llvm::Constant::getIntegerValue(
@@ -29,7 +30,9 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_ident(const ast::Ident *pIdent) {
         return nullptr;
     }
     if (calleeFunc->arg_size() != 0) {
-        llvm_pascal_s_report_semantic_error_n(pIdent, "callee func param size does not match exp list size");
+        llvm_pascal_s_report_semantic_error_n(pIdent, fmt::format(
+                "callee {} expected args size is {}, but length of expression list is 0",
+                pIdent->ident->content, calleeFunc->arg_size()));
         return nullptr;
     }
     std::vector<Value *> args;
@@ -51,7 +54,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_exp_constant_string(const ast::ExpCons
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_exp_constant_boolean(const ast::ExpConstantBoolean *pBoolean) {
     return llvm::Constant::getIntegerValue(
-            llvm::Type::getInt1Ty(ctx), llvm::APInt(8, pBoolean->value->attr));
+            llvm::Type::getInt1Ty(ctx), llvm::APInt(1, pBoolean->value->attr));
 }
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_variable(const ast::Variable *node) {

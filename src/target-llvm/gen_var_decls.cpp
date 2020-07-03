@@ -3,12 +3,12 @@
 //
 
 #include <target/llvm.h>
+#include <fmt/core.h>
 
 void LLVMBuilder::insert_var_decls(LLVMBuilder::Function *cur_func,
                                    std::map<std::string, pascal_s::ArrayInfo *> &array_infos,
                                    std::map<std::string, llvm::Value *> &map,
                                    const ast::VarDecls *pDecls) {
-    auto s = llvm::StructType::create(ctx, "var_struct");
     if (pDecls != nullptr) {
         llvm::IRBuilder<> dfn_block(&cur_func->getEntryBlock(),
                                     cur_func->getEntryBlock().begin());
@@ -20,7 +20,14 @@ void LLVMBuilder::insert_var_decls(LLVMBuilder::Function *cur_func,
             }
 
             if (decl->type_spec->type == ast::Type::ArrayTypeSpec) {
+
                 for (auto ident : decl->idents->idents) {
+                    if (map.count(ident->content)) {
+                        llvm_pascal_s_report_semantic_error_n(
+                                ident, fmt::format("ident redeclared"));
+                        continue;
+                    }
+
                     map[ident->content] = new llvm::GlobalVariable(
                             modules, llvm_type, false,
                             llvm::GlobalVariable::LinkageTypes::InternalLinkage,
@@ -34,6 +41,12 @@ void LLVMBuilder::insert_var_decls(LLVMBuilder::Function *cur_func,
                 }
             } else {
                 for (auto ident : decl->idents->idents) {
+                    if (map.count(ident->content)) {
+                        llvm_pascal_s_report_semantic_error_n(
+                                ident, fmt::format("ident redeclared"));
+                        continue;
+                    }
+
                     if (llvm_type->isIntegerTy()) {
                         map[ident->content] = new llvm::GlobalVariable(
                                 modules, llvm_type, false,
@@ -47,7 +60,9 @@ void LLVMBuilder::insert_var_decls(LLVMBuilder::Function *cur_func,
                                 llvm::GlobalVariable::LinkageTypes::InternalLinkage,
                                 llvm::ConstantFP::get(llvm_type, llvm::APFloat(.0)), ident->content);
                     } else {
-                        llvm_pascal_s_report_semantic_error_n(ident, "gen var type");
+                        llvm_pascal_s_report_semantic_error_n(
+                                ident, fmt::format("ident with type spec {} could not convert to a llvm type",
+                                                   static_cast<uint16_t>(decl->type_spec->type)));
                     };
 //                    map[ident->content] = dfn_block.CreateAlloca(llvm_type, nullptr, ident->content);
                 }
