@@ -3,7 +3,7 @@
 #include <pascal-s/interface.h>
 
 #include <pascal-s/yacc_ast.h>
-#include "parser.h"
+#include <pascal-s/yacc_parser.h>
 #include <pascal-s/mock.h>
 #include <vector>
 
