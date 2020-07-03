@@ -815,7 +815,10 @@ factor:
   $$ = $1;
 }
 | id lparen expression_list rparen {
-  $$ = $1;
+  $$ = $1; //TODO ERROR!
+}
+| lparen expression_list rparen {
+  $$ = $2;
 }
 | not factor{
   $$ = new UnExp((const Marker*)$1, (Exp*)$2);
@@ -824,7 +827,6 @@ factor:
   $$ = new UnExp((const Marker*)$1, (Exp*)$2);
 }
 | const_value {
-  printf("const value\n\n");
   $$ = $1;
   }
 
