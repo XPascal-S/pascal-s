@@ -3,6 +3,7 @@
 //
 
 #include <target/llvm.h>
+#include <fmt/core.h>
 
 LLVMBuilder::Function *LLVMBuilder::code_gen_procedure(const ast::Subprogram *pSubprogram) {
     Function *fn = modules.getFunction(pSubprogram->subhead->name->content);
@@ -54,25 +55,78 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_procedure(const ast::Subprogram *pS
             }
         }
     } else {
-//            for (int i = 0; i < fn->arg_size(); i++) {
-//                const auto &arg = fn->getArg(i);
-//
-//            }
-        //todo action fn existed
+        // repeated implementation is not allowed
+        if (pSubprogram->subbody != nullptr) {
+            llvm_pascal_s_report_semantic_error_n(
+                    pSubprogram->subhead,
+                    "subprogram has multiple implementation");
+            return nullptr;
+        }
+
+        // repeated definition is allowed, so just check signature
+
+        // check void param signature
+        if (pSubprogram->subhead->decls == nullptr) {
+            llvm_pascal_s_report_semantic_error_n(
+                    pSubprogram->subhead,
+                    "subprogram is already defined, but prototype are different (want empty param list)");
+            return nullptr;
+        }
+
+        // check signature
+        int arg_cursor = 0, arg_size = fn->arg_size();
+        for (auto arg_spec : pSubprogram->subhead->decls->params) {
+            llvm::Type *llvm_arg_type = create_type(arg_spec->spec);
+
+            if (arg_spec->keyword_var != nullptr) {
+                llvm_arg_type = llvm_arg_type->getPointerTo();
+            }
+
+            for (auto ident: arg_spec->id_list->idents) {
+                if (arg_cursor == arg_size) {
+                    llvm_pascal_s_report_semantic_error_n(
+                            ident, fmt::format("subprogram is already defined, but prototype are different"
+                                               " (old definition has {} params, less than new definition)",
+                                               arg_size));
+                    return nullptr;
+                }
+                auto a = fn->getArg(arg_cursor++);
+                if (llvm_arg_type != a->getType()) {
+                    llvm_pascal_s_report_semantic_warning(
+                            ident, fmt::format("the i-th param-proto type is incompatible, "
+                                               "old type = {}, new type = {}",
+                                               format_type(a->getType()), format_type(llvm_arg_type)));
+                    return nullptr;
+                }
+            }
+        }
+
+        return fn;
     }
 
     // out_code('entry:')
     llvm::BasicBlock *body = llvm::BasicBlock::Create(ctx, "entry", fn);
     ir_builder.SetInsertPoint(body);
 
+    // create local const map this.const_ctx
+    std::map<std::string, Value *> program_const_this;
+    insert_const_decls(program_const_this, pSubprogram->subbody->constdecls);
     // create local variable map this.ctx
     std::map<std::string, pascal_s::ArrayInfo *> program_array_infos;
     std::map<std::string, llvm::Value *> program_this;
     insert_var_decls(fn, program_array_infos, program_this, pSubprogram->subbody->vardecls);
-    // create local const map this.const_ctx
-    std::map<std::string, Value *> program_const_this;
-    insert_const_decls(program_const_this, pSubprogram->subbody->constdecls);
-    insert_param_decls(fn, program_this, program_const_this);
+
+    if (pSubprogram->subbody->constdecls != nullptr) {
+        for (auto d : pSubprogram->subbody->constdecls->decls) {
+            if (program_this.count(d->ident->content)) {
+                llvm_pascal_s_report_semantic_error_n(
+                        d->ident, fmt::format("ident redeclared"));
+            }
+        }
+    }
+    if (pSubprogram->subhead->decls) {
+        insert_param_decls(pSubprogram->subhead->decls->visit_pos(), fn, program_this, program_const_this);
+    }
 
     // push 'this' into scope stack
     auto link = LinkedContext{scope_stack, &program_array_infos, &program_this, &program_const_this};
@@ -80,9 +134,17 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_procedure(const ast::Subprogram *pS
 
     // out_code( define variable ret_type: %procedure.name )
     llvm::IRBuilder<> dfn_block(&fn->getEntryBlock(), fn->getEntryBlock().begin());
-    if (!fn->getReturnType()->isVoidTy())
+    if (!fn->getReturnType()->isVoidTy()) {
+        if (program_this.count(pSubprogram->subhead->name->content) ||
+            program_const_this.count(pSubprogram->subhead->name->content)) {
+            llvm_pascal_s_report_semantic_error_n(
+                    pSubprogram->subhead->name,
+                    fmt::format("ident redeclared"));
+        }
+
         program_this[pSubprogram->subhead->name->content] = dfn_block.CreateAlloca(
                 fn->getReturnType(), nullptr, pSubprogram->subhead->name->content);
+    }
 
     // generate body
     if (pSubprogram->subbody->compound->state->statement.empty() ||

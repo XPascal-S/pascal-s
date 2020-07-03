@@ -4,17 +4,17 @@
 
 #include <target/llvm.h>
 #include <fmt/core.h>
-#include "llvm-helper.h"
 
 int64_t LLVMBuilder::calc_periods_size(const ast::ArrayTypeSpec *spec) {
     int64_t ret = 1;
     for (size_t i = 0; i < spec->periods.size(); i++) {
         auto &p = spec->periods[i];
         if (p.second < p.first) {
-            llvm_pascal_s_report_semantic_error_n(spec,
-                                                  fmt::format(
-                                                          "the {}-th dim range of array is invalid, want left range({}) > right range({})",
-                                                          i + 1, p.first, p.second));
+            llvm_pascal_s_report_semantic_error_n(
+                    spec,
+                    fmt::format(
+                            "the {}-th dim range of array is invalid, want left range({}) > right range({})",
+                            i + 1, p.first, p.second));
         }
         ret *= (p.second - p.first + 1);
     }
@@ -24,10 +24,11 @@ int64_t LLVMBuilder::calc_periods_size(const ast::ArrayTypeSpec *spec) {
 void LLVMBuilder::code_gen_offset(std::vector<llvm::Value *> &offset, const pascal_s::ArrayInfo *ai,
                                   const ast::ExpressionList *exp_list) {
     if (ai->spec->periods.size() != exp_list->explist.size()) {
-        llvm_pascal_s_report_semantic_error_n(exp_list,
-                                              fmt::format(
-                                                      "array expected dim is {}, but length of expression list is {}",
-                                                      ai->spec->periods.size(), exp_list->explist.size()));
+        llvm_pascal_s_report_semantic_error_n(
+                exp_list,
+                fmt::format(
+                        "array expected dim is {}, but length of expression list is {}",
+                        ai->spec->periods.size(), exp_list->explist.size()));
         offset.clear();
         return;
     }

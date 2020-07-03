@@ -3,6 +3,7 @@
 //
 
 #include <target/llvm.h>
+#include <fmt/core.h>
 
 
 llvm::Type *LLVMBuilder::create_type(const ast::TypeSpec *spec) {
@@ -20,7 +21,9 @@ llvm::Type *LLVMBuilder::create_type(const ast::TypeSpec *spec) {
 //        return create_basic_type_from_keyword(
 //                reinterpret_cast<const ast::ArrayTypeSpec *>(spec)->keyword->key_type);
     } else {
-        llvm_pascal_s_report_semantic_error_n(spec, "type spec type error");
+        llvm_pascal_s_report_semantic_error_n(
+                spec,
+                fmt::format("type spec {} has no gen function", static_cast<uint16_t>(spec->type)));
         return nullptr;
     }
 }
@@ -42,7 +45,10 @@ llvm::Type *LLVMBuilder::create_basic_type_from_keyword(const Keyword *spec) {
             return llvm::Type::getInt1Ty(ctx);
 //            case KeywordType::String:
         default:
-            llvm_pascal_s_report_semantic_error_n(spec, "bacis type spec type error");
+            llvm_pascal_s_report_semantic_error_n(
+                    spec,
+                    fmt::format("basic type spec {} has no gen function",
+                                static_cast<uint16_t>(spec->type)));
             return nullptr;
     }
 }

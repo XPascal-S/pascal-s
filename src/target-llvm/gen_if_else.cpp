@@ -3,6 +3,7 @@
 //
 
 #include <target/llvm.h>
+#include <fmt/core.h>
 
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_if_else_statement(const ast::IfElseStatement *if_else_stmt) {
@@ -24,7 +25,10 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_if_else_statement(const ast::IfElseSta
                     cond, llvm::ConstantFP::get(cond->getType(), llvm::APFloat(double(0))), "if_cond");
             break;
         default:
-            llvm_pascal_s_report_semantic_error_n(if_else_stmt->expression, "expression type error");
+            llvm_pascal_s_report_semantic_error_n(
+                    if_else_stmt->expression,
+                    fmt::format("could not perform !=(<>) on not boolean condition expression,"
+                                "if-exp type = {}", format_type(cond->getType())));
             return nullptr;
     }
 
@@ -71,12 +75,4 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_if_else_statement(const ast::IfElseSta
     }
 
     return llvm::UndefValue::get(llvm::Type::getVoidTy(ctx));
-}
-
-void LLVMBuilder::insert_const_decls(std::map<std::string, llvm::Value *> &map, const ast::ConstDecls *pDecls) {
-    if (pDecls != nullptr) {
-        for (auto decl : pDecls->decls) {
-            map[decl->ident->content] = code_gen(decl->rhs);
-        }
-    }
 }

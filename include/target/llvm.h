@@ -31,6 +31,10 @@ namespace pascal_s {
     };
 }
 
+llvm::Value *create_int64_literal(llvm::LLVMContext &ctx, int64_t literal);
+
+std::string format_type(llvm::Type *t);
+
 // 用于生成目标中间代码LLVM-IR
 struct LLVMBuilder {
     using LLVMContext = llvm::LLVMContext;
@@ -74,9 +78,12 @@ struct LLVMBuilder {
 
     void report_semantic_error(const char *fn, const pascal_s::Pos *, std::string &&msg);
 
+    void report_semantic_warning(const char *fn, const pascal_s::Pos *, std::string &&msg);
+
 #define llvm_pascal_s_report_semantic_error(pos, msg) report_semantic_error(__FUNCTION__, pos, msg)
+#define llvm_pascal_s_report_semantic_warning(pos, msg) report_semantic_warning(__FUNCTION__, pos, msg)
 #define llvm_pascal_s_report_semantic_error_n(node, msg) llvm_pascal_s_report_semantic_error(node->visit_pos(), msg)
-#define llvm_pascal_s_report_semantic_warning_n(node, msg) llvm_pascal_s_report_semantic_error(node->visit_pos(), msg)
+#define llvm_pascal_s_report_semantic_warning_n(node, msg) llvm_pascal_s_report_semantic_warning(node->visit_pos(), msg)
 
     // llvm相关初始化
     // do_init: 初始化llvm模块
@@ -91,6 +98,11 @@ struct LLVMBuilder {
 
     Value *assign_lvalue(const pascal_s::Pos *lvalue_pos, Value *ptr, Value *rhs);
 
+    bool
+    check_extend_type(const pascal_s::Pos *pos, llvm::Value *&source, llvm::Value *&target, bool target_changeable);
+
+    bool check_extend_type(const pascal_s::Pos *pos, llvm::Value *&source, llvm::Type *target);
+
     // 更新访问链信息
     // var_decl: 可变变量
     // const_decl: 运行时常量（可以在编译时确认）
@@ -100,8 +112,9 @@ struct LLVMBuilder {
 
     void insert_const_decls(std::map<std::string, llvm::Value *> &map, const ast::ConstDecls *pDecls);
 
-    static void insert_param_decls(
-            Function *fn, std::map<std::string, llvm::Value *> &map, std::map<std::string, llvm::Value *> &const_map);
+    void insert_param_decls(
+            const pascal_s::Pos *pos, Function *fn, std::map<std::string, llvm::Value *> &map,
+            std::map<std::string, llvm::Value *> &const_map);
 
     // 计算数组信息
 

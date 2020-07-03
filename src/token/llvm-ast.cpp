@@ -223,17 +223,19 @@ void ast::printAST(const ast::Node *node, int dep) {
             // todo: remove const cast
             put_tab(dep + 1);
             printf("param(ids) = \n");
-            printAST(cur_node->subhead->decls, dep + 1);
+            if (cur_node->subhead) printAST(cur_node->subhead->decls, dep + 1);
             put_tab(dep + 1);
-            printf("const decls = \n");
-            printAST(cur_node->subbody->constdecls, dep + 1);
-            put_tab(dep + 1);
-            printf("var decls = \n");
-            printAST(cur_node->subbody->vardecls, dep + 1);
-            put_tab(dep + 1);
-            printf("body = \n");
-            printAST(cur_node->subbody->compound, dep + 1);
-            put_tab(dep);
+            if (cur_node->subbody) {
+                printf("const decls = \n");
+                printAST(cur_node->subbody->constdecls, dep + 1);
+                put_tab(dep + 1);
+                printf("var decls = \n");
+                printAST(cur_node->subbody->vardecls, dep + 1);
+                put_tab(dep + 1);
+                printf("body = \n");
+                printAST(cur_node->subbody->compound, dep + 1);
+                put_tab(dep);
+            }
             printf("}\n");
             break;
 #undef  cur_node
