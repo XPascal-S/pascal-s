@@ -97,6 +97,7 @@
 
 programstruct:  program_head semicolon program_body dot {
   $$ = new Program((ProgramHead*)$1, (ProgramBody*)$3);
+  // printf("%x %d %d\n", $$, ((Program*)$$)->type, ((Node*)$$)->type);
   access_ast($$);
   /* Program *node = reinterpret_cast<Program*> (ast_reduce_nodes(4, Type::Program)); */
   /* node->programHead = (ProgramHead*)(node->children.front()); */
@@ -113,23 +114,22 @@ programstruct:  program_head semicolon program_body dot {
 
 dot: MARKER_DOT{
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
-}
+ }
 ;
 
 program_head:
-  program id lparen idlist rparen {
-    $$ = new ProgramHead((const ExpKeyword*)$1, (Ident*)$2, (IdentList*)$4);
-    /* ProgramHead *node = reinterpret_cast<ProgramHead *>(ast_reduce_nodes(5, Type::ProgramHead)); */
-    /* node->programKeyword = (const ExpKeyword*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->id = (Ident*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front(); //pop lparen */
-    /* node->idlist = ( IdentList*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();//pop rparen */
-  }
+program id lparen idlist rparen {
+  $$ = new ProgramHead((const ExpKeyword*)$1, (Ident*)$2, (IdentList*)$4);
+  /* ProgramHead *node = reinterpret_cast<ProgramHead *>(ast_reduce_nodes(5, Type::ProgramHead)); */
+  /* node->programKeyword = (const ExpKeyword*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->id = (Ident*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front(); //pop lparen */
+  /* node->idlist = ( IdentList*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();//pop rparen */
+}
 | program id{
   $$ = new ProgramHead((const ExpKeyword*)$1, (Ident*)$2);
   /* ProgramHead *node = reinterpret_cast<ProgramHead *>(ast_reduce_nodes(2, Type::ProgramHead)); */
@@ -137,14 +137,13 @@ program_head:
   /* node->children.pop_front(); */
   /* node->id = ( Ident*)(node->children.front()); */
   /* node->children.pop_front(); */
-  }
+}
 //| program id error idlist {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
 //| program id lparen idlist error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
 ;
 
 program:KEYWORD_PROGRAM{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
@@ -167,37 +166,37 @@ program_body : const_declarations var_declarations subprogram_declarations compo
 ;
 
 idlist:
-  idlist comma id  {
-    $$ = $1;
-    ((IdentList*)$$)->idents.push_back((Identifier*)$3);
-    /* IdentList* node = reinterpret_cast<IdentList*> (ast_reduce_nodes(3, Type::IdentList)); */
-    /* node->idents = reinterpret_cast<IdentList*>(node->children.front())->idents; */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop comma */
-    /* Identifier* id = (Identifier*)(node->children.front()); */
-    /* node->idents.push_back(id); */
-    /* node->children.pop_front(); */
-  }
+idlist comma id  {
+  $$ = $1;
+  ((IdentList*)$$)->idents.push_back((Identifier*)$3);
+  /* IdentList* node = reinterpret_cast<IdentList*> (ast_reduce_nodes(3, Type::IdentList)); */
+  /* node->idents = reinterpret_cast<IdentList*>(node->children.front())->idents; */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop comma */
+  /* Identifier* id = (Identifier*)(node->children.front()); */
+  /* node->idents.push_back(id); */
+  /* node->children.pop_front(); */
+}
 | id      {
   $$ = new IdentList();
   ((IdentList*)$$)->idents.push_back((Identifier*)$1);
-    /* IdentList* node = reinterpret_cast<IdentList*> (ast_reduce_nodes(1, Type::IdentList)); */
-    /* Identifier* id = (Identifier*)(node->children.front()); */
-    /* node->idents.push_back(id); */
-    /* node->children.pop_front(); */
+  /* IdentList* node = reinterpret_cast<IdentList*> (ast_reduce_nodes(1, Type::IdentList)); */
+  /* Identifier* id = (Identifier*)(node->children.front()); */
+  /* node->idents.push_back(id); */
+  /* node->children.pop_front(); */
   }
 //| idlist error id {printf("\n\n\n\nMissing comma\n"); yyerrok;}
 ;
 
 const_declarations:
-  const const_declaration semicolon {
-    $$ = $2;
-    /* ConstDecls* node = reinterpret_cast<ConstDecls*> (ast_reduce_nodes(3, Type::ConstDecls)); */
-    /* node->children.pop_front();// pop const */
-    /* node->decls = reinterpret_cast<ConstDecls*>(node->children.front())->decls; */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop semicolon */
-  }
+const const_declaration semicolon {
+  $$ = $2;
+  /* ConstDecls* node = reinterpret_cast<ConstDecls*> (ast_reduce_nodes(3, Type::ConstDecls)); */
+  /* node->children.pop_front();// pop const */
+  /* node->decls = reinterpret_cast<ConstDecls*>(node->children.front())->decls; */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop semicolon */
+}
 |                                       { $$ = new ConstDecls(); }
 //| error const_declaration semicolon {printf("\n\n\n\nMissing const\n"); yyerrok;}
 //| const const_declaration error {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
@@ -205,144 +204,140 @@ const_declarations:
 
 const:KEYWORD_CONST{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
 const_declaration:
-  const_declaration semicolon id eq const_value {
-    $$ = $1;
-    ConstDecl* constDecl = new ConstDecl((const Identifier*)$3, (Exp*)$5);
-    ((ConstDecls*)$$)->decls.push_back(constDecl);
-    /* ConstDecls* node = reinterpret_cast<ConstDecls*> (ast_reduce_nodes(5, Type::ConstDecls)); */
+const_declaration semicolon id eq const_value {
+  $$ = $1;
+  ConstDecl* constDecl = new ConstDecl((const Identifier*)$3, (Exp*)$5);
+  ((ConstDecls*)$$)->decls.push_back(constDecl);
+  /* ConstDecls* node = reinterpret_cast<ConstDecls*> (ast_reduce_nodes(5, Type::ConstDecls)); */
 
-    /* node->decls = reinterpret_cast<ConstDecls*> (node->children.front())->decls; */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop semicolon */
+  /* node->decls = reinterpret_cast<ConstDecls*> (node->children.front())->decls; */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop semicolon */
 
-    /* Identifier* id = (Identifier*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop eq */
-    /* Exp* rhs = (Exp*)(node->children.front()); */
-    /* ConstDecl* constDecl = new ConstDecl(id, rhs); */
-    /* // constDecl->ident = ; */
-    /* // constDecl->rhs = ; */
-    /* node->decls.push_back(constDecl); */
-    /* node->children.pop_front(); */
-  }
+  /* Identifier* id = (Identifier*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop eq */
+  /* Exp* rhs = (Exp*)(node->children.front()); */
+  /* ConstDecl* constDecl = new ConstDecl(id, rhs); */
+  /* // constDecl->ident = ; */
+  /* // constDecl->rhs = ; */
+  /* node->decls.push_back(constDecl); */
+  /* node->children.pop_front(); */
+}
 |id eq const_value  {
   ConstDecl* constDecl = new ConstDecl((const Identifier*)$1, (Exp*)$3);
   $$ = new ConstDecls();
   ((ConstDecls*)$$)->decls.push_back(constDecl);
-    /* ConstDecls* node = reinterpret_cast<ConstDecls*> (ast_reduce_nodes(3, Type::ConstDecls)); */
+  /* ConstDecls* node = reinterpret_cast<ConstDecls*> (ast_reduce_nodes(3, Type::ConstDecls)); */
 
-    /* Identifier* ident = (Identifier*)(node->children.front()); */
-    /* // const->ident = (Identifier*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop eq */
-    /* // const->rhs = (Exp*)(node->children.front()); */
-    /* Exp* rhs = (Exp*)(node->children.front()); */
+  /* Identifier* ident = (Identifier*)(node->children.front()); */
+  /* // const->ident = (Identifier*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop eq */
+  /* // const->rhs = (Exp*)(node->children.front()); */
+  /* Exp* rhs = (Exp*)(node->children.front()); */
 
-    /* ConstDecl* constDecl = new ConstDecl(ident, rhs); */
-    /* printf("\n\nget constDecls\n\n"); */
-    /* node->children.pop_front(); */
-    /* printf("\n\n pop front \n\n"); */
-    /* node->decls.push_back(constDecl); */
-    /* printf("%d\n\n", node->decls.size()); */
-    /* printf("\n\n push back \n\n"); */
+  /* ConstDecl* constDecl = new ConstDecl(ident, rhs); */
+  /* printf("\n\nget constDecls\n\n"); */
+  /* node->children.pop_front(); */
+  /* printf("\n\n pop front \n\n"); */
+  /* node->decls.push_back(constDecl); */
+  /* printf("%d\n\n", node->decls.size()); */
+  /* printf("\n\n push back \n\n"); */
 }
 //| const_declaration error id eq const_value {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 eq:MARKER_EQ {
-    $$ = new ExpMarker((const Marker *)($1));
-    // access_ast($$);
-  }
+  $$ = new ExpMarker((const Marker *)($1));
+}
 ;
 
 const_value:
-add num  {$$ = new UnExp((const Marker*)$1, (Exp*)$2);}
+ add num  {$$ = new UnExp((const Marker*)$1, (Exp*)$2);}
 |sub num  {$$ = new UnExp((const Marker*)$1, (Exp*)$2);}
 |num      {$$ = $1;}
 |char     {$$ = $1;}
+|bool     {$$ = $1;}
 ;
 
+bool:BOOL{$$ = new ExpConstantBoolean(((const ConstantBoolean*)($1)));}
 
 num:INT {
   $$ = new ExpConstantInteger(((const ConstantInteger*)($1)));
-  // access_ast($$);
 }
 ;
 
 char:CHAR {
   $$ = new ExpConstantChar(((const ConstantChar*)($1)));
-  // access_ast($$);
 }
 ;
 
 add:MARKER_ADD {
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 ;
 
 sub:MARKER_SUB {
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 ;
 
-var_declarations:              { $$ = new ExpVoid();  /* access_ast($$); */ }
+var_declarations:              { $$ = new ExpVoid();  /*  */ }
 |var var_declaration semicolon {
   $$ = $2;
-    /* VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(3, Type::VarDecls)); */
-    /* node->children.pop_front();// pop var */
-    /* node->decls = reinterpret_cast<VarDecls*>(node->children.front())->decls; */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop semicolon */
+  /* VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(3, Type::VarDecls)); */
+  /* node->children.pop_front();// pop var */
+  /* node->decls = reinterpret_cast<VarDecls*>(node->children.front())->decls; */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop semicolon */
 }
 //| var var_declaration error {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 var_declaration:
-  var_declaration semicolon idlist colon type   {
-    $$ = $1;
-    VarDecl* vdecl = new VarDecl((IdentList*)$3, (TypeSpec*)$5);
-    ((VarDecls*)$$)->decls.push_back(vdecl);
-    /* VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(5, Type::VarDecls)); */
+var_declaration semicolon idlist colon type   {
+  $$ = $1;
+  VarDecl* vdecl = new VarDecl((IdentList*)$3, (TypeSpec*)$5);
+  ((VarDecls*)$$)->decls.push_back(vdecl);
+  /* VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(5, Type::VarDecls)); */
 
-    /* node->decls = reinterpret_cast<VarDecls*>(node->children.front())->decls; */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop semicolon */
+  /* node->decls = reinterpret_cast<VarDecls*>(node->children.front())->decls; */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop semicolon */
 
-    /* IdentList* idents = (IdentList*)(node->children.front()); */
-    /* // const->idents = (IdentList*)(node->children.front()); */
-    /* node->children.pop_front(); // idlist */
-    /* node->children.pop_front(); // pop colon */
-    /* // const->type_spec = (TypeSpec*)(node->children.front()); */
-    /* TypeSpec* type_spec = (TypeSpec*)(node->children.front()); */
-    /* VarDecl* varDecl = new VarDecl(idents, type_spec); */
-    /* node->decls.push_back(varDecl); */
+  /* IdentList* idents = (IdentList*)(node->children.front()); */
+  /* // const->idents = (IdentList*)(node->children.front()); */
+  /* node->children.pop_front(); // idlist */
+  /* node->children.pop_front(); // pop colon */
+  /* // const->type_spec = (TypeSpec*)(node->children.front()); */
+  /* TypeSpec* type_spec = (TypeSpec*)(node->children.front()); */
+  /* VarDecl* varDecl = new VarDecl(idents, type_spec); */
+  /* node->decls.push_back(varDecl); */
 
-    /* node->children.pop_front(); */
+  /* node->children.pop_front(); */
 }
 | idlist colon type {
   $$ = new VarDecls();
   VarDecl* vdecl = new VarDecl((IdentList*)$1, (TypeSpec*)$3);
   ((VarDecls*)$$)->decls.push_back(vdecl);
-    /* VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(3, Type::VarDecls)); */
+  /* VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(3, Type::VarDecls)); */
 
-    /* // const->idents = (IdentList*)(node->children.front()); */
-    /* IdentList* idents = (IdentList*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop colon */
-    /* // const->type_spec = (TypeSpec*)(node->children.front()); */
-    /* TypeSpec* type_spec = (TypeSpec*)(node->children.front()); */
+  /* // const->idents = (IdentList*)(node->children.front()); */
+  /* IdentList* idents = (IdentList*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop colon */
+  /* // const->type_spec = (TypeSpec*)(node->children.front()); */
+  /* TypeSpec* type_spec = (TypeSpec*)(node->children.front()); */
 
-    /* node->children.pop_front(); *
-/
-    /* VarDecl* varDecl = new VarDecl(idents, type_spec); */
-    /* node->decls.push_back(varDecl); */
+  /* node->children.pop_front(); *
+     /
+     /* VarDecl* varDecl = new VarDecl(idents, type_spec); */
+  /* node->decls.push_back(varDecl); */
 }
 //| var_declaration error idlist colon type {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
@@ -359,18 +354,16 @@ basic_type           {
 
 array:KEYWORD_ARRAY{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
 of:KEYWORD_OF{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
 basic_type:
-  integer           {$$ = $1;}
+integer           {$$ = $1;}
 | real          {$$ = $1;}
 | boolean          {$$ = $1;}
 | char          {$$ = $1;}
@@ -378,25 +371,21 @@ basic_type:
 
 integer:KEYWORD_INTEGER{
   $$ = new BasicTypeSpec((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
 char:KEYWORD_CHAR{
   $$ = new BasicTypeSpec((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
 real:KEYWORD_REAL{
   $$ = new BasicTypeSpec((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
 boolean:KEYWORD_BOOLEAN{
   $$ = new BasicTypeSpec((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
@@ -414,44 +403,44 @@ period comma num range num        {
 ;
 range: MARKER_RANGE{
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 
-subprogram_declarations:                    { $$ = new SubprogramDecls();  }
-| subprogram_declarations subprogram semicolon  {
+subprogram_declarations:
+subprogram_declarations subprogram semicolon  {
   $$ = $1;
   ((SubprogramDecls*)$$)->subprogram.push_back(((Subprogram*)$2));
   /* SubprogramDecls* node = reinterpret_cast<SubprogramDecls*> (ast_reduce_nodes(3, Type::SubprogramDecls)); */
 
-    /* node->subprogram = reinterpret_cast<SubprogramDecls*>(node->children.front())->subprogram; */
-    /* node->children.pop_front(); */
+  /* node->subprogram = reinterpret_cast<SubprogramDecls*>(node->children.front())->subprogram; */
+  /* node->children.pop_front(); */
 
-    /* Subprogram* sub = (Subprogram*)(node->children.front()); */
-    /* node->subprogram.push_back(sub); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop semicolon */
+  /* Subprogram* sub = (Subprogram*)(node->children.front()); */
+  /* node->subprogram.push_back(sub); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop semicolon */
 
-    //ast_reduce_nodes(3, Type::SubprogramDecls);
+  //ast_reduce_nodes(3, Type::SubprogramDecls);
 }
+| { printf("\n\nvoid sub decl\n\n"); $$ = new SubprogramDecls();  }
 //| subprogram_declarations subprogram error  {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 subprogram:
-  subprogram_head semicolon subprogram_body {
-    $$ = new Subprogram((SubprogramHead*)$1, (SubprogramBody*)$3);
-    /* Subprogram* node = reinterpret_cast<Subprogram*> (ast_reduce_nodes(3, Type::Subprogram)); */
-    /* node->subhead = (SubprogramHead*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop semicolon */
-    /* node->subbody = (SubprogramBody*)(node->children.front()); */
-    /* node->children.pop_front(); */
+subprogram_head semicolon subprogram_body {
+  $$ = new Subprogram((SubprogramHead*)$1, (SubprogramBody*)$3);
+  /* Subprogram* node = reinterpret_cast<Subprogram*> (ast_reduce_nodes(3, Type::Subprogram)); */
+  /* node->subhead = (SubprogramHead*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop semicolon */
+  /* node->subbody = (SubprogramBody*)(node->children.front()); */
+  /* node->children.pop_front(); */
 }
 //| subprogram_head error subprogram_body {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 subprogram_head:
-  procedure id formal_parameter   {
-    $$ = new SubprogramHead((const Keyword*)$1, (const Identifier*)$2, (ParamList*)$3, nullptr);
+procedure id formal_parameter   {
+  $$ = new SubprogramHead((const Keyword*)$1, (const Identifier*)$2, (ParamList*)$3, nullptr);
   /* SubprogramHead* node = reinterpret_cast<SubprogramHead*> (ast_reduce_nodes(3, Type::SubprogramHead)); */
 
 
@@ -468,35 +457,33 @@ subprogram_head:
 }
 | function id formal_parameter colon basic_type  {
   $$ = new SubprogramHead((const Keyword*)$1, (const Identifier*)$2, (ParamList*)$3, (BasicTypeSpec*)$5);
-    /* SubprogramHead* node = reinterpret_cast<SubprogramHead*> (ast_reduce_nodes(5, Type::SubprogramHead)); */
+  /* SubprogramHead* node = reinterpret_cast<SubprogramHead*> (ast_reduce_nodes(5, Type::SubprogramHead)); */
 
-    /* FunctionDecl* func = new FunctionDecl(); */
-    /* node->children.pop_front();// pop function */
-    /* func->name = (Identifier*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* func->decls = (ParamList*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();//pop colon */
-    /* func->basic = (BasicTypeSpec*)(node->children.front()); */
-    /* node->children.pop_front(); */
+  /* FunctionDecl* func = new FunctionDecl(); */
+  /* node->children.pop_front();// pop function */
+  /* func->name = (Identifier*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* func->decls = (ParamList*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();//pop colon */
+  /* func->basic = (BasicTypeSpec*)(node->children.front()); */
+  /* node->children.pop_front(); */
 
-    /* node->func = func; */
+  /* node->func = func; */
 }
 ;
 
 procedure:KEYWORD_PROCEDURE{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
 function:KEYWORD_FUNCTION{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
-formal_parameter: { $$ = new ParamList();  /* access_ast($$); */  }
+formal_parameter: { $$ = new ParamList();  /*  */  }
 |lparen parameter_list rparen {
   $$ = $1;
   /* ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(3, Type::ParamList)); */
@@ -512,99 +499,97 @@ formal_parameter: { $$ = new ParamList();  /* access_ast($$); */  }
 ;
 
 parameter_list:
-  parameter_list semicolon parameter   {
-    $$ = $1;
-    ((ParamList*)$$)->params.push_back((ParamSpec*)$3);
-    /* ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(3, Type::ParamList)); */
-    /* node->params = reinterpret_cast<ParamList*>(node->children.front())->params; */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop semicolon */
+parameter_list semicolon parameter   {
+  $$ = $1;
+  ((ParamList*)$$)->params.push_back((ParamSpec*)$3);
+  /* ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(3, Type::ParamList)); */
+  /* node->params = reinterpret_cast<ParamList*>(node->children.front())->params; */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop semicolon */
 
-    /* ParamSpec* param = (ParamSpec*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->params.push_back(param); */
-  }
+  /* ParamSpec* param = (ParamSpec*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->params.push_back(param); */
+}
 | parameter                     {
   $$ = new ParamList();
   ((ParamList*)$$)->params.push_back((ParamSpec*)$1);
-    /* ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(1, Type::ParamList)); */
-    /* ParamSpec* param = (ParamSpec*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->params.push_back(param); */
-    //$$ = $1;
-}
+  /* ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(1, Type::ParamList)); */
+  /* ParamSpec* param = (ParamSpec*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->params.push_back(param); */
+  //$$ = $1;
+  }
 //| parameter_list error parameter {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 
 parameter:
-  var idlist colon basic_type         {
-    $$ = new ParamSpec((const Keyword*)$1, (IdentList*)$2, (TypeSpec*)$4);
-    /* ParamSpec* node = reinterpret_cast<ParamSpec*> (ast_reduce_nodes(4, Type::ParamSpec)); */
+var idlist colon basic_type         {
+  $$ = new ParamSpec((const Keyword*)$1, (IdentList*)$2, (TypeSpec*)$4);
+  /* ParamSpec* node = reinterpret_cast<ParamSpec*> (ast_reduce_nodes(4, Type::ParamSpec)); */
 
-    /* node->keyword_var = (const Keyword*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->id_list = (IdentList*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop colon */
-    /* node->spec = (TypeSpec*)(node->children.front()); */
-    /* node->children.pop_front(); */
+  /* node->keyword_var = (const Keyword*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->id_list = (IdentList*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop colon */
+  /* node->spec = (TypeSpec*)(node->children.front()); */
+  /* node->children.pop_front(); */
 }
 | idlist colon basic_type       {
   $$ = new ParamSpec((IdentList*)$1, (TypeSpec*)$3);
-    /* ParamSpec* node = reinterpret_cast<ParamSpec*> (ast_reduce_nodes(3, Type::ParamSpec)); */
+  /* ParamSpec* node = reinterpret_cast<ParamSpec*> (ast_reduce_nodes(3, Type::ParamSpec)); */
 
-    /* node->id_list = (IdentList*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();// pop colon */
-    /* node->spec = (TypeSpec*)(node->children.front()); */
-    /* node->children.pop_front(); */
+  /* node->id_list = (IdentList*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();// pop colon */
+  /* node->spec = (TypeSpec*)(node->children.front()); */
+  /* node->children.pop_front(); */
 }
 ;
 
 
 var:KEYWORD_VAR{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
 
 colon: MARKER_COLON{
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 
 subprogram_body:
 const_declarations var_declarations compound_statement  {
   $$ = new SubprogramBody((ConstDecls*)$1, (VarDecls*)$2, (CompoundStatement*)$3);
-    /* SubprogramBody* node = reinterpret_cast<SubprogramBody*> (ast_reduce_nodes(3, Type::SubprogramBody)); */
+  /* SubprogramBody* node = reinterpret_cast<SubprogramBody*> (ast_reduce_nodes(3, Type::SubprogramBody)); */
 
-    /* node->constdecls = (ConstDecls*)(node->children.front()); */
-    /* node->children.pop_front(); */
+  /* node->constdecls = (ConstDecls*)(node->children.front()); */
+  /* node->children.pop_front(); */
 
-    /* node->vardecls = (VarDecls*)(node->children.front()); */
-    /* node->children.pop_front(); */
+  /* node->vardecls = (VarDecls*)(node->children.front()); */
+  /* node->children.pop_front(); */
 
-    /* node->compound = (CompoundStatement*)(node->children.front()); */
-    /* node->children.pop_front(); */
+  /* node->compound = (CompoundStatement*)(node->children.front()); */
+  /* node->children.pop_front(); */
 
-    //ast_reduce_nodes(3, Type::Statement);
+  //ast_reduce_nodes(3, Type::Statement);
 }
 ;
 
 compound_statement:
 begin statement_list end         {
   $$ = new CompoundStatement((StatementList*)$2);
-    /* CompoundStatement* node = reinterpret_cast<CompoundStatement*> (ast_reduce_nodes(3, Type::CompoundStatement)); */
-    /* node->children.pop_front();//pop begin */
+  /* CompoundStatement* node = reinterpret_cast<CompoundStatement*> (ast_reduce_nodes(3, Type::CompoundStatement)); */
+  /* node->children.pop_front();//pop begin */
 
-    /* StatementList* state = (StatementList*)(node->children.front()); */
-    /* node->state = state; */
+  /* StatementList* state = (StatementList*)(node->children.front()); */
+  /* node->state = state; */
 
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();//pop end */
-    //ast_reduce_nodes(3, Type::Statement);
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();//pop end */
+  //ast_reduce_nodes(3, Type::Statement);
 }
              { $$ = new CompoundStatement(); }
 //| error statement_list end   {printf("\n\n\n\nMissing begin\n"); yyerrok;}
@@ -614,56 +599,54 @@ begin statement_list end         {
 
 begin:KEYWORD_BEGIN{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
-}
+             }
 ;
 
 end:KEYWORD_END{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
-}
+             }
 ;
 
 statement_list:
-  statement_list semicolon statement     {
-    $$ = $1;
-    ((StatementList*)$$)->statement.push_back((Statement*)$3);
-    /* StatementList* node = reinterpret_cast<StatementList*> (ast_reduce_nodes(3, Type::StatementList)); */
+statement_list semicolon statement     {
+  $$ = $1;
+  ((StatementList*)$$)->statement.push_back((Statement*)$3);
+  /* StatementList* node = reinterpret_cast<StatementList*> (ast_reduce_nodes(3, Type::StatementList)); */
 
-    /* node->statement = reinterpret_cast<StatementList*>(node->children.front())->statement; */
-    /* node->children.pop_front(); */
+  /* node->statement = reinterpret_cast<StatementList*>(node->children.front())->statement; */
+  /* node->children.pop_front(); */
 
-    /* node->children.pop_front();// pop semicolon */
+  /* node->children.pop_front();// pop semicolon */
 
-    /* Statement* sta = (Statement*)(node->children.front()); */
-    /* node->statement.push_back(sta); */
-    /* node->children.pop_front(); */
+  /* Statement* sta = (Statement*)(node->children.front()); */
+  /* node->statement.push_back(sta); */
+  /* node->children.pop_front(); */
 
-    //ast_reduce_nodes(3, Type::Statement);
+  //ast_reduce_nodes(3, Type::Statement);
 }
 | statement {
   $$ = new StatementList();
   ((StatementList*)$$)->statement.push_back((Statement*)$1);
-    /* StatementList* node = reinterpret_cast<StatementList*> (ast_reduce_nodes(1, Type::StatementList)); */
+  /* StatementList* node = reinterpret_cast<StatementList*> (ast_reduce_nodes(1, Type::StatementList)); */
 
-    /* Statement* sta = (Statement*)(node->children.front()); */
-    /* node->statement.push_back(sta); */
-    /* node->children.pop_front(); */
-}
+  /* Statement* sta = (Statement*)(node->children.front()); */
+  /* node->statement.push_back(sta); */
+  /* node->children.pop_front(); */
+  }
 //| statement_list error statement {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 semicolon: MARKER_SEMICOLON{
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 
-statement:                                          {$$ = new ExpVoid();  } //TODO
+//TODO
+statement:                                          {$$ = new ExpVoid();  }
 | variable assign expression                        {$$ = new ExecStatement(new ExpAssign((Variable*)$1, (Exp*)$3));}
 | procedure_call                                    {$$ = new CompoundStatement();}
 | compound_statement                                {$$ = new CompoundStatement();}
-  if expression then statement else statement       {$$ = new IfElseStatement();}
-  if expression then statement                      {$$ = new IfElseStatement();}
+| if expression then statement else statement       {$$ = new IfElseStatement();}
+| if expression then statement                      {$$ = new IfElseStatement();}
 | for id assign expression to expression do statement {$$ = new ForStatement();}
 | KEYWORD_READ lparen variable_list rparen                   {$$ = new Read();}
 | KEYWORD_WRITE lparen expression_list rparen                {$$ = new Write();}
@@ -671,124 +654,115 @@ statement:                                          {$$ = new ExpVoid();  } //TO
 
 for:KEYWORD_FOR{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
 to:KEYWORD_TO{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
 do:KEYWORD_DO{
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
-}
+   }
 ;
 
 assign: MARKER_ASSIGN{
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 
 if : KEYWORD_IF {
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
 then: KEYWORD_THEN {
   $$ = new ExpKeyword((const Keyword *)($1));
-  // access_ast($$);
 }
 ;
 
-else : KEYWORD_ELSE {
-    $$ = new ExpKeyword((const Keyword *)($1));
-    // access_ast($$);
-}
+ else : KEYWORD_ELSE {
+   $$ = new ExpKeyword((const Keyword *)($1));
+        }
 ;
 
 variable_list:
-  variable_list comma variable  {
-    $$ = new VariableList();
-    /* VariableList* node = reinterpret_cast<VariableList*> (ast_reduce_nodes(3, Type::VariableList)); */
+variable_list comma variable  {
+  $$ = new VariableList();
+  /* VariableList* node = reinterpret_cast<VariableList*> (ast_reduce_nodes(3, Type::VariableList)); */
 
-    /* node->params = reinterpret_cast<VariableList*>(node->children.front())->params; */
-    /* node->children.pop_front(); */
+  /* node->params = reinterpret_cast<VariableList*>(node->children.front())->params; */
+  /* node->children.pop_front(); */
 
-    /* node->children.pop_front();// pop comma */
+  /* node->children.pop_front();// pop comma */
 
-    /* Variable* var = (Variable*)(node->children.front()); */
-    /* node->params.push_back(var); */
-    /* node->children.pop_front(); */
+  /* Variable* var = (Variable*)(node->children.front()); */
+  /* node->params.push_back(var); */
+  /* node->children.pop_front(); */
 
-    /* printf("variable_list\n"); */
+  /* printf("variable_list\n"); */
 }
 | variable      {
   $$ = new VariableList();
   ((VariableList*)$$)->params.push_back((Variable*)$1);
-    /* VariableList* node = reinterpret_cast<VariableList*> (ast_reduce_nodes(1, Type::VariableList)); */
+  /* VariableList* node = reinterpret_cast<VariableList*> (ast_reduce_nodes(1, Type::VariableList)); */
 
-    /* Variable* var = (Variable*)(node->children.front()); */
-    /* node->params.push_back(var); */
-    /* node->children.pop_front(); */
-}
+  /* Variable* var = (Variable*)(node->children.front()); */
+  /* node->params.push_back(var); */
+  /* node->children.pop_front(); */
+  }
 //| variable_list error variable {printf("\n\n\n\nMissing comma\n"); yyerrok;}
 ;
 
 variable:
-  id id_varpart  {
-    $$ = new Variable((Identifier*)$1, (ExpressionList*)$2);
-    /* Variable* node = reinterpret_cast<Variable*> (ast_reduce_nodes(2, Type::Variable)); */
-    /* node->id = (Identifier*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->id_var = (ExpressionList*)(node->children.front()); */
-    /* node->children.pop_front(); */
+id id_varpart  {
+  $$ = new Variable((Identifier*)$1, (ExpressionList*)$2);
+  /* Variable* node = reinterpret_cast<Variable*> (ast_reduce_nodes(2, Type::Variable)); */
+  /* node->id = (Identifier*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->id_var = (ExpressionList*)(node->children.front()); */
+  /* node->children.pop_front(); */
 }
 ;
 
 id_varpart:           { $$ = new ExpressionList(); }      /*empty*/
 | lbracket expression_list rbracket {
   $$ = $2;
-    /* ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(3, Type::ExpressionList)); */
-    /* node->children.pop_front();//pop lbracket */
+  /* ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(3, Type::ExpressionList)); */
+  /* node->children.pop_front();//pop lbracket */
 
-    /* node->explist = reinterpret_cast<ExpressionList*>(node->children.front())->explist; */
-    /* node->children.pop_front(); */
+  /* node->explist = reinterpret_cast<ExpressionList*>(node->children.front())->explist; */
+  /* node->children.pop_front(); */
 
-    /* node->children.pop_front();//pop rbracket */
-    /* ast_reduce_nodes(3,Type::Statement); */
-  }
+  /* node->children.pop_front();//pop rbracket */
+  /* ast_reduce_nodes(3,Type::Statement); */
+}
 ;
 
 lbracket: MARKER_LBRACKET{
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 
 rbracket: MARKER_RBRACKET{
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 
 procedure_call:
- id          {
-   $$ = new ExpCall((const Identifier*)$1, nullptr);
-    //ast_reduce_nodes(1,Type::ExpCall);
-  }
+id          {
+  $$ = new ExpCall((const Identifier*)$1, nullptr);
+  //ast_reduce_nodes(1,Type::ExpCall);
+}
 | id lparen expression_list rparen    {
   $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$2);
-    /* ExpCall* node = reinterpret_cast<ExpCall*> (ast_reduce_nodes(4, Type::ExpCall)); */
-    /* node->fn = (Identifier*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();//pop lparen */
-    /* node->params = (ExpressionList*)(node->children.front()); */
-    /* node->children.pop_front(); */
-    /* node->children.pop_front();//pop rparen */
-    //ast_reduce_nodes(4,Type::ExpCall);
-  }
+  /* ExpCall* node = reinterpret_cast<ExpCall*> (ast_reduce_nodes(4, Type::ExpCall)); */
+  /* node->fn = (Identifier*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();//pop lparen */
+  /* node->params = (ExpressionList*)(node->children.front()); */
+  /* node->children.pop_front(); */
+  /* node->children.pop_front();//pop rparen */
+  //ast_reduce_nodes(4,Type::ExpCall);
+}
 //| id error expression_list rparen {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
 //| id lparen expression_list error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
 ////| id error expression_list error  {printf("\n\n\n\nMissing lparen and rparen\n"); yyerrok;}
@@ -796,49 +770,45 @@ procedure_call:
 
 lparen: MARKER_LPAREN{
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 
 rparen: MARKER_RPAREN{
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 
 id: IDENT{
-    $$ = new Ident((const Identifier *)($1));
-    // access_ast($$);
+  $$ = new Ident((const Identifier *)($1));
 }
 
 expression_list:
-  expression_list comma expression {
-    $$ = $1;
-    ((ExpressionList*)$$)->explist.push_back((Exp*)$3);
-    /* ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(3, Type::ExpressionList)); */
+expression_list comma expression {
+  $$ = $1;
+  ((ExpressionList*)$$)->explist.push_back((Exp*)$3);
+  /* ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(3, Type::ExpressionList)); */
 
-    /* node->explist = reinterpret_cast<ExpressionList*> (node->children.front())->explist; */
-    /* node->children.pop_front(); */
+  /* node->explist = reinterpret_cast<ExpressionList*> (node->children.front())->explist; */
+  /* node->children.pop_front(); */
 
-    /* node->children.pop_front();// pop comma */
+  /* node->children.pop_front();// pop comma */
 
-    /* Exp* exp = (Exp*)(node->children.front()); */
-    /* node->explist.push_back(exp); */
-    /* node->children.pop_front(); */
+  /* Exp* exp = (Exp*)(node->children.front()); */
+  /* node->explist.push_back(exp); */
+  /* node->children.pop_front(); */
 }
 | expression        {
   $$ = new ExpressionList();
   ((ExpressionList*)$$)->explist.push_back((Exp*)$1);
-    /* ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(1, Type::ExpressionList)); */
+  /* ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(1, Type::ExpressionList)); */
 
-    /* Exp* exp = (Exp*)(node->children.front()); */
-    /* node->explist.push_back(exp); */
-    /* node->children.pop_front(); */
-}
+  /* Exp* exp = (Exp*)(node->children.front()); */
+  /* node->explist.push_back(exp); */
+  /* node->children.pop_front(); */
+  }
 //| expression_list error expression {printf("\n\n\n\nMissing comma\n"); yyerrok;}
 ;
 
 comma : MARKER_COMMA {
-    $$ = new ExpMarker((const Marker *)($1));
-    // access_ast($$);
+  $$ = new ExpMarker((const Marker *)($1));
 }
 ;
 
@@ -867,7 +837,7 @@ term : term mulop factor{ $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3);
 factor:
 | variable {
   $$ = $1;
-  }
+}
 | id lparen expression_list rparen {
   $$ = $1;
 }
@@ -891,57 +861,44 @@ unimus : MARKER_SUB {
 
 addop : MARKER_ADD {
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 | MARKER_SUB {
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
-}
+  }
 | MARKER_LOGICOR{
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
-}
+  }
 
 
 mulop : MARKER_MUL {
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
 }
 | MARKER_DIV {
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
   }
 | MARKER_MOD {
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
   }
 | MARKER_LOGICAND {
   $$ = new ExpMarker((const Marker *)($1));
-  // access_ast($$);
   }
 
 relop : MARKER_EQ {
-    $$ = new ExpMarker((const Marker *)($1));
-    // access_ast($$);
-  }
+  $$ = new ExpMarker((const Marker *)($1));
+}
 | MARKER_NEQ {
-    $$ = new ExpMarker((const Marker *)($1));
-    // access_ast($$);
+  $$ = new ExpMarker((const Marker *)($1));
   }
 | MARKER_LT {
-    $$ = new ExpMarker((const Marker *)($1));
-    // access_ast($$);
+  $$ = new ExpMarker((const Marker *)($1));
   }
 | MARKER_GT {
-    $$ = new ExpMarker((const Marker *)($1));
-    // access_ast($$);
+  $$ = new ExpMarker((const Marker *)($1));
   }
 | MARKER_LE {
-    $$ = new ExpMarker((const Marker *)($1));
-    // access_ast($$);
+  $$ = new ExpMarker((const Marker *)($1));
   }
 | MARKER_GE {
-    $$ = new ExpMarker((const Marker *)($1));
-    // access_ast($$);
+  $$ = new ExpMarker((const Marker *)($1));
   }
 %%

@@ -60,7 +60,9 @@ private:
     }
 
     void access_ast(void *ast) override {
-        parsed_result = (ast::Node *) ast;
+        parsed_result = (ast::Program *) ast;
+        // printf("access ast %x %d\n\n", parsed_result, parsed_result->type);
+        ast::printAST(parsed_result);
     }
     Node* ast_reduce_nodes(int k, Type type) override {
       // if (astTreeStack.size() < k) {
