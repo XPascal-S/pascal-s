@@ -21,4 +21,4 @@ endfunction()
 
 add_compiler(-r compiler.cpp ${PASCAL_S_RECURSIVE_COMPILER_SOURCE_FILES})
 add_compiler(-r2 compiler_v2.cpp ${PASCAL_S_RECURSIVE_COMPILER_SOURCE_FILES})
-add_compiler(-y compiler.cpp ${PASCAL_S_COMPILER_SOURCE_FILES})
+add_compiler(-y compiler_v2.cpp ${PASCAL_S_COMPILER_SOURCE_FILES})

@@ -6,50 +6,35 @@
 #include <pascal-s/yacc_parser.h>
 #include <pascal-s/mock.h>
 
+template<typename Lexer>
+Parser *parser_factory(Lexer &lexer) {
+  return new YaccParser<Lexer>(LexerProxy<Lexer>(lexer));
+}
 
-// int TestExample() {
-//   // std::vector<Token*> mocking_stream{new ConstantInteger("1")};
+#ifdef WITH_MOCK
+#include <pascal-s/lexer_mock.h>
+template
+struct YaccParser<MockLexer>;
 
-//   // const char c = 't';
-//   // std::vector<Token *> mocking_stream{new ConstantChar(&c)};
-//   // std::vector<Token *> mocking_stream{new ConstantReal("1.0")};
-//   std::vector<Token *> mocking_stream{
-//                                       new Keyword(KeywordType::Program),
-//                                       new Identifier("test"),
-//                                       new Marker(MarkerType::Semicolon),
-//                                       new Keyword(KeywordType::Const),
-//                                       new Identifier("a"),
-//                                       new Marker(MarkerType::EQ),
-//                                       new ConstantInteger(2),
-//                                       new Marker(MarkerType::Semicolon),
-//                                       new Keyword(KeywordType::Var),
-//                                       new Identifier("b"),
-//                                       new Marker(MarkerType::Colon),
-//                                       new Keyword(KeywordType::Integer),
-//                                       new Marker(MarkerType::Semicolon),
-//                                       new Keyword(KeywordType::Begin),
-//                                       new Keyword(KeywordType::End),
-//                                       new Marker(MarkerType::Dot)
-//   };
+template Parser* parser_factory(MockLexer& lexer);
+#endif
 
-//   MockLexer lexer(mocking_stream);
-//   LexerProxy<MockLexer> lexer_proxy(lexer);
+#ifdef WITH_PASCAL_LEXER_FILES
 
-//   YACCParser<MockLexer> parser(lexer_proxy);
+#include <pascal-s/lexer.h>
 
-//   parser.set_debug_level(1);
+// #include <pascal-s/lexer_full_in_memory.h>
+template
+struct YaccParser<FullInMemoryLexer>;
 
-//   auto res = parser.parse();
+template Parser* parser_factory(FullInMemoryLexer &lexer);
 
-//   printf("parsed result: ");
-//   // printAST(parser.parsed_result);
-//   // deleteAST(parser.parsed_result);
-//   // printf("parser stack: %d\n", parser.astTreeStack.size());
-//   // printAST(parser.ast_root);
+template<typename Lexer>
+YaccParser<Lexer>::~YaccParser() {
+  for (auto e: errors) {
+    delete e;
+  }
+}
 
-//   for (auto tok : lexer.token_stream) {
-//     deleteToken(tok);
-//   }
-//   // deleteAST(parser.ast_root);
-//   return res;
-// }
+
+#endif
