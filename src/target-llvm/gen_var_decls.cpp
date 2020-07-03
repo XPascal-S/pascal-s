@@ -47,7 +47,7 @@ void LLVMBuilder::insert_var_decls(LLVMBuilder::Function *cur_func,
                                 llvm::GlobalVariable::LinkageTypes::InternalLinkage,
                                 llvm::ConstantFP::get(llvm_type, llvm::APFloat(.0)), ident->content);
                     } else {
-                        assert(false);
+                        llvm_pascal_s_report_semantic_error_n(ident, "gen var type");
                     };
 //                    map[ident->content] = dfn_block.CreateAlloca(llvm_type, nullptr, ident->content);
                 }

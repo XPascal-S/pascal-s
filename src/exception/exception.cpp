@@ -1,10 +1,10 @@
 
 
+#include <fmt/core.h>
 #include <pascal-s/exception.h>
 #include <pascal-s/token.h>
-#include <pascal-s/llvm-ast.h>
-#include <fmt/core.h>
 #include <pascal-s/interface.h>
+#include <pascal-s/llvm-ast.h>
 
 
 RuntimeReinterpretTokenException::RuntimeReinterpretTokenException(const Token *token)
@@ -41,7 +41,7 @@ PascalSParseExpectVGotError::PascalSParseExpectVGotError(char *fn, const Token *
     } else {
         this->length = 0;
         this->offset = 0;
-        this->line = 0;
+        this->line = 1;
         this->column = 0;
     }
 }
@@ -65,7 +65,7 @@ PascalSParseExpectTGotError::PascalSParseExpectTGotError(
     } else {
         this->length = 0;
         this->offset = 0;
-        this->line = 0;
+        this->line = 1;
         this->column = 0;
     }
 }
@@ -88,7 +88,23 @@ PascalSParseExpectSGotError::PascalSParseExpectSGotError(
     } else {
         this->length = 0;
         this->offset = 0;
-        this->line = 0;
+        this->line = 1;
+        this->column = 0;
+    }
+}
+
+PascalSSemanticError::PascalSSemanticError(const char *fn, const pascal_s::Pos *problem_pos, std::string msg,
+                                           PascalSErrno t) :
+        PascalSError(std::move(msg), t), fn(fn) {
+    if (problem_pos) {
+        this->length = problem_pos->length;
+        this->offset = problem_pos->offset;
+        this->line = problem_pos->line;
+        this->column = problem_pos->column;
+    } else {
+        this->length = 0;
+        this->offset = 0;
+        this->line = 1;
         this->column = 0;
     }
 }

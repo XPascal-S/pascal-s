@@ -7,7 +7,7 @@ template<typename Lexer>
 ast::Exp *Parser<Lexer>::parse_exp(const std::set<const Token *> *till) {
 
     // lhs
-    auto maybe_lhs = parse_fac();
+    auto maybe_lhs = parse_fac(till);
 
     for (;;) {
         if (predicate::token_equal(current_token, till)) {
@@ -86,12 +86,15 @@ ast::Exp *Parser<Lexer>::parse_exp(const std::set<const Token *> *till) {
 }
 
 template<typename Lexer>
-ast::Exp *Parser<Lexer>::parse_fac() {
+ast::Exp *Parser<Lexer>::parse_fac(const std::set<const Token *> *till) {
     if (current_token == nullptr) {
         return fall_expect_s("expression fac");
     }
 
     for (;;) {
+        if (predicate::token_equal(current_token, till)) {
+            return fall_expect_s("expression fac");
+        }
         if (predicate::is_add(current_token)) {
             break;
         }
@@ -162,7 +165,7 @@ ast::Exp *Parser<Lexer>::parse_fac() {
                 // - exp
             case MarkerType::Sub:
                 next_token();
-                return new ast::UnExp(marker, parse_exp());
+                return new ast::UnExp(marker, parse_exp(till));
 
                 // (  )
             case MarkerType::LParen:
@@ -218,7 +221,7 @@ Parser<Lexer>::parse_binary_exp(ast::Exp *lhs, const Marker *marker,
                                 pascal_s::marker_type_underlying_type current_marker_pri,
                                 const std::set<const Token *> *till) {
 
-    auto rhs = parse_fac();
+    auto rhs = parse_fac(till);
 
     for (;;) {
         if (predicate::token_equal(current_token, till)) {

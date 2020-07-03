@@ -62,7 +62,7 @@ void ast::deleteAST(Node *node) {
         case Type::ParamList:
             delete reinterpret_cast<ParamList *>(node);
             break;
-        case Type::Variabele:
+        case Type::Variable:
             delete reinterpret_cast<Variable *>(node);
             break;
         case Type::ExpressionList:
@@ -293,9 +293,10 @@ void ast::printAST(const ast::Node *node, int dep) {
 //            printf("invoke_target = %s\n", convertToString(cur_node->).c_str());
             put_tab(dep + 1);
             printf("invoke_params = \n");
-            for (auto exp: cur_node->var_list->params) {
-                printAST(exp, dep + 1);
-            }
+            if (cur_node->var_list)
+                for (auto exp: cur_node->var_list->params) {
+                    printAST(exp, dep + 1);
+                }
 
 
             put_tab(dep);
@@ -313,9 +314,10 @@ void ast::printAST(const ast::Node *node, int dep) {
             put_tab(dep + 1);
             printf("invoke_params = \n");
 
-            for (auto exp: cur_node->exp_list->explist) {
-                printAST(exp, dep + 1);
-            }
+            if (cur_node->exp_list)
+                for (auto exp: cur_node->exp_list->explist) {
+                    printAST(exp, dep + 1);
+                }
 
 
             put_tab(dep);
@@ -385,12 +387,12 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
-        case Type::Variabele:
+        case Type::Variable:
 #define cur_node (reinterpret_cast<const ast::Variable*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
-            printf("type = Variabele\n");
+            printf("type = Variable\n");
             printf("name = %s\n", convertToString(cur_node->id).c_str());
             printf("exps =\n");
             if (cur_node->id_var) {
@@ -642,3 +644,4 @@ void ast::printAST(const ast::Node *node, int dep) {
             break;
     }
 }
+

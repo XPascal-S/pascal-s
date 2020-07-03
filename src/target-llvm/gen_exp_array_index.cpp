@@ -3,18 +3,18 @@
 //
 
 #include <target/llvm.h>
-
-inline llvm::Value *create_int64_literal(llvm::LLVMContext &ctx, int64_t literal) {
-    return llvm::Constant::getIntegerValue(
-            llvm::IntegerType::get(ctx, 64), llvm::APInt(64, literal, true));
-}
+#include <fmt/core.h>
+#include "llvm-helper.h"
 
 int64_t LLVMBuilder::calc_periods_size(const ast::ArrayTypeSpec *spec) {
     int64_t ret = 1;
-    for (const auto &p : spec->periods) {
+    for (size_t i = 0; i < spec->periods.size(); i++) {
+        auto &p = spec->periods[i];
         if (p.second < p.first) {
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "calc periods size error"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(spec,
+                                                  fmt::format(
+                                                          "the {}-th dim range of array is invalid, want left range({}) > right range({})",
+                                                          i + 1, p.first, p.second));
         }
         ret *= (p.second - p.first + 1);
     }
@@ -24,8 +24,10 @@ int64_t LLVMBuilder::calc_periods_size(const ast::ArrayTypeSpec *spec) {
 void LLVMBuilder::code_gen_offset(std::vector<llvm::Value *> &offset, const pascal_s::ArrayInfo *ai,
                                   const ast::ExpressionList *exp_list) {
     if (ai->spec->periods.size() != exp_list->explist.size()) {
-        errors.push_back(new PascalSSemanticError(__FUNCTION__, "assign_lvalue error"));
-        assert(false);
+        llvm_pascal_s_report_semantic_error_n(exp_list,
+                                              fmt::format(
+                                                      "array expected dim is {}, but length of expression list is {}",
+                                                      ai->spec->periods.size(), exp_list->explist.size()));
         offset.clear();
         return;
     }
@@ -43,8 +45,11 @@ void LLVMBuilder::code_gen_offset(std::vector<llvm::Value *> &offset, const pasc
                 e = ir_builder.CreateSExt(e, llvm_i64, "exp_ext_tmp");
             }
         } else {
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "assign_lvalue error"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(
+                    exp_list->explist[i],
+                    fmt::format(
+                            "the {}-th of expression's type for array index wants a integer type, got {}",
+                            i + 1, format_type(e->getType())));
             offset.clear();
             return;
         }
@@ -52,15 +57,20 @@ void LLVMBuilder::code_gen_offset(std::vector<llvm::Value *> &offset, const pasc
         constant_index = llvm::dyn_cast<llvm::ConstantInt>(e);
         if (constant_index) {
             if (constant_index->getValue().getSExtValue() < pd.first) {
-                errors.push_back(new PascalSSemanticError(__FUNCTION__, "constant array index underflow error"));
-                assert(false);
+                llvm_pascal_s_report_semantic_error_n(
+                        exp_list->explist[i],
+                        fmt::format(
+                                "the {}-th of expression's type for array index is underflow, "
+                                "want >= {}, got {}", i + 1, pd.first, constant_index->getValue().getSExtValue()));
                 offset.clear();
                 return;
             }
-            // todo >= pd.second
             if (constant_index->getValue().getSExtValue() > pd.second) {
-                errors.push_back(new PascalSSemanticError(__FUNCTION__, "constant array index overflow error"));
-                assert(false);
+                llvm_pascal_s_report_semantic_error_n(
+                        exp_list->explist[i],
+                        fmt::format(
+                                "the {}-th of expression's type for array index is overflow, "
+                                "want <= {}, got {}", i + 1, pd.second, constant_index->getValue().getSExtValue()));
                 offset.clear();
                 return;
             }

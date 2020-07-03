@@ -98,7 +98,7 @@ public:
     parse_binary_exp(ast::Exp *lhs, const Marker *marker, pascal_s::marker_type_underlying_type current_marker_pri,
                      const std::set<const Token *> *till = nullptr);
 
-    ast::Exp *parse_fac();
+    ast::Exp *parse_fac(const std::set<const Token *> *till = nullptr);
 
     [[maybe_unused]] virtual bool has_error();
 

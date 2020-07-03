@@ -4,12 +4,12 @@
 
 #include <target/llvm.h>
 
+static pascal_s::Pos static_pos{0, 0, 1, 1};
 
 LLVMBuilder::Function *LLVMBuilder::rename_program_to_pascal_s_native(LLVMBuilder::Function *f) {
     Function *maybe_conflict = modules.getFunction(pascal_main_function_name);
     if (maybe_conflict) {
-        errors.push_back(new PascalSSemanticError(__FUNCTION__, "llvm native main function redeclared"));
-        assert(false);
+        llvm_pascal_s_report_semantic_error(&static_pos, "rename function error");
         return nullptr;
     }
 
@@ -18,7 +18,7 @@ LLVMBuilder::Function *LLVMBuilder::rename_program_to_pascal_s_native(LLVMBuilde
 }
 
 
-LLVMBuilder::Value *LLVMBuilder::assign_lvalue(LLVMBuilder::Value *ptr, LLVMBuilder::Value *rhs) {
+llvm::Value *LLVMBuilder::assign_lvalue(const pascal_s::Pos *lvalue_pos, Value *ptr, Value *rhs) {
     llvm::Type *elemType = nullptr;
     if (ptr->getType()->isPointerTy()) {
         elemType = ptr->getType()->getPointerElementType();
@@ -28,8 +28,7 @@ LLVMBuilder::Value *LLVMBuilder::assign_lvalue(LLVMBuilder::Value *ptr, LLVMBuil
 
     if (rhs->getType()->getTypeID() != elemType->getTypeID()) {
         // todo: implicit type conversion feature
-        errors.push_back(new PascalSSemanticError(__FUNCTION__, "assign_named_value error"));
-        assert(false);
+        llvm_pascal_s_report_semantic_error(lvalue_pos, "lvalue type incompatible error");
         return nullptr;
     }
 
@@ -43,8 +42,7 @@ LLVMBuilder::Value *LLVMBuilder::assign_lvalue(LLVMBuilder::Value *ptr, LLVMBuil
             rhs = ir_builder.CreateSExt(rhs, elemType, "");
         }
     } else if (elemType->getTypeID() != llvm::Type::DoubleTyID) {
-        errors.push_back(new PascalSSemanticError(__FUNCTION__, "assign_named_value error"));
-        assert(false);
+        llvm_pascal_s_report_semantic_error(lvalue_pos, "lvalue llvm type error");
         return nullptr;
     }
 

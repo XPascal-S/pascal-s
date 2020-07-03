@@ -31,7 +31,7 @@ true|false { return addBoolean(); }
 [\_a-zA-Z][\_a-zA-Z0-9]* { return addIdentifier(); }
 [0-9]*\.[0-9]+ { return addReal(); }
 [0-9]+ { return addInteger(); }
-'(\\'|[^'[:space:]])*' { return addChar(); }
+'(\\'|[^'])*' { return addChar(); }
 
 [\_a-zA-Z0-9]* { return skipErrorString("lexical error: identifier started with number is not allow"); }
 [^[:space:]] { return skipErrorString("lexical error: unknown character in input stream"); }

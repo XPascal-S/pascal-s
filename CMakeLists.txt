@@ -19,6 +19,7 @@ set(LLVM_PATH "C:/work/cpp/llvm-tutorial/lib/build-llvm/lib/cmake/llvm" CACHE ST
 
 # include files (header, configuration, and others can include)
 include_directories(include)
+include_directories(vendor)
 
 # vendor files (external libraries)
 add_subdirectory(vendor)

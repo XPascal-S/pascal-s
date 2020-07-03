@@ -18,12 +18,12 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_read_statement(const ast::Read *stmt) 
         // get function proto llvm_func
         Function *calleeFunc = nullptr;
         switch (res->getType()->getPointerElementType()->getTypeID()) {
+            default:
+                llvm_pascal_s_report_semantic_error_n(ptr_proto, "type invalid error");
+                return nullptr;
             case llvm::Type::DoubleTyID:
                 calleeFunc = modules.getFunction("read_real");
                 break;
-            default:
-                assert(false);
-                return nullptr;
             case llvm::Type::IntegerTyID:
                 auto bw = res->getType()->getPointerElementType()->getIntegerBitWidth();
                 if (bw == 64) {
@@ -36,8 +36,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_read_statement(const ast::Read *stmt) 
                 break;
         }
         if (!calleeFunc) {
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "get callee error"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(ptr_proto, "read function not found");
             return nullptr;
         }
         assert(calleeFunc->arg_size() == 1);
@@ -82,12 +81,11 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_write_statement(const ast::Write *stmt
                 calleeFunc = modules.getFunction("write_real");
                 break;
             default:
-                assert(false);
+                llvm_pascal_s_report_semantic_error_n(exp_proto, "type invalid error");
                 return nullptr;
         }
         if (!calleeFunc) {
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "get callee error"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(exp_proto, "write function not found");
             return nullptr;
         }
         assert(calleeFunc->arg_size() == 1);

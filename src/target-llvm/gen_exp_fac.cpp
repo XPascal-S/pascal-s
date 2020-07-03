@@ -25,14 +25,11 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_ident(const ast::Ident *pIdent) {
     // get function proto llvm_func
     Function *calleeFunc = modules.getFunction(pIdent->ident->content);
     if (!calleeFunc) {
-        errors.push_back(new PascalSSemanticError(__FUNCTION__, "get callee error"));
-        assert(false);
+        llvm_pascal_s_report_semantic_error_n(pIdent, "neither variable nor function");
         return nullptr;
     }
     if (calleeFunc->arg_size() != 0) {
-        errors.push_back(new PascalSSemanticError(__FUNCTION__,
-                                                  "callee func param size does not match exp list size"));
-        assert(false);
+        llvm_pascal_s_report_semantic_error_n(pIdent, "callee func param size does not match exp list size");
         return nullptr;
     }
     std::vector<Value *> args;
@@ -46,9 +43,8 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_ident(const ast::Ident *pIdent) {
     }
 }
 
-LLVMBuilder::Value *LLVMBuilder::code_gen_exp_constant_string(const ast::ExpConstantString *) {
-    errors.push_back(new PascalSSemanticError(__FUNCTION__,
-                                              "code_gen_exp_constant_string 2"));
+LLVMBuilder::Value *LLVMBuilder::code_gen_exp_constant_string(const ast::ExpConstantString *cs) {
+    llvm_pascal_s_report_semantic_error_n(cs, "constant string is not available now");
     assert(false);
     return nullptr;
 }
@@ -61,7 +57,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_exp_constant_boolean(const ast::ExpCon
 LLVMBuilder::Value *LLVMBuilder::code_gen_variable(const ast::Variable *node) {
     auto ptr = get_lvalue_pointer(node);
     if (ptr == nullptr) {
-        assert(false);
+        llvm_pascal_s_report_semantic_error_n(node, "cant get lvalue of node");
         return nullptr;
     }
     return ir_builder.CreateLoad(ptr, "arr_load");

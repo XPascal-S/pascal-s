@@ -37,13 +37,13 @@ set(llvm_components support core irreader mc native)
 
 llvm_map_components_to_libnames(LLVMLIBS ${llvm_components})
 
-add_definitions(${LLVM_DEFINITIONS})
+#add_definitions(${LLVM_DEFINITIONS})
 
 file(GLOB PASCAL_S_TARGET_LLVM_SOURCE_FILES **.cpp)
 
 add_library(target-llvm ${PASCAL_S_TARGET_LLVM_SOURCE_FILES})
 #target_include_llvm(target-llvm)
-target_link_libraries(target-llvm ${LLVMLIBS})
+target_link_libraries(target-llvm fmt ${LLVMLIBS})
 
 
-add_subdirectory(test)
+#add_subdirectory(test)

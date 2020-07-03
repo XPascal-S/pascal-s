@@ -72,6 +72,12 @@ struct LLVMBuilder {
 
     ~LLVMBuilder();
 
+    void report_semantic_error(const char *fn, const pascal_s::Pos *, std::string &&msg);
+
+#define llvm_pascal_s_report_semantic_error(pos, msg) report_semantic_error(__FUNCTION__, pos, msg)
+#define llvm_pascal_s_report_semantic_error_n(node, msg) llvm_pascal_s_report_semantic_error(node->visit_pos(), msg)
+#define llvm_pascal_s_report_semantic_warning_n(node, msg) llvm_pascal_s_report_semantic_error(node->visit_pos(), msg)
+
     // llvm相关初始化
     // do_init: 初始化llvm模块
     // prepend_lib_standard_pascal_s: 声明内置函数
@@ -83,7 +89,7 @@ struct LLVMBuilder {
 
     Function *rename_program_to_pascal_s_native(Function *f);
 
-    Value *assign_lvalue(Value *ptr, Value *rhs);
+    Value *assign_lvalue(const pascal_s::Pos *lvalue_pos, Value *ptr, Value *rhs);
 
     // 更新访问链信息
     // var_decl: 可变变量
@@ -126,7 +132,7 @@ struct LLVMBuilder {
 
     Type *create_basic_type(const ast::BasicTypeSpec *spec);
 
-    Type *create_basic_type_from_keyword(KeywordType spec);
+    Type *create_basic_type_from_keyword(const Keyword *spec);
 
     // gen function
 

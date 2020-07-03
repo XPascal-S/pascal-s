@@ -166,7 +166,7 @@ const Keyword keyword_## lower(KeywordType::upper);
     }
 
     bool is_binary_sign(MarkerType mt) {
-        return MarkerType::LogicAnd <= mt && mt <= MarkerType::Mod;
+        return MarkerType::LogicNot <= mt && mt <= MarkerType::LogicAnd;
     }
 
 #undef marker_predicator

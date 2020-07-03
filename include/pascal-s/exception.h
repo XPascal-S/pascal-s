@@ -73,8 +73,8 @@ struct PascalSParseError : public PascalSError {
 struct PascalSSemanticError : public PascalSError {
     std::string fn;
 
-    explicit PascalSSemanticError(const char *fn, std::string msg, PascalSErrno t = PascalSErrno::SemanticError) :
-            PascalSError(std::move(msg), t), fn(fn) {}
+    explicit PascalSSemanticError(const char *fn, const pascal_s::Pos *problem_pos, std::string msg,
+                                  PascalSErrno t = PascalSErrno::SemanticError);
 
     ~PascalSSemanticError() override = default;
 };
