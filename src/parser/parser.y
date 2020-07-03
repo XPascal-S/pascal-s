@@ -260,11 +260,12 @@ eq:MARKER_EQ {
   }
 ;
 
-const_value:add num          {ast_reduce_nodes(2, Type::Statement);}
-    |sub num             {ast_reduce_nodes(2, Type::Statement);}
-    |num                {$$ = $1;}
-    |char        {$$ = $1;}
-    ;
+const_value:
+add num  {$$ = new UnExp((const Marker*)$1, (Exp*)$2);}
+|sub num  {$$ = new UnExp((const Marker*)$1, (Exp*)$2);}
+|num      {$$ = $1;}
+|char     {$$ = $1;}
+;
 
 
 num:INT {
@@ -864,13 +865,28 @@ term : term mulop factor{ $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3);
 | factor { $$=$1; };
 
 factor:
-INT {
-  $$ = new ExpConstantInteger(((const ConstantInteger*)($1)));
-  // access_ast($$);
+| variable {
+  $$ = $1;
+  }
+| id lparen expression_list rparen {
+  $$ = $1;
 }
-| IDENT {
-  $$ = new Ident(((const Identifier*)($1)));
-  // access_ast($$);
+| not factor{
+  $$ = new UnExp((const Marker*)$1, (Exp*)$2);
+}
+| unimus factor{
+  $$ = new UnExp((const Marker*)$1, (Exp*)$2);
+}
+| const_value {
+  $$ = $1;
+  }
+
+not : MARKER_LOGICNOT {
+  $$ = new ExpMarker((const Marker *)($1));
+}
+
+unimus : MARKER_SUB {
+  $$ = new ExpMarker((const Marker *)($1));
 }
 
 addop : MARKER_ADD {

@@ -51,6 +51,7 @@ private:
       return static_cast<int>(MARKERTYPE(marker_token->marker_type));
     }
     default:
+      printf("\ndefault token: %s\n", convertToString(token).c_str());
       return static_cast<int>(token->type);
     }
     return static_cast<int>(token->type);
