@@ -83,7 +83,7 @@ struct PascalSParseExpectVGotError : public PascalSParseError {
     const Token *expected, *got;
 
     PascalSParseExpectVGotError(
-            char *fn, const Token *expected, const Token *got, std::string msg = "");
+            const char *fn, const Token *expected, const Token *got, std::string msg = "");
 
     ~PascalSParseExpectVGotError() override = default;
 };
@@ -92,7 +92,7 @@ struct PascalSParseExpectTGotError : public PascalSParseError {
     const Token *got;
     pascal_s::token_type_underlying_type expected;
 
-    PascalSParseExpectTGotError(char *fn, TokenType expected, const Token *got,
+    PascalSParseExpectTGotError(const char *fn, TokenType expected, const Token *got,
                                 std::string msg = "");
 
     ~PascalSParseExpectTGotError() override = default;
@@ -102,7 +102,7 @@ struct PascalSParseExpectSGotError : public PascalSParseError {
     const Token *got;
     const char *expected;
 
-    PascalSParseExpectSGotError(char *fn, const char *expected, const Token *got,
+    PascalSParseExpectSGotError(const char *fn, const char *expected, const Token *got,
                                 std::string msg = "");
 
     ~PascalSParseExpectSGotError() override = default;

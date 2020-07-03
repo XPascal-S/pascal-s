@@ -24,7 +24,7 @@ const char *RuntimeReinterpretASTException::what() const noexcept {
     return msg.c_str();
 }
 
-PascalSParseExpectVGotError::PascalSParseExpectVGotError(char *fn, const Token *expected, const Token *got,
+PascalSParseExpectVGotError::PascalSParseExpectVGotError(const char *fn, const Token *expected, const Token *got,
                                                          std::string msg) :
         PascalSParseError(fn, fmt::format("{} parse failed: "
                                           "expected: {}, "
@@ -47,7 +47,7 @@ PascalSParseExpectVGotError::PascalSParseExpectVGotError(char *fn, const Token *
 }
 
 PascalSParseExpectTGotError::PascalSParseExpectTGotError(
-        char *fn, TokenType expected, const Token *got, std::string msg) :
+        const char *fn, TokenType expected, const Token *got, std::string msg) :
         PascalSParseError(fn,
                           fmt::format("{} parse failed: "
                                       "expected type: {}, "
@@ -71,7 +71,7 @@ PascalSParseExpectTGotError::PascalSParseExpectTGotError(
 }
 
 PascalSParseExpectSGotError::PascalSParseExpectSGotError(
-        char *fn, const char *expected, const Token *got, std::string msg) :
+        const char *fn, const char *expected, const Token *got, std::string msg) :
         PascalSParseError(fn, "",
                           PascalSErrno::ParseExpectSGotError), expected(expected), got(got) {
     this->msg = fmt::format("{} parse failed: "

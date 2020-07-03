@@ -9,12 +9,13 @@
 #define ISBASIC 2
 #define ISARRAY 3
 
-#include <pascal-s/yacc_ast.h>
+#include <pascal-s/llvm-ast.h>
 #include <fmt/include/fmt/core.h>
 #include <vector>
 #include <string>
 #include <deque>
 
+using namespace ast;
 
 namespace target_c {
 
@@ -420,7 +421,7 @@ namespace target_c {
 
             if(se.typeDecl == "char*"){
                 auto *arrayType = new ArrayTypeSpec(new Keyword(KeywordType::Char));
-                arrayType->period->periods.push_back(std::pair<int, int>(0, se.value.size()));
+                arrayType->periods.push_back(std::pair<int, int>(0, se.value.size()));
                 se.arrayInfo = arrayType;
             }
             this->nowST_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(lhs, se));
@@ -455,10 +456,10 @@ namespace target_c {
                     keyword2str(se.arrayInfo->keyword->key_type, se.typeDecl);
                     printTab(buffer);
                     buffer += fmt::format("{0} {1}", se.typeDecl, name);
-                    for(int i=0; i<se.arrayInfo->period->periods.size(); i++){
+                    for(int i=0; i<se.arrayInfo->periods.size(); i++){
                         se.typeDecl += "*"; //数组类型 example：char**
                     }
-                    for (auto x : se.arrayInfo->period->periods) {
+                    for (auto x : se.arrayInfo->periods) {
                         buffer += "[" + std::to_string(x.second - x.first + 1) + "]";
                     }
                     buffer += ";\n";
@@ -500,30 +501,41 @@ namespace target_c {
             std::string funcName = node->name->content;
             st_pointer->tableName = funcName;
             functionInfo.funcName = funcName;
-            check &= keyword2str(node->ret_type->keyword->key_type, functionInfo.returnType);
-            for (const auto param : node->decls->params){
-                for(const auto id : param->id_list->idents){
-                    struct SymbolEntry se;
-                    if (param->spec->type == Type::BasicTypeSpec) {
-                        check &= keyword2str(reinterpret_cast<const BasicTypeSpec *>(param->spec)->keyword->key_type, se.typeDecl);
-                        functionInfo.paraType.push_back(se.typeDecl);
-                        se.varType = ISBASIC;
-                    } else if (param->spec->type == Type::ArrayTypeSpec) {
-                        check &= keyword2str(reinterpret_cast<const ArrayTypeSpec *>(param->spec)->keyword->key_type, se.typeDecl);
-                        for(int i=0; i<reinterpret_cast<const ArrayTypeSpec *>(param->spec)->period->periods.size(); i++){
-                            se.typeDecl += "*"; //数组类型
+            if(node->ret_type == nullptr){
+                functionInfo.returnType = "void";
+            }else {
+                check &= keyword2str(node->ret_type->keyword->key_type, functionInfo.returnType);
+            }
+            if(node->decls != nullptr) {
+                for (const auto param : node->decls->params) {
+                    for (const auto id : param->id_list->idents) {
+                        struct SymbolEntry se;
+                        if (param->spec->type == Type::BasicTypeSpec) {
+                            check &= keyword2str(
+                                    reinterpret_cast<const BasicTypeSpec *>(param->spec)->keyword->key_type,
+                                    se.typeDecl);
+                            functionInfo.paraType.push_back(se.typeDecl);
+                            se.varType = ISBASIC;
+                        } else if (param->spec->type == Type::ArrayTypeSpec) {
+                            check &= keyword2str(
+                                    reinterpret_cast<const ArrayTypeSpec *>(param->spec)->keyword->key_type,
+                                    se.typeDecl);
+                            for (int i = 0;
+                                 i < reinterpret_cast<const ArrayTypeSpec *>(param->spec)->periods.size(); i++) {
+                                se.typeDecl += "*"; //数组类型
+                            }
+                            functionInfo.paraType.push_back(se.typeDecl);
+                            se.varType = ISARRAY;
+                            se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(param->spec);
+                        } else {
+                            addErrMsg(node, "no var type match");
+                            assert(false);
+                            return TranslateFailed;
                         }
-                        functionInfo.paraType.push_back(se.typeDecl);
-                        se.varType = ISARRAY;
-                        se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(param->spec);
-                    } else {
-                        addErrMsg(node, "no var type match");
-                        assert(false);
-                        return TranslateFailed;
-                    }
 
-                    st_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(id->content, se));
-                    functionInfo.formalPara += se.typeDecl + " " + id->content + ", ";
+                        st_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(id->content, se));
+                        functionInfo.formalPara += se.typeDecl + " " + id->content + ", ";
+                    }
                 }
             }
             this->functionBuff.insert(std::pair<std::string, struct FuncInfo>(funcName, functionInfo));
@@ -654,10 +666,17 @@ namespace target_c {
                 case Type::ExpConstantString:
                     return code_gen_ExpConstantString(reinterpret_cast<const ExpConstantString *>(node), buffer,
                                                       expType);
+                case Type::Ident:
+                    break;
                 default:
                     assert(false);
                     return TranslateFailed;
             }
+            // Deal with Ident
+            auto *tempVariable = new Variable;
+            tempVariable->id = reinterpret_cast<const Ident *>(node)->ident;
+            delete node;
+            return code_gen_Variable(tempVariable, buffer, expType);
             return OK;
         }
 
@@ -675,6 +694,10 @@ namespace target_c {
                     return code_gen_ForStatement(reinterpret_cast<const ForStatement *>(node), buffer);
                 case Type::CompoundStatement:
                     return code_gen_CompoundStatement(reinterpret_cast<const CompoundStatement *>(node), buffer);
+                case Type::Read:
+                    return code_gen_Read(reinterpret_cast<const Read*>(node), buffer);
+                case Type::Write:
+                    return code_gen_Write(reinterpret_cast<const Write*>(node), buffer);
                 default:
                     addErrMsg(node, "no statement type match");
                     assert(false);
@@ -789,7 +812,7 @@ namespace target_c {
 
                 if(expType.find("*") != std::string::npos) {
                     std::string periodType;
-                    if (iterTable->second.arrayInfo->period->periods.size() != node->id_var->explist.size()){
+                    if (iterTable->second.arrayInfo->periods.size() != node->id_var->explist.size()){
                         assert(false); // 定义数组维数与下标不符
                         return TranslateFailed;
                     }
@@ -802,7 +825,7 @@ namespace target_c {
                     for(int i=0; i<node->id_var->explist.size(); i++){
                         expType.pop_back(); // int* --> int
                         buffer += "[";
-                        arraySubInt->attr = iterTable->second.arrayInfo->period->periods[i].first;
+                        arraySubInt->attr = iterTable->second.arrayInfo->periods[i].first;
                         arraySubIntExp->value = arraySubInt;
                         tempExp->lhs = node->id_var->explist.at(i);
                         tempExp->rhs = arraySubIntExp;
@@ -895,6 +918,7 @@ namespace target_c {
             buffer += "scanf(\"";
             std::string readBuffer;
             for (auto x: node->var_list->params) {
+
                 auto var_type = this->nowST_pointer->content[x->id->content].typeDecl;
                 std::string io_type;
                 if (typeStr2ioStr(var_type, io_type)) {
@@ -1004,6 +1028,7 @@ namespace target_c {
             this->tabNum += 1;
             if (node->type != Type::CompoundStatement)
                 printTab(buffer);
+
             check &= code_gen_Statement(node->for_stmt, buffer);
             if (node->type != Type::CompoundStatement)
                 buffer += ";\n";
@@ -1044,5 +1069,6 @@ namespace target_c {
         }
     };
 }
+
 #endif //PASCAL_S_TARGET_C_H
 

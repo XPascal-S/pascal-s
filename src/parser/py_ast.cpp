@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <pascal-s/yacc_ast.h>
 #include <pascal-s/mock.h>
+/*
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <vector>
@@ -91,3 +92,4 @@ PYBIND11_MODULE(py_ast, m) {
     .def_readonly("children", &Node::children);
     // .def("GetTokenSymbol", &Node::GetTokenSymbol);
 }
+*/

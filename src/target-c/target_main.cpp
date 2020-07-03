@@ -5,7 +5,7 @@
 #include <iostream>
 #include <target/task.h>
 
-//using namespace ast;
+using namespace ast;
 
 Program * test_gcd() {
     auto *integer = new Keyword(KeywordType::Integer);
@@ -21,7 +21,7 @@ Program * test_gcd() {
     auto arrayidentlist = new IdentList;
     arrayidentlist->idents.push_back(new Identifier("c"));
     auto *arrayTypesp = new ArrayTypeSpec(new Keyword(KeywordType::Integer));
-    arrayTypesp->period->periods.push_back(std::pair<int, int>(0, 10));
+    arrayTypesp->periods.push_back(std::pair<int, int>(0, 10));
 
     varDecls->decls.push_back(new VarDecl(identList, new BasicTypeSpec(new Keyword(KeywordType::Integer))));
     varDecls->decls.push_back(new VarDecl(arrayidentlist, arrayTypesp));
@@ -117,8 +117,6 @@ Program * test_gcd() {
     auto *mainProgram = new Program(mainHead, mainBody);
     return mainProgram;
 }
-
-
 
 Program * test_write_char(){
     Keyword *integer = new Keyword(KeywordType::Integer);
@@ -304,6 +302,7 @@ end
 
  */
 
+/*
 int main(){
     auto *mainProgram = test_gcd();
     target_c::Buffer tempBuffer(std::cout);
@@ -312,12 +311,13 @@ int main(){
     theBuilder.code_gen(mainProgram);
     printf("target c main function invoked");
 }
+*/
 
 [[maybe_unused]] int target_compile(int, const char **, CompilerTargetTask * task) {
     target_c::Buffer tempBuffer(std::cout);
     std::vector<std::string> include_files;
     target_c::CBuilder theBuilder(include_files, tempBuffer);
-    //theBuilder.code_gen(task->source);
+    theBuilder.code_gen(task->source);
     printf("target c main function invoked");
     return 0;
 }

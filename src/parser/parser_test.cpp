@@ -17,6 +17,7 @@ void simple_printAST(Node * n, int d){
   }
 }
 
+/*
 int main() {
   // std::vector<Token*> mocking_stream{new ConstantInteger("1")};
 
@@ -63,3 +64,4 @@ int main() {
   // deleteAST(parser.ast_root);
   return res;
 }
+*/
