@@ -417,7 +417,7 @@ range: MARKER_RANGE{
   // access_ast($$);
 }
 
-subprogram_declarations:                    { $$ = new SubprogramDecls();  access_ast($$); }
+subprogram_declarations:                    { $$ = new SubprogramDecls();  }
 | subprogram_declarations subprogram semicolon  {
   $$ = $1;
   ((SubprogramDecls*)$$)->subprogram.push_back(((Subprogram*)$2));
@@ -593,7 +593,7 @@ const_declarations var_declarations compound_statement  {
 }
 ;
 
-compound_statement:             { $$ = new CompoundStatement();  access_ast($$);  }
+compound_statement:
 begin statement_list end         {
   $$ = new CompoundStatement((StatementList*)$2);
     /* CompoundStatement* node = reinterpret_cast<CompoundStatement*> (ast_reduce_nodes(3, Type::CompoundStatement)); */
@@ -606,6 +606,7 @@ begin statement_list end         {
     /* node->children.pop_front();//pop end */
     //ast_reduce_nodes(3, Type::Statement);
 }
+             { $$ = new CompoundStatement(); }
 //| error statement_list end   {printf("\n\n\n\nMissing begin\n"); yyerrok;}
 //| begin statement_list error {printf("\n\n\n\nMissing end\n"); yyerrok;}
 ////| error statement_list error {printf("\n\n\n\nMissing begin and end\n"); yyerrok;}
@@ -774,19 +775,18 @@ rbracket: MARKER_RBRACKET{
 
 procedure_call:
  id          {
-    ExpCall* node = reinterpret_cast<ExpCall*> (ast_reduce_nodes(1, Type::ExpCall));
-    node->fn = (Identifier*)(node->children.front());
-    node->children.pop_front();
+   $$ = new ExpCall((const Identifier*)$1, nullptr);
     //ast_reduce_nodes(1,Type::ExpCall);
   }
 | id lparen expression_list rparen    {
-    ExpCall* node = reinterpret_cast<ExpCall*> (ast_reduce_nodes(4, Type::ExpCall));
-    node->fn = (Identifier*)(node->children.front());
-    node->children.pop_front();
-    node->children.pop_front();//pop lparen
-    node->params = (ExpressionList*)(node->children.front());
-    node->children.pop_front();
-    node->children.pop_front();//pop rparen
+  $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$2);
+    /* ExpCall* node = reinterpret_cast<ExpCall*> (ast_reduce_nodes(4, Type::ExpCall)); */
+    /* node->fn = (Identifier*)(node->children.front()); */
+    /* node->children.pop_front(); */
+    /* node->children.pop_front();//pop lparen */
+    /* node->params = (ExpressionList*)(node->children.front()); */
+    /* node->children.pop_front(); */
+    /* node->children.pop_front();//pop rparen */
     //ast_reduce_nodes(4,Type::ExpCall);
   }
 //| id error expression_list rparen {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
