@@ -4,7 +4,7 @@
 
 
 template<typename Lexer>
-ast::ProgramBody *Parser<Lexer>::parse_program_body() {
+ast::ProgramBody *RecursiveParser<Lexer>::parse_program_body() {
 
     // const declarations
     ast::ConstDecls *const_decls = nullptr;

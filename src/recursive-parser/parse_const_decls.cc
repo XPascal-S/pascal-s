@@ -4,8 +4,10 @@
 
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::ConstDecls *Parser<Lexer>::parse_const_decls() {
+ast::ConstDecls *RecursiveParser<Lexer>::parse_const_decls() {
 
     // const
     expected_enum_type_r_e(predicate::is_const, predicate::keyword_const, nullptr,
@@ -25,7 +27,7 @@ ast::ConstDecls *Parser<Lexer>::parse_const_decls() {
 }
 
 template<typename Lexer>
-ast::ConstDecls *Parser<Lexer>::_parse_const_decls(ast::ConstDecls *decls) {
+ast::ConstDecls *RecursiveParser<Lexer>::_parse_const_decls(ast::ConstDecls *decls) {
 
     for (;;) {
         // declaration
@@ -59,7 +61,7 @@ ast::ConstDecls *Parser<Lexer>::_parse_const_decls(ast::ConstDecls *decls) {
 }
 
 template<typename Lexer>
-ast::ConstDecl *Parser<Lexer>::parse_const_decl() {
+ast::ConstDecl *RecursiveParser<Lexer>::parse_const_decl() {
     // id
     expected_type_r(TokenType::Identifier, nullptr);
     auto ident = reinterpret_cast<const Identifier *>(current_token);

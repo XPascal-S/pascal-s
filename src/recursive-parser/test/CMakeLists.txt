@@ -4,7 +4,7 @@ project(pascal-s)
 
 
 function(add_recursive_parser_test test_name)
-    add_gtest(${test_name} ${PASCAL_S_RECURSIVE_PARSER_SOURCE_FILES})
+    add_gtest(${test_name} ${PASCAL_S_RECURSIVE_PARSER_ONLY_MOCK_SOURCE_FILES})
     target_link_libraries(${test_name} pascal-s-local)
 endfunction()
 

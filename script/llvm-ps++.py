@@ -37,6 +37,7 @@ parser.add_argument('--src', type=str, help='Source path')
 parser.add_argument('--out', default="build", type=str, help='Output path')
 parser.add_argument('--out-ir', type=str, help='Output IR Code, enum of {json, yml, fmt, binary, console}')
 parser.add_argument('--out-token', type=str, help='Output tokens, enum of {json, yml, fmt, binary, console}')
+parser.add_argument('--out-ast', type=str, help='Output ast, enum of {json, yml, fmt, binary, console}')
 
 args = parser.parse_args()
 
@@ -82,13 +83,16 @@ if args.out_ir is not None:
 if args.out_token is not None:
     asm_options.append('--out-token=' + args.out_token)
 
+if args.out_ast is not None:
+    asm_options.append('--out-ast=' + args.out_ast)
+
 asm = ' '.join(asm_options)
 # print(asm)
 print('assembling...')
 print('generated', object_file)
 asm_result = os.popen(asm).readlines()
 if len(asm_result) > 0:
-    print('\n'.join(map(lambda s: s.strip(), asm_result)))
+    print('\n'.join(map(lambda s: s.strip('\n'), asm_result)))
 
 link = ' '.join([
                     args.c_linker,
@@ -100,4 +104,4 @@ link = ' '.join([
 print('linking...')
 link_result = os.popen(link).readlines()
 if len(link_result) > 0:
-    print('\n'.join(map(lambda s: s.strip(), link_result)))
+    print('\n'.join(map(lambda s: s.strip('\n'), link_result)))

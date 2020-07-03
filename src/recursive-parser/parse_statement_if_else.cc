@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::Statement *Parser<Lexer>::parse_if_else_statement(std::set<const Token *> *till) {
+ast::Statement *RecursiveParser<Lexer>::parse_if_else_statement(std::set<const Token *> *till) {
 #define cond expression
     auto *if_else = new ast::IfElseStatement();
 

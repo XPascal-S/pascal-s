@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::IdentList *Parser<Lexer>::parse_id_list_with_paren() {
+ast::IdentList *RecursiveParser<Lexer>::parse_id_list_with_paren() {
 
     // lparen
     expected_enum_type(predicate::is_lparen, predicate::marker_lparen);
@@ -27,7 +29,7 @@ ast::IdentList *Parser<Lexer>::parse_id_list_with_paren() {
 }
 
 template<typename Lexer>
-ast::IdentList *Parser<Lexer>::parse_id_list() {
+ast::IdentList *RecursiveParser<Lexer>::parse_id_list() {
     // allocate
     ast::IdentList *id_list = _parse_id_list(new ast::IdentList);
     if (id_list->idents.empty()) {
@@ -40,7 +42,7 @@ ast::IdentList *Parser<Lexer>::parse_id_list() {
 }
 
 template<typename Lexer>
-ast::IdentList *Parser<Lexer>::_parse_id_list(ast::IdentList *params) {
+ast::IdentList *RecursiveParser<Lexer>::_parse_id_list(ast::IdentList *params) {
 
     for (;;) {
         if (predicate::is_rparen(current_token)) {

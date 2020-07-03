@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::Statement *Parser<Lexer>::parse_for_statement(std::set<const Token *> *till) {
+ast::Statement *RecursiveParser<Lexer>::parse_for_statement(std::set<const Token *> *till) {
 #define loop_var id
 #define from_exp express1
 #define to_exp express2

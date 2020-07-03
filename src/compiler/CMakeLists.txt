@@ -20,3 +20,4 @@ function(add_compiler compiler-suffix)
 endfunction()
 
 add_compiler(-r compiler.cpp ${PASCAL_S_RECURSIVE_COMPILER_SOURCE_FILES})
+add_compiler(-r2 compiler_v2.cpp ${PASCAL_S_RECURSIVE_COMPILER_SOURCE_FILES})

@@ -3,13 +3,15 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::SubprogramDecls *Parser<Lexer>::parse_subprogram_decls() {
+ast::SubprogramDecls *RecursiveParser<Lexer>::parse_subprogram_decls() {
     return _parse_subprogram_decls(new ast::SubprogramDecls);
 }
 
 template<typename Lexer>
-ast::SubprogramDecls *Parser<Lexer>::_parse_subprogram_decls(ast::SubprogramDecls *decls) {
+ast::SubprogramDecls *RecursiveParser<Lexer>::_parse_subprogram_decls(ast::SubprogramDecls *decls) {
 
     // function head
 
