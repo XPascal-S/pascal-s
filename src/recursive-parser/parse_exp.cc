@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::Exp *Parser<Lexer>::parse_exp(const std::set<const Token *> *till) {
+ast::Exp *RecursiveParser<Lexer>::parse_exp(const std::set<const Token *> *till) {
 
     // lhs
     auto maybe_lhs = parse_fac(till);
@@ -86,7 +88,7 @@ ast::Exp *Parser<Lexer>::parse_exp(const std::set<const Token *> *till) {
 }
 
 template<typename Lexer>
-ast::Exp *Parser<Lexer>::parse_fac(const std::set<const Token *> *till) {
+ast::Exp *RecursiveParser<Lexer>::parse_fac(const std::set<const Token *> *till) {
     if (current_token == nullptr) {
         return fall_expect_s("expression fac");
     }
@@ -217,9 +219,9 @@ ast::Exp *Parser<Lexer>::parse_fac(const std::set<const Token *> *till) {
 
 template<typename Lexer>
 ast::Exp *
-Parser<Lexer>::parse_binary_exp(ast::Exp *lhs, const Marker *marker,
-                                pascal_s::marker_type_underlying_type current_marker_pri,
-                                const std::set<const Token *> *till) {
+RecursiveParser<Lexer>::parse_binary_exp(ast::Exp *lhs, const Marker *marker,
+                                         pascal_s::marker_type_underlying_type current_marker_pri,
+                                         const std::set<const Token *> *till) {
 
     auto rhs = parse_fac(till);
 

@@ -2,8 +2,10 @@
 // Created by kamiyoru on 2020/6/27.
 //
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::Variable *Parser<Lexer>::parse_variable(const std::set<const Token *> *till) {
+ast::Variable *RecursiveParser<Lexer>::parse_variable(const std::set<const Token *> *till) {
     if (current_token == nullptr || current_token->type != TokenType::Identifier) {
         for (;;) {
             if (current_token == nullptr) {

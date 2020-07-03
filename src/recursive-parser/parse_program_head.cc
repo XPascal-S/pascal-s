@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::ProgramHead *Parser<Lexer>::parse_program_head() {
+ast::ProgramHead *RecursiveParser<Lexer>::parse_program_head() {
 
     // program id
     auto program = reinterpret_cast<const Keyword *>(current_token);

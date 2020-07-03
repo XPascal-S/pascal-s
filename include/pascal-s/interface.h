@@ -143,13 +143,13 @@ struct ParserProxy {
 
     // cursor控制peek_token的值
 
-    // 完成解析语法动作
+    // 解析语法
     [[maybe_unused]] ast::Node *parse() { return parser.parse(); }
 
     // 判断是否存在语法错误
     [[maybe_unused]] bool has_error() { return parser.has_error(); }
 
-    // 获取所有的词法错误
+    // 获取所有的语法错误
     [[maybe_unused]] const error_references &get_all_errors() { return parser.get_all_errors(); }
 };
 

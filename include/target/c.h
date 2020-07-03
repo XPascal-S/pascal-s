@@ -640,7 +640,7 @@ namespace target_c {
                     return code_gen_ExpCall(reinterpret_cast<const ast::ExpCall *>(node), buffer, expType);
                 case ast::Type::ExpAssign:
                     return code_gen_ExpAssign(reinterpret_cast<const ast::ExpAssign *>(node), buffer, expType);
-                case ast::Type::Variabele: // AST里的Variabele有拼写错误
+                case ast::Type::Variable:
                     return code_gen_Variable(reinterpret_cast<const ast::Variable *>(node), buffer, expType);
                 case ast::Type::ExpConstantBoolean:
                     return code_gen_ExpConstantBoolean(reinterpret_cast<const ast::ExpConstantBoolean *>(node), buffer,
@@ -830,15 +830,15 @@ namespace target_c {
             bool check = true;
             std::string lhsType;
             std::string rhsType;
-            if(node->lhs->type == ast::Type::Variabele){
+            if (node->lhs->type == ast::Type::Variable) {
                 //处理函数返回值的问题
                 std::string varName = reinterpret_cast<const ast::Variable *>(node->lhs)->id->content;
-                if(varName == this->nowST_pointer->tableName){
+                if (varName == this->nowST_pointer->tableName) {
                     buffer += "return ";
                     code_gen_exp(node->rhs, buffer, rhsType);
                     //buffer += ";\n";
                     auto funcIter = this->functionBuff.find(this->nowST_pointer->tableName);
-                    if(funcIter->second.returnType != rhsType){
+                    if (funcIter->second.returnType != rhsType) {
                         //函数返回值类型不符
                         addErrMsg(node, "type of return value does not match func");
                         assert(false);
@@ -1046,4 +1046,3 @@ namespace target_c {
     };
 }
 #endif //PASCAL_S_TARGET_C_H
-

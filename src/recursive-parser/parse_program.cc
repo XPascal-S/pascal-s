@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::Program *Parser<Lexer>::parse_program() {
+ast::Program *RecursiveParser<Lexer>::parse_program() {
 
     // program head
     auto ph = parse_program_head();
@@ -22,7 +24,7 @@ ast::Program *Parser<Lexer>::parse_program() {
     auto program = new ast::Program(ph, parse_program_body());
     program->semicolon = semicolon;
 
-    // ;
+    // .
     expected_enum_type_r(predicate::is_dot, predicate::marker_dot, program);
     program->dot = reinterpret_cast<const Marker *>(current_token);
     next_token();

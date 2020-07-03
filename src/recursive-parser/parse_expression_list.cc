@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_paren() {
+ast::ExpressionList *RecursiveParser<Lexer>::parse_expression_list_with_paren() {
 
     // (
     expected_enum_type(predicate::is_lparen, predicate::marker_lparen);
@@ -26,7 +28,7 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_paren() {
 }
 
 template<typename Lexer>
-ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_bracket() {
+ast::ExpressionList *RecursiveParser<Lexer>::parse_expression_list_with_bracket() {
 
     // [
     expected_enum_type(predicate::is_lbracket, predicate::marker_lbracket);
@@ -51,7 +53,8 @@ ast::ExpressionList *Parser<Lexer>::parse_expression_list_with_bracket() {
 
 template<typename Lexer>
 template<typename F>
-ast::ExpressionList *Parser<Lexer>::parse_expression_list(const F &is_follow, const std::set<const Token *> *till) {
+ast::ExpressionList *
+RecursiveParser<Lexer>::parse_expression_list(const F &is_follow, const std::set<const Token *> *till) {
     auto *ret = new ast::ExpressionList;
     for (;;) {
 

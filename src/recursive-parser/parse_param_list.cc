@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::ParamList *Parser<Lexer>::parse_param_list_with_paren() {
+ast::ParamList *RecursiveParser<Lexer>::parse_param_list_with_paren() {
 
     // (
     expected_enum_type(predicate::is_lparen, predicate::marker_lparen);
@@ -31,7 +33,7 @@ ast::ParamList *Parser<Lexer>::parse_param_list_with_paren() {
 }
 
 template<typename Lexer>
-ast::ParamList *Parser<Lexer>::parse_param_list() {
+ast::ParamList *RecursiveParser<Lexer>::parse_param_list() {
     //look ahead
     ast::ParamList *pl = _parse_param_list(new ast::ParamList);
     if (pl->params.empty()) {
@@ -45,7 +47,7 @@ ast::ParamList *Parser<Lexer>::parse_param_list() {
 
 
 template<typename Lexer>
-ast::ParamList *Parser<Lexer>::_parse_param_list(ast::ParamList *params) {
+ast::ParamList *RecursiveParser<Lexer>::_parse_param_list(ast::ParamList *params) {
     for (;;) {
         auto spec = parse_param();
         if (spec != nullptr) {
@@ -70,7 +72,7 @@ ast::ParamList *Parser<Lexer>::_parse_param_list(ast::ParamList *params) {
 }
 
 template<typename Lexer>
-ast::ParamSpec *Parser<Lexer>::parse_param() {
+ast::ParamSpec *RecursiveParser<Lexer>::parse_param() {
 
     for (;;) {
         if (current_token == nullptr) {

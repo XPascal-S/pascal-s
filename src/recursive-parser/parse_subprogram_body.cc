@@ -3,8 +3,10 @@
 //
 
 
+#include <pascal-s/parser_recursive.h>
+
 template<typename Lexer>
-ast::SubprogramBody *Parser<Lexer>::parse_subprogram_body() {
+ast::SubprogramBody *RecursiveParser<Lexer>::parse_subprogram_body() {
 
     // const declarations
     ast::ConstDecls *const_decls = nullptr;

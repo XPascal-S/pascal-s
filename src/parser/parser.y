@@ -97,6 +97,7 @@
 
 programstruct:  program_head semicolon program_body dot {
   $$ = new Program((ProgramHead*)$1, (ProgramBody*)$3);
+  access_ast($$);
   /* Program *node = reinterpret_cast<Program*> (ast_reduce_nodes(4, Type::Program)); */
   /* node->programHead = (ProgramHead*)(node->children.front()); */
   /* node->children.pop_front(); */
@@ -230,9 +231,9 @@ const_declaration:
     /* node->children.pop_front(); */
   }
 |id eq const_value  {
-  ConstDecl* cdecl = new ConstDecl((const Identifier*)$1, (Exp*)$3);
+  ConstDecl* constDecl = new ConstDecl((const Identifier*)$1, (Exp*)$3);
   $$ = new ConstDecls();
-  ((ConstDecls*)$$)->decls.push_back(cdecl);
+  ((ConstDecls*)$$)->decls.push_back(constDecl);
     /* ConstDecls* node = reinterpret_cast<ConstDecls*> (ast_reduce_nodes(3, Type::ConstDecls)); */
 
     /* Identifier* ident = (Identifier*)(node->children.front()); */
@@ -337,8 +338,8 @@ var_declaration:
     /* // const->type_spec = (TypeSpec*)(node->children.front()); */
     /* TypeSpec* type_spec = (TypeSpec*)(node->children.front()); */
 
-    /* node->children.pop_front(); */
-
+    /* node->children.pop_front(); *
+/
     /* VarDecl* varDecl = new VarDecl(idents, type_spec); */
     /* node->decls.push_back(varDecl); */
 }
@@ -346,8 +347,13 @@ var_declaration:
 ;
 
 type://TODO
-  basic_type                               {$$ = $1;}
-| array lbracket period rbracket of basic_type         {ast_reduce_nodes(6, Type::TypeSpec);}
+basic_type           {
+  $$ = $1;
+}
+| array lbracket period rbracket of basic_type         {
+  $$ = $3;
+  ((ArrayTypeSpec*)$$)->keyword = ((BasicTypeSpec*)$6)->keyword;
+}
 ;
 
 array:KEYWORD_ARRAY{
@@ -393,11 +399,18 @@ boolean:KEYWORD_BOOLEAN{
 }
 ;
 
-period: // TODO
-  period comma num range num        {ast_reduce_nodes(5, Type::ArrayTypeSpec);}
-| num range num                    {ast_reduce_nodes(3, Type::ArrayTypeSpec);}
+period:
+period comma num range num        {
+  $$ = $1;
+  ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)$3, (int64_t)$5));
+  //ast_reduce_nodes(5, Type::ArrayTypeSpec);
+}
+| num range num                    {
+  $$ = new ArrayTypeSpec();
+  ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)$1, (int64_t)$3));
+  //ast_reduce_nodes(3, Type::ArrayTypeSpec);
+}
 ;
-
 range: MARKER_RANGE{
   $$ = new ExpMarker((const Marker *)($1));
   // access_ast($$);
