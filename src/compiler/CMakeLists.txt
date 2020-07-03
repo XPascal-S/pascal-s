@@ -7,15 +7,15 @@ add_definitions(-D__STDC_VERSION__=199901L)
 add_definitions(-DWITH_PASCAL_LEXER_FILES)
 function(add_compiler compiler-suffix)
     add_executable(nothing-pascal-s${compiler-suffix} ${ARGN})
-    target_link_libraries(nothing-pascal-s${compiler-suffix} fmt debug target-nothing)
+    target_link_libraries(nothing-pascal-s${compiler-suffix} fmt target-nothing)
     target_include_flex(nothing-pascal-s${compiler-suffix})
 
     add_executable(c-pascal-s${compiler-suffix} ${ARGN})
-    target_link_libraries(c-pascal-s${compiler-suffix} fmt debug target-c)
+    target_link_libraries(c-pascal-s${compiler-suffix} fmt target-c)
     target_include_flex(c-pascal-s${compiler-suffix})
 
     add_executable(llvm-pascal-s${compiler-suffix} ${ARGN})
-    target_link_libraries(llvm-pascal-s${compiler-suffix} fmt debug target-llvm)
+    target_link_libraries(llvm-pascal-s${compiler-suffix} fmt target-llvm)
     target_include_flex(llvm-pascal-s${compiler-suffix})
 endfunction()
 

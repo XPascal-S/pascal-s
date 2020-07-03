@@ -71,6 +71,6 @@ ast::Variable *Parser<Lexer>::parse_variable(const std::set<const Token *> *till
     }
 
     variable->id_var = parse_expression_list_with_bracket();
-    variable->length = variable->id_var->length + variable->offset - variable->offset;
+    if (variable->id_var) variable->length = variable->id_var->length + variable->offset - variable->offset;
     return variable;
 }

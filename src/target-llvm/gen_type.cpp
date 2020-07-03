@@ -16,21 +16,21 @@ llvm::Type *LLVMBuilder::create_type(const ast::TypeSpec *spec) {
         }
 
         return llvm::ArrayType::get(create_basic_type_from_keyword(
-                reinterpret_cast<const ast::ArrayTypeSpec *>(spec)->keyword->key_type), sz);
+                reinterpret_cast<const ast::ArrayTypeSpec *>(spec)->keyword), sz);
 //        return create_basic_type_from_keyword(
 //                reinterpret_cast<const ast::ArrayTypeSpec *>(spec)->keyword->key_type);
     } else {
-        assert(false);
+        llvm_pascal_s_report_semantic_error_n(spec, "type spec type error");
         return nullptr;
     }
 }
 
 llvm::Type *LLVMBuilder::create_basic_type(const ast::BasicTypeSpec *spec) {
-    return create_basic_type_from_keyword(spec->keyword->key_type);
+    return create_basic_type_from_keyword(spec->keyword);
 }
 
-llvm::Type *LLVMBuilder::create_basic_type_from_keyword(KeywordType spec) {
-    switch (spec) {
+llvm::Type *LLVMBuilder::create_basic_type_from_keyword(const Keyword *spec) {
+    switch (spec->key_type) {
         case KeywordType::Char:
             return llvm::Type::getInt8Ty(ctx);
         case KeywordType::Integer:
@@ -42,8 +42,7 @@ llvm::Type *LLVMBuilder::create_basic_type_from_keyword(KeywordType spec) {
             return llvm::Type::getInt1Ty(ctx);
 //            case KeywordType::String:
         default:
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "get keyword spec type error"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(spec, "bacis type spec type error");
             return nullptr;
     }
 }

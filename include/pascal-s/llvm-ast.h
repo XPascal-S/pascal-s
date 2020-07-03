@@ -88,7 +88,7 @@ namespace ast {
 
         VariableList, // variable list
 
-        Variabele, // variable
+        Variable, // variable
 
         IdVarpart, // id varpart
 
@@ -197,6 +197,15 @@ namespace ast {
     };
 
 
+    struct Period : public TypeSpec {
+
+        std::vector<std::pair<ast::Exp *, ast::Exp *>> periods;
+
+        explicit Period() : TypeSpec(Type::Period) {}
+
+    };
+
+
     struct BasicTypeSpec : public TypeSpec {
 
         const Keyword *keyword;
@@ -212,6 +221,7 @@ namespace ast {
 
         const Keyword *keyword;
 
+        // todo: check period
         std::vector<std::pair<int64_t, int64_t>> periods;
 
         explicit ArrayTypeSpec(const Keyword *keyword) : TypeSpec(Type::ArrayTypeSpec), keyword(keyword) {}
@@ -285,7 +295,9 @@ namespace ast {
 
         ExpressionList *id_var = nullptr;
 
-        explicit Variable() : Exp(Type::Variabele) {}
+        explicit Variable() : Exp(Type::Variable) {}
+
+        explicit Variable(Identifier *id, ExpressionList *id_var) : Exp(Type::Variable), id(id), id_var(id_var) {}
     };
 
 
@@ -738,6 +750,10 @@ namespace ast {
             if (idlist) copy_pos_between_tokens(this, programKeyword, idlist);
             else copy_pos_between_tokens(this, programKeyword, id);
         }
+
+        explicit ProgramHead(const ExpKeyword *programKeyword, Ident *id) :
+                Node(Type::ProgramHead), programKeyword(programKeyword), id(id), idlist(nullptr) {}
+
 
     };
 

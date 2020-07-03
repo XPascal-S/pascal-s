@@ -9,6 +9,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_if_else_statement(const ast::IfElseSta
 
     Value *cond = code_gen(if_else_stmt->expression);
     if (!cond) {
+        llvm_pascal_s_report_semantic_error_n(if_else_stmt->expression, "gen expression error");
         return nullptr;
     }
 
@@ -23,8 +24,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_if_else_statement(const ast::IfElseSta
                     cond, llvm::ConstantFP::get(cond->getType(), llvm::APFloat(double(0))), "if_cond");
             break;
         default:
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "if else statement type error"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(if_else_stmt->expression, "expression type error");
             return nullptr;
     }
 

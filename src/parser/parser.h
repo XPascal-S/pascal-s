@@ -24,7 +24,7 @@ public:
   explicit YACCParser(LexerProxy<Lexer> lexer) : lexer(lexer) {}
 
   Node *parsed_result;
-  Node *ast_root;
+  // Node *ast_root;
 
   std::vector<Node *> astTreeStack;
 
@@ -54,8 +54,8 @@ private:
     return static_cast<int>(token->type);
   }
 
-  void access_ast(void *leaf_node) override {
-    // astTreeStack.push_back((Node *)leaf_node);
+  void access_ast(void *ast) override {
+    parsed_result = (Node*)ast;
   }
 
   Node* ast_reduce_nodes(int k, Type type) override {
