@@ -19,4 +19,4 @@ function(add_compiler compiler-suffix)
     target_include_flex(llvm-pascal-s${compiler-suffix})
 endfunction()
 
-add_compiler(-r compiler.cpp ${PASCAL_S_RECURSIVE_COMPILER_SOURCE_FILES})
+add_compiler(-r compiler.cpp ${PASCAL_S_COMPILER_SOURCE_FILES})

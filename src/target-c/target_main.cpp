@@ -1,14 +1,11 @@
 //
 // Created by kamiyoru on 2020/5/12.
 //
-#include <pascal-s/llvm-ast.h>
-#include <pascal-s/token.h>
 #include <target/c.h>
 #include <iostream>
-
 #include <target/task.h>
 
-using namespace ast;
+//using namespace ast;
 
 Program * test_gcd() {
     auto *integer = new Keyword(KeywordType::Integer);
@@ -24,7 +21,7 @@ Program * test_gcd() {
     auto arrayidentlist = new IdentList;
     arrayidentlist->idents.push_back(new Identifier("c"));
     auto *arrayTypesp = new ArrayTypeSpec(new Keyword(KeywordType::Integer));
-    arrayTypesp->periods.push_back(std::pair<int, int>(0, 10));
+    arrayTypesp->period->periods.push_back(std::pair<int, int>(0, 10));
 
     varDecls->decls.push_back(new VarDecl(identList, new BasicTypeSpec(new Keyword(KeywordType::Integer))));
     varDecls->decls.push_back(new VarDecl(arrayidentlist, arrayTypesp));
@@ -307,18 +304,20 @@ end
 
  */
 
-int main()
-{
-    Program *mainProgram = test_write_char();
+int main(){
+    auto *mainProgram = test_gcd();
     target_c::Buffer tempBuffer(std::cout);
     std::vector<std::string> include_files;
     target_c::CBuilder theBuilder(include_files, tempBuffer);
     theBuilder.code_gen(mainProgram);
-
-    return 0;
+    printf("target c main function invoked");
 }
 
-[[maybe_unused]] int target_compile(int, const char **, CompilerTargetTask *) {
+[[maybe_unused]] int target_compile(int, const char **, CompilerTargetTask * task) {
+    target_c::Buffer tempBuffer(std::cout);
+    std::vector<std::string> include_files;
+    target_c::CBuilder theBuilder(include_files, tempBuffer);
+    //theBuilder.code_gen(task->source);
     printf("target c main function invoked");
     return 0;
 }

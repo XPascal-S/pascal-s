@@ -6,7 +6,7 @@
 #define PASCAL_S_TARGET_TASK_H
 
 #include <string>
-#include <pascal-s/llvm-ast.h>
+#include <pascal-s/yacc_ast.h>
 #include <pascal-s/interface.h>
 #include <pascal-s/lib/stream_file.h>
 
