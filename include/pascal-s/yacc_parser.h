@@ -4,8 +4,8 @@
 #define YYDEBUG 1
 
 #include <pascal-s/llvm-ast.h>
-#include <pascal-s/yacc_bison.h>
 #include <pascal-s/parser.h>
+#include <pascal-s/yacc_bison.h>
 #include <cstdio>
 #include <pascal-s/interface.h>
 #include <pascal-s/mock.h>
@@ -30,7 +30,7 @@ public:
     ast::Node *parsed_result;
     // Node *ast_root;
 
-    std::vector<Node *> astTreeStack;
+    std::vector<ast::Node *> astTreeStack;
 
 private:
     int yylex(void **current_token) override {
@@ -60,7 +60,8 @@ private:
     }
 
     void access_ast(void *ast) override {
-        parsed_result = (ast::Program *) ast;
+        // parsed_result = (ast::Program *) ast;
+      parsed_result = reinterpret_cast<ast::Node*>(ast);
         // printf("access ast %x %d\n\n", parsed_result, parsed_result->type);
         ast::printAST(parsed_result);
     }

@@ -3,6 +3,7 @@
 
 %{
 #define YYSTYPE void *
+using namespace ast;
 %}
 
 %token  KEYWORD            1
@@ -80,7 +81,7 @@
 %%
 
 programstruct:  program_head semicolon program_body dot {
-  $$ = new Program((ProgramHead*)$1, (ProgramBody*)$3);
+  $$ = new ast::Program((ProgramHead*)$1, (ProgramBody*)$3);
   // printf("%x %d %d\n", $$, ((Program*)$$)->type, ((Node*)$$)->type);
   access_ast($$);
   /* Program *node = reinterpret_cast<Program*> (ast_reduce_nodes(4, Type::Program)); */
@@ -326,7 +327,7 @@ var_declaration semicolon idlist colon type   {
 //| var_declaration error idlist colon type {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
-type://TODO
+type:
 basic_type           {
   $$ = $1;
 }
@@ -380,7 +381,7 @@ period comma num range num        {
   //ast_reduce_nodes(5, Type::ArrayTypeSpec);
 }
 | num range num                    {
-  $$ = new ArrayTypeSpec();
+  $$ = new ArrayTypeSpec(nullptr);
   ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)$1, (int64_t)$3));
   //ast_reduce_nodes(3, Type::ArrayTypeSpec);
 }
@@ -405,7 +406,7 @@ subprogram_declarations subprogram semicolon  {
 
   //ast_reduce_nodes(3, Type::SubprogramDecls);
 }
-| { printf("\n\nvoid sub decl\n\n"); $$ = new SubprogramDecls();  }
+| { $$ = new SubprogramDecls();  }
 //| subprogram_declarations subprogram error  {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
@@ -522,7 +523,8 @@ var idlist colon basic_type         {
   /* node->children.pop_front(); */
 }
 | idlist colon basic_type       {
-  $$ = new ParamSpec((IdentList*)$1, (TypeSpec*)$3);
+  printf("????\n\n");
+  $$ = new ParamSpec(nullptr, (IdentList*)$1, (TypeSpec*)$3);
   /* ParamSpec* node = reinterpret_cast<ParamSpec*> (ast_reduce_nodes(3, Type::ParamSpec)); */
 
   /* node->id_list = (IdentList*)(node->children.front()); */
@@ -624,16 +626,15 @@ semicolon: MARKER_SEMICOLON{
   $$ = new ExpMarker((const Marker *)($1));
 }
 
-//TODO
-statement:                                          {$$ = new ExpVoid();  }
-| variable assign expression                        {$$ = new ExecStatement(new ExpAssign((Variable*)$1, (Exp*)$3));}
-| procedure_call                                    {$$ = new CompoundStatement();}
-| compound_statement                                {$$ = new CompoundStatement();}
-| if expression then statement else statement       {$$ = new IfElseStatement();}
-| if expression then statement                      {$$ = new IfElseStatement();}
-| for id assign expression to expression do statement {$$ = new ForStatement();}
-| KEYWORD_READ lparen variable_list rparen                   {$$ = new Read();}
-| KEYWORD_WRITE lparen expression_list rparen                {$$ = new Write();}
+statement:                                            {$$ = new ExpVoid();}
+| variable assign expression                          {$$ = new ExecStatement(new ExpAssign((Variable*)$1, (Exp*)$3));}
+| procedure_call                                      {$$ = new ExecStatement((Exp*)$1);}
+| compound_statement                                  {$$ = $1;}
+| if expression then statement else statement         {$$ = new IfElseStatement((Exp*)$2, (Statement*)$4, (Statement*)$6);}
+| if expression then statement                        {$$ = new IfElseStatement((Exp*)$2, (Statement*)$4, nullptr);}
+| for id assign expression to expression do statement {$$ = new ForStatement((const Identifier *)$2, (Exp*)$4, (Exp*)$6, (Statement*)$8);}
+| KEYWORD_READ lparen variable_list rparen            {$$ = new Read((VariableList*)$3);}
+| KEYWORD_WRITE lparen expression_list rparen         {$$ = new Write((ExpressionList*)$3);}
 ;
 
 for:KEYWORD_FOR{
@@ -807,7 +808,12 @@ simple_expression addop term { $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*
 | term { $$ = $1; }
 ;
 
-term : term mulop factor{ $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3); }
+term : term mulop factor{
+  // printAST((Exp*)$1);
+  // printAST((Exp*)$3);
+  $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3); // TODO error!
+  // printf("\n\n pass \n\n");
+}
 | factor { $$=$1; };
 
 factor:
@@ -815,7 +821,7 @@ factor:
   $$ = $1;
 }
 | id lparen expression_list rparen {
-  $$ = $1; //TODO ERROR!
+  $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$3);
 }
 | lparen expression_list rparen {
   $$ = $2;
@@ -859,7 +865,6 @@ mulop : MARKER_MUL {
   $$ = new ExpMarker((const Marker *)($1));
   }
 | MARKER_LOGICAND {
-  printf("logicand\n\n");
   $$ = new ExpMarker((const Marker *)($1));
   }
 

@@ -226,6 +226,7 @@ namespace ast {
 
         explicit ArrayTypeSpec(const Keyword *keyword) : TypeSpec(Type::ArrayTypeSpec), keyword(keyword) {}
 
+
     };
 
 
@@ -517,6 +518,7 @@ namespace ast {
         VariableList *var_list = nullptr;
 
         explicit Read() : Statement(Type::Read) {}
+        explicit Read(VariableList *var_list) : Statement(Type::Read), var_list(var_list) {}
     };
 
 
@@ -524,6 +526,7 @@ namespace ast {
         ExpressionList *exp_list = nullptr;
 
         explicit Write() : Statement(Type::Write) {}
+        explicit Write(ExpressionList *exp_list) : Statement(Type::Write), exp_list(exp_list) {}
     };
 
 
@@ -545,6 +548,8 @@ namespace ast {
 
         IfElseStatement() : Statement(Type::IfElseStatement) {}
 
+        IfElseStatement(Exp* expression, Statement* if_part, Statement* else_part) : Statement(Type::IfElseStatement), expression(expression), if_part(if_part), else_part(else_part) {}
+
     };
 
 
@@ -559,6 +564,8 @@ namespace ast {
         Statement *for_stmt = nullptr;
 
         ForStatement() : Statement(Type::ForStatement) {}
+
+      ForStatement(const Identifier *id, Exp *express1, Exp *express2, Statement *for_stmt) : Statement(Type::ForStatement), id(id), express1(express1), express2(express2), for_stmt(for_stmt) {}
 
     };
 
