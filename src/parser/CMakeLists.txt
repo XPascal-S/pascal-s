@@ -14,11 +14,11 @@ link_pascal_s_local(pascal-s-parser)
 
 
 if (UNIX)
-add_custom_target(
-  bison_build
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build.sh
+  add_custom_target(
+          bison_build
+          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build.sh
   )
-add_dependencies(pascal-s-parser bison_build)
+  add_dependencies(pascal-s-parser bison_build)
 endif (UNIX)
 
 # pybind11_add_module(py_ast py_ast.cpp)

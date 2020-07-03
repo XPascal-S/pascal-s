@@ -193,12 +193,12 @@ struct Period : public TypeSpec {
 
 struct ArrayTypeSpec : public TypeSpec {
 
-    const Keyword* keyword = nullptr;
+    const Keyword *keyword = nullptr;
 
     std::vector<std::pair<int64_t, int64_t>> periods;
     // Period* period;
 
-    explicit ArrayTypeSpec(const Keyword* keyword) : TypeSpec(Type::ArrayTypeSpec), keyword(keyword) {}
+    explicit ArrayTypeSpec(const Keyword *keyword) : TypeSpec(Type::ArrayTypeSpec), keyword(keyword) {}
 
     explicit ArrayTypeSpec() : TypeSpec(Type::ArrayTypeSpec) {}
 };
@@ -545,9 +545,9 @@ struct IfElseStatement : public Statement {
 
     Exp* expression = nullptr;
 
-    Statement* if_part = nullptr;
+    Statement *if_part = nullptr;
 
-    Statement* else_part = nullptr;
+    Statement *else_part = nullptr;
 
     IfElseStatement() : Statement(Type::IfElseStatement) {}
 
@@ -562,7 +562,7 @@ struct ForStatement : public Statement {
 
     Exp* express2 = nullptr;
 
-    Statement* for_stmt = nullptr;
+    Statement *for_stmt = nullptr;
 
     ForStatement() : Statement(Type::ForStatement) {}
 

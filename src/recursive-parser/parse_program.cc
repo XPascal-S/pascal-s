@@ -23,5 +23,11 @@ ast::Program *RecursiveParser<Lexer>::parse_program() {
     // program body
     auto program = new ast::Program(ph, parse_program_body());
     program->semicolon = semicolon;
+
+    // .
+    expected_enum_type_r(predicate::is_dot, predicate::marker_dot, program);
+    program->dot = reinterpret_cast<const Marker *>(current_token);
+    next_token();
+
     return program;
 }

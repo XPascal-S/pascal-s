@@ -830,15 +830,15 @@ namespace target_c {
             bool check = true;
             std::string lhsType;
             std::string rhsType;
-            if(node->lhs->type == ast::Type::Variable){
+            if (node->lhs->type == ast::Type::Variable) {
                 //处理函数返回值的问题
                 std::string varName = reinterpret_cast<const ast::Variable *>(node->lhs)->id->content;
-                if(varName == this->nowST_pointer->tableName){
+                if (varName == this->nowST_pointer->tableName) {
                     buffer += "return ";
                     code_gen_exp(node->rhs, buffer, rhsType);
                     //buffer += ";\n";
                     auto funcIter = this->functionBuff.find(this->nowST_pointer->tableName);
-                    if(funcIter->second.returnType != rhsType){
+                    if (funcIter->second.returnType != rhsType) {
                         //函数返回值类型不符
                         addErrMsg(node, "type of return value does not match func");
                         assert(false);
