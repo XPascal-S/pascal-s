@@ -7,21 +7,14 @@
 LLVMBuilder::Value *LLVMBuilder::code_gen_binary_exp(const ast::BiExp *pExp) {
     auto lhs = code_gen(pExp->lhs);
     auto rhs = code_gen(pExp->rhs);
-    if (lhs == nullptr) {
-        errors.push_back(new PascalSSemanticError(__FUNCTION__, "binary exp eval lhs error"));
-        assert(false);
-        return nullptr;
-    }
-    if (rhs == nullptr) {
-        errors.push_back(new PascalSSemanticError(__FUNCTION__, "binary exp eval rhs error"));
-        assert(false);
+    if (lhs == nullptr || rhs == nullptr) {
         return nullptr;
     }
 
     if (lhs->getType()->getTypeID() != rhs->getType()->getTypeID()) {
         // todo: signed/unsigned integer type feature
-        errors.push_back(new PascalSSemanticError(__FUNCTION__, "binary type conflict error"));
-        assert(false);
+        llvm_pascal_s_report_semantic_warning_n(pExp,
+                                                "code_gen_binary_exp type conflict error");
         return nullptr;
     }
     switch (lhs->getType()->getTypeID()) {
@@ -70,8 +63,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_binary_exp(const ast::BiExp *pExp) {
                 case MarkerType::NEQ:
                     return ir_builder.CreateICmpNE(lhs, rhs, "neq_tmp");
                 default:
-                    errors.push_back(new PascalSSemanticError(__FUNCTION__, "binary exp error"));
-                    assert(false);
+                    llvm_pascal_s_report_semantic_error_n(pExp->marker, "code_gen_binary_exp marker error");
                     return nullptr;
             }
         case llvm::Type::DoubleTyID:
@@ -115,13 +107,11 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_binary_exp(const ast::BiExp *pExp) {
                 case MarkerType::NEQ:
                     return ir_builder.CreateFCmpONE(lhs, rhs, "neq_tmp");
                 default:
-                    errors.push_back(new PascalSSemanticError(__FUNCTION__, "binary exp error"));
-                    assert(false);
+                    llvm_pascal_s_report_semantic_error_n(pExp->marker, "code_gen_binary_exp marker error");
                     return nullptr;
             }
         default:
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "binary exp error"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(pExp->marker, "code_gen_binary_exp llvm type error");
             return nullptr;
     }
 }

@@ -199,7 +199,7 @@ namespace ast {
 
     struct Period : public TypeSpec {
 
-        std::vector<std::pair<int64_t, int64_t>> periods;
+        std::vector<std::pair<ast::Exp *, ast::Exp *>> periods;
 
         explicit Period() : TypeSpec(Type::Period) {}
 

@@ -65,10 +65,7 @@ enum class KeywordType : pascal_s::keyword_type_underlying_type {
 
 enum class MarkerType : pascal_s::marker_type_underlying_type {
     Range = 0x00, // ..
-
-    LogicAnd = 0x01, // and
-    LogicOr = 0x02, // or
-    LogicNot = 0x03, // not
+    LogicNot = 0x01, // not
 
     NEQ = 0x11, // <>
     LE = 0x12, // <=
@@ -79,10 +76,12 @@ enum class MarkerType : pascal_s::marker_type_underlying_type {
 
     Add = 0x20, // +
     Sub = 0x21, // -
+    LogicOr = 0x22, // or
 
     Mul = 0x30, // *
     Div = 0x31, // /
     Mod = 0x32, // mod
+    LogicAnd = 0x33, // and
 
     LParen = 0x40, // (
     RParen = 0x41, // )

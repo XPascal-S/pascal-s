@@ -50,12 +50,14 @@ ast::TypeSpec *Parser<Lexer>::parse_type() {
     return nullptr;
 }
 
+#define ps_bad_reduced_array (ast::copy_pos_with_check(arr_type_spec, keyword_array), arr_type_spec)
+
 template<typename Lexer>
 ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array) {
     auto arr_type_spec = new ast::ArrayTypeSpec(keyword_array);
 
     // [
-    expected_enum_type_r(predicate::is_lbracket, predicate::marker_lbracket, arr_type_spec);
+    expected_enum_type_r(predicate::is_lbracket, predicate::marker_lbracket, ps_bad_reduced_array);
     next_token();
 
 
@@ -66,13 +68,16 @@ ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array
         if (current_token == nullptr || current_token->type != TokenType::ConstantInteger) {
             for (;;) {
                 if (current_token == nullptr) {
-                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                    return fall_expect_t(TokenType::ConstantInteger), ps_bad_reduced_array;
                 }
                 if (predicate::is_semicolon(current_token)) {
-                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                    return fall_expect_t(TokenType::ConstantInteger), ps_bad_reduced_array;
                 }
                 if (predicate::is_end(current_token)) {
-                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                    return fall_expect_t(TokenType::ConstantInteger), ps_bad_reduced_array;
+                }
+                if (current_token->type == TokenType::ConstantInteger) {
+                    break;
                 }
                 if (current_token->type == TokenType::ConstantReal) {
                     errors.push_back(
@@ -89,7 +94,7 @@ ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array
                 }
                 skip_error_token_t(TokenType::ConstantInteger)
                 errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "left_range", current_token));
-                return arr_type_spec;
+                return ps_bad_reduced_array;
             }
         }
 
@@ -98,20 +103,35 @@ ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array
         next_token();
 
         // ..
-        expected_enum_type_r(predicate::is_range, predicate::marker_range, arr_type_spec);
+        expected_enum_type_r(predicate::is_range, predicate::marker_range, ps_bad_reduced_array);
         next_token();
 
         // digit
         if (current_token == nullptr || current_token->type != TokenType::ConstantInteger) {
             for (;;) {
                 if (current_token == nullptr) {
-                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                    return fall_expect_t(TokenType::ConstantInteger), ps_bad_reduced_array;
+                }
+                if (predicate::is_add(current_token)) {
+                    errors.push_back(
+                            new PascalSParseExpectTGotError(__FUNCTION__, TokenType::ConstantInteger, current_token));
+                    next_token();
+                    continue;
+                }
+                if (predicate::is_sub(current_token)) {
+                    errors.push_back(
+                            new PascalSParseExpectTGotError(__FUNCTION__, TokenType::ConstantInteger, current_token));
+                    next_token();
+                    continue;
                 }
                 if (predicate::is_semicolon(current_token)) {
-                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                    return fall_expect_t(TokenType::ConstantInteger), ps_bad_reduced_array;
                 }
                 if (predicate::is_end(current_token)) {
-                    return fall_expect_t(TokenType::ConstantInteger), arr_type_spec;
+                    return fall_expect_t(TokenType::ConstantInteger), ps_bad_reduced_array;
+                }
+                if (current_token->type == TokenType::ConstantInteger) {
+                    break;
                 }
                 if (current_token->type == TokenType::ConstantReal) {
                     errors.push_back(
@@ -128,7 +148,7 @@ ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array
                 }
                 skip_error_token_t(TokenType::ConstantInteger)
                 errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "right_range", current_token));
-                return arr_type_spec;
+                return ps_bad_reduced_array;
             }
         }
         arr_type_spec->periods.emplace_back(
@@ -155,6 +175,18 @@ ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array
         for (;;) {
             if (current_token == nullptr) {
                 return fall_expect_t(TokenType::Keyword), arr_type_spec;
+            }
+            if (predicate::is_add(current_token)) {
+                errors.push_back(
+                        new PascalSParseExpectTGotError(__FUNCTION__, TokenType::ConstantInteger, current_token));
+                next_token();
+                continue;
+            }
+            if (predicate::is_sub(current_token)) {
+                errors.push_back(
+                        new PascalSParseExpectTGotError(__FUNCTION__, TokenType::ConstantInteger, current_token));
+                next_token();
+                continue;
             }
             if (predicate::is_rparen(current_token)) {
                 return fall_expect_t(TokenType::Keyword), arr_type_spec;
@@ -191,3 +223,5 @@ ast::ArrayTypeSpec *Parser<Lexer>::parse_array_type(const Keyword *keyword_array
     errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "basic type spec", basic));
     return nullptr;
 }
+
+#undef ps_bad_reduced_array

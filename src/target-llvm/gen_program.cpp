@@ -16,8 +16,8 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_program(const ast::Program *pProgra
         program = Function::Create(prototype, Function::ExternalLinkage,
                                    pProgram->programHead->id->ident->content, modules);
     } else {
-        errors.push_back(new PascalSSemanticError(__FUNCTION__, "main function redeclared"));
-        assert(false);
+        llvm_pascal_s_report_semantic_error_n(pProgram, "main function redeclared");
+        return nullptr;
     }
 
     // out_code('entry:')

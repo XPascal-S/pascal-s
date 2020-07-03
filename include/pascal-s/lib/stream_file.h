@@ -17,11 +17,13 @@ namespace pascal_s {
 
         pascal_errno seek(size_t offset) {
             f.seekg(offset, std::ios::beg);
+            assert(!f.fail());
             return 0;
         }
 
         pascal_errno read(char *buf, size_t len) {
-            f.read(buf, len);
+            f.get(buf, len, '\x00');
+            assert(!f.fail());
             return 0;
         }
     };

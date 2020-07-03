@@ -13,14 +13,21 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_for_statement(const ast::ForStatement 
     Value *from_value = code_gen(for_stmt->express1);
     Value *to_value = code_gen(for_stmt->express2);
 
+    if (from_value == nullptr) {
+        llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "gen express1 error");
+    }
+
+    if (to_value == nullptr) {
+        llvm_pascal_s_report_semantic_error_n(for_stmt->express2, "gen express2 error");
+    }
+
     if (from_value == nullptr || to_value == nullptr) {
         return nullptr;
     }
 
     if (from_value->getType()->getTypeID() != to_value->getType()->getTypeID()) {
         // todo: implicit type conversion feature
-        errors.push_back(new PascalSSemanticError(__FUNCTION__, "from statement loop type error"));
-        assert(false);
+        llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "from to type conflict error");
         return nullptr;
     }
 
@@ -37,8 +44,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_for_statement(const ast::ForStatement 
                     from_value->getType(), llvm::APFloat(1.0));
             break;
         default:
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "unknown loop type error"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "type invalid error");
             return nullptr;
     }
 
@@ -68,8 +74,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_for_statement(const ast::ForStatement 
                     from_value, to_value, "loop_cond");
             break;
         default:
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "loop unknown compare type error"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "type invalid error");
             return nullptr;
     }
 
@@ -92,8 +97,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_for_statement(const ast::ForStatement 
                     ir_builder.CreateFAdd(cur_value, step_value, "next_tmp_d"), loop_var);
             break;
         default:
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "loop store next compare type error"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "store type invalid error");
             return nullptr;
     }
     if (si == nullptr)
@@ -112,8 +116,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_for_statement(const ast::ForStatement 
                     ir_builder.CreateLoad(loop_var), to_value, "loop_cond");
             break;
         default:
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "loop unknown compare type error 2"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(for_stmt->express1, "cmp jump type invalid error");
             return nullptr;
     }
 

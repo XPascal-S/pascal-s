@@ -89,7 +89,7 @@ struct CompilerOptions {
             auto fs = new std::fstream(source_path);
             if (fs->fail()) {
                 delete fs;
-                std::cout << "Open Source File Error: " << strerror(errno) << ": " << source_path;
+                std::cerr << "Open Source File Error: " << strerror(errno) << ": " << source_path;
                 exit(errno);
             }
 
@@ -204,7 +204,7 @@ private:
         if (exited) return;
         pascal_s::CPPStreamFile fin(options.get_source());
         FileProxy<pascal_s::CPPStreamFile> fp(fin);
-        WriterProxy<std::ostream> os(std::cout);
+        WriterProxy<std::ostream> os(std::cerr);
 
         CompilerTargetTask task{fp, os};
 
@@ -233,7 +233,7 @@ private:
 
             pascal_s::CPPStreamFile fin(options.get_source());
             FileProxy<pascal_s::CPPStreamFile> fp(fin);
-            WriterProxy<std::ostream> os(std::cout);
+            WriterProxy<std::ostream> os(std::cerr);
 
             for (auto e : lexer.get_all_errors()) {
                 feature::format_line_column_error(fp, ErrorProxy<ErrorToken>(*e), os, options.source_path.c_str());
@@ -244,7 +244,7 @@ private:
 
             pascal_s::CPPStreamFile fin(options.get_source());
             FileProxy<pascal_s::CPPStreamFile> fp(fin);
-            WriterProxy<std::ostream> os(std::cout);
+            WriterProxy<std::ostream> os(std::cerr);
 
             for (auto e : parser.get_all_errors()) {
                 feature::format_line_column_error(fp, ErrorProxy<const PascalSError *>(e), os,
@@ -277,7 +277,7 @@ int main(int argc, const char *argv[]) {
     if (!options.help) {
         is = &options.get_source();
     }
-    FullInMemoryLexer lexer(is, &std::cout);
+    FullInMemoryLexer lexer(is, &std::cerr);
     LexerProxy<FullInMemoryLexer> lexer_proxy(lexer);
     Parser<FullInMemoryLexer> parser(lexer_proxy);
     ParserProxy<Parser<FullInMemoryLexer>> parser_proxy(parser);

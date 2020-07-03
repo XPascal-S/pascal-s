@@ -43,7 +43,7 @@ file(GLOB PASCAL_S_TARGET_LLVM_SOURCE_FILES **.cpp)
 
 add_library(target-llvm ${PASCAL_S_TARGET_LLVM_SOURCE_FILES})
 #target_include_llvm(target-llvm)
-target_link_libraries(target-llvm ${LLVMLIBS})
+target_link_libraries(target-llvm fmt ${LLVMLIBS})
 
 
 #add_subdirectory(test)

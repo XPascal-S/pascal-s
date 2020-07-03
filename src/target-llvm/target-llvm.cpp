@@ -30,7 +30,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_function(const ast::Function *pFunctio
             return code_gen_procedure(
                     reinterpret_cast<const ast::Subprogram *>(pFunction));
         default:
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(pFunction, "gen method not found");
             return nullptr;
     }
 }
@@ -59,7 +59,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_statement(const ast::Statement *stmt) 
             return code_gen_write_statement(
                     reinterpret_cast<const ast::Write *>(stmt));
         default:
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(stmt, "gen method not found");
             return nullptr;
     }
 }
@@ -67,10 +67,10 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_statement(const ast::Statement *stmt) 
 LLVMBuilder::Value *LLVMBuilder::code_gen(const ast::Node *node) {
     switch (node->type) {
         default:
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(node, "gen method not found");
             return nullptr;
         case ast::Type::Unknown:
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(node, "Type::Unknown Node has no gen method");
             return nullptr;
         case ast::Type::Program:
             return code_gen_program(
@@ -162,28 +162,33 @@ LLVMBuilder::Value *LLVMBuilder::code_gen(const ast::Node *node) {
         case ast::Type::Write:
             return code_gen_write_statement(
                     reinterpret_cast<const ast::Write *>(node));
-        case ast::Type::FormalParameter:
-            assert(false);
-            break;
         case ast::Type::Variable:
             return code_gen_variable(
                     reinterpret_cast<const ast::Variable *>(node));
+        case ast::Type::FormalParameter:
+            llvm_pascal_s_report_semantic_error_n(node, "gen method not found");
+            break;
         case ast::Type::Expression:
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(node, "gen method not found");
             break;
         case ast::Type::SimpleExpression:
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(node, "gen method not found");
             break;
         case ast::Type::Procedure:
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(node, "gen method not found");
             break;
         case ast::Type::Exp:
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(node, "gen method not found");
             break;
     }
-    assert(false);
+    llvm_pascal_s_report_semantic_error_n(node, "gen method not found");
     return nullptr;
 }
 
+
+void LLVMBuilder::report_semantic_error(const char *fn, const pascal_s::Pos *pos, std::string &&msg) {
+    errors.push_back(new PascalSSemanticError(fn, pos,
+                                              "semantic error: at function" + (fn + (": " + msg))));
+}
 
 

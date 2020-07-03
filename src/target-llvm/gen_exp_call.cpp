@@ -9,14 +9,11 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_exp_call(const ast::ExpCall *pCall) {
     // get function proto llvm_func
     Function *calleeFunc = modules.getFunction(pCall->fn->content);
     if (!calleeFunc) {
-        errors.push_back(new PascalSSemanticError(__FUNCTION__, "get callee error"));
-        assert(false);
+        llvm_pascal_s_report_semantic_error_n(pCall->fn, "get callee error");
         return nullptr;
     }
     if (calleeFunc->arg_size() != pCall->params->explist.size()) {
-        errors.push_back(new PascalSSemanticError(__FUNCTION__,
-                                                  "callee func param size does not match exp list size"));
-        assert(false);
+        llvm_pascal_s_report_semantic_error_n(pCall->params, "callee func param size does not match exp list size");
         return nullptr;
     }
     std::vector<Value *> args;
@@ -33,15 +30,11 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_exp_call(const ast::ExpCall *pCall) {
             argument_value = code_gen(pCall->params->explist[i]);
         }
         if (argument_value == nullptr) {
-            errors.push_back(new PascalSSemanticError(__FUNCTION__,
-                                                      "callee func gen exp failed"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(pCall->params->explist[i], "gen exp failed");
             gen_exp_failed = true;
         } else if (argument_proto->getType()->getTypeID() != argument_value->getType()->getTypeID()) {
             // todo: implicit type conversion feature
-            errors.push_back(new PascalSSemanticError(__FUNCTION__,
-                                                      "callee func gen exp type conflicted"));
-            assert(false);
+            llvm_pascal_s_report_semantic_warning_n(pCall->params->explist[i], "callee func gen exp type conflicted");
             gen_exp_failed = true;
         }
         args.push_back(argument_value);

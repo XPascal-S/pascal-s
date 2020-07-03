@@ -18,8 +18,7 @@ llvm::Value *LLVMBuilder::get_lvalue_pointer(const ast::Exp *lvalue) {
             exp_list = reinterpret_cast<const ast::Variable *>(lvalue)->id_var;
             break;
         default:
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "get_lvalue_pointer error"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(lvalue, "not ident or variable, should not have lvalue");
             return nullptr;
     }
 
@@ -29,34 +28,32 @@ llvm::Value *LLVMBuilder::get_lvalue_pointer(const ast::Exp *lvalue) {
          resolving_ctx; resolving_ctx = resolving_ctx->last) {
         auto &value_ctx = resolving_ctx->ctx;
         if (value_ctx->count(content)) {
+            auto ptr = (*value_ctx).at(content);
+
             if (resolving_ctx->array_infos->count(content)) {
                 if (exp_list != nullptr) {
                     offset.push_back(llvm::ConstantInt::get(ctx, llvm::APInt(64, 0, true)));
                     code_gen_offset(offset, resolving_ctx->array_infos->at(content), exp_list);
+                    if (offset.empty()) {
+                        return nullptr;
+                    } else {
+                        return ir_builder.CreateGEP(ptr, offset, "gep_tmp");
+                    }
                 } else {
-                    errors.push_back(new PascalSSemanticError(__FUNCTION__, "get_lvalue_pointer error 2"));
-                    assert(false);
+                    llvm_pascal_s_report_semantic_error_n(lvalue, "array does not indexed");
                     return nullptr;
                 }
             }
 
-            auto ptr = (*value_ctx).at(content);
-
-            if (offset.empty()) {
-                return ptr;
-            } else {
-                return ir_builder.CreateGEP(ptr, offset, "gep_tmp");
-            }
+            return ptr;
         }
         auto &const_ctx = resolving_ctx->const_ctx;
         if (const_ctx->count(content)) {
-            errors.push_back(new PascalSSemanticError(__FUNCTION__, "get_lvalue_pointer const error 3"));
-            assert(false);
+            llvm_pascal_s_report_semantic_error_n(lvalue, "could not move const value to lvalue");
             return nullptr;
         }
     }
-    errors.push_back(new PascalSSemanticError(__FUNCTION__, "get_lvalue_pointer not found error"));
-    assert(false);
+    llvm_pascal_s_report_semantic_error_n(lvalue, "variable not found");
     return nullptr;
 }
 
