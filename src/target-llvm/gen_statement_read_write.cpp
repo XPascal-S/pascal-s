@@ -7,17 +7,21 @@
 
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_read_statement(const ast::Read *stmt) {
+
+    // out_code( define constant from_value.type: %ret_value = 0 )
     Value *ret_value = llvm::Constant::getIntegerValue(
             llvm::IntegerType::get(ctx, 32), llvm::APInt(32, 0));
 
     for (auto ptr_proto: stmt->var_list->params) {
+
+        // gen_lvalue(var)
         auto res = get_lvalue_pointer(ptr_proto);
         if (res == nullptr) {
             ret_value = nullptr;
             continue;
         }
 
-        // get function proto llvm_func
+        // get function proto read_func corresponding var.type
         Function *calleeFunc = nullptr;
         switch (res->getType()->getPointerElementType()->getTypeID()) {
             default:
@@ -51,13 +55,16 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_read_statement(const ast::Read *stmt) 
             ret_value = nullptr;
             continue;
         }
+
+        // check proto
         assert(calleeFunc->arg_size() == 1);
+        assert(calleeFunc->getArg(0)->getType()->getTypeID() == res->getType()->getTypeID());
+
         std::vector<Value *> args;
-        auto *argument_proto = calleeFunc->getArg(0);
-        assert(argument_proto->getType()->getTypeID() == res->getType()->getTypeID());
         args.push_back(res);
 
-        // out_code(%call_stmt.name = call ret_type @call_stmt.name(args))
+        // out_code(%read_tmp = call i32 @read_func(args))
+        // out_code(%ret_value = %ret_value + %read_tmp)
         if (ret_value)
             ret_value = ir_builder.CreateAdd(ret_value, ir_builder.CreateCall(calleeFunc, args, "read_tmp"));
     }
@@ -66,17 +73,21 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_read_statement(const ast::Read *stmt) 
 
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_write_statement(const ast::Write *stmt) {
+
+    // out_code( define constant from_value.type: %ret_value = 0 )
     Value *ret_value = llvm::Constant::getIntegerValue(
             llvm::IntegerType::get(ctx, 32), llvm::APInt(32, 0));
 
     for (auto exp_proto: stmt->exp_list->explist) {
+
+        // exp = gen(exp)
         auto res = code_gen(exp_proto);
         if (res == nullptr) {
             ret_value = nullptr;
             continue;
         }
 
-        // get function proto llvm_func
+        // get function proto write_func corresponding exp.type
         Function *calleeFunc = nullptr;
         switch (res->getType()->getTypeID()) {
             case llvm::Type::IntegerTyID:
@@ -109,13 +120,16 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_write_statement(const ast::Write *stmt
             ret_value = nullptr;
             continue;
         }
+
+        // check proto
         assert(calleeFunc->arg_size() == 1);
+        assert(calleeFunc->getArg(0)->getType()->getTypeID() == res->getType()->getTypeID());
+
         std::vector<Value *> args;
-        auto *argument_proto = calleeFunc->getArg(0);
-        assert(argument_proto->getType()->getTypeID() == res->getType()->getTypeID());
         args.push_back(res);
 
-        // out_code(%call_stmt.name = call ret_type @call_stmt.name(args))
+        // out_code(%write_tmp = call i32 @write_func(args))
+        // out_code(%ret_value = %ret_value + %write_tmp)
         if (ret_value)
             ret_value = ir_builder.CreateAdd(ret_value, ir_builder.CreateCall(calleeFunc, args, "write_tmp"));
     }

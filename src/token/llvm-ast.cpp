@@ -5,6 +5,7 @@
 #include <pascal-s/exception.h>
 #include <pascal-s/llvm-ast.h>
 #include <cassert>
+#include <cstring>
 
 void ast::deleteAST(Node *node) {
     if (node == nullptr) {
@@ -147,7 +148,8 @@ void ast::printAST(const ast::Node *node, int dep) {
     switch (node->type) {
         default:
         case Type::Unknown:
-            throw RuntimeReinterpretASTException(node);
+            //throw RuntimeReinterpretASTException(node);
+            printf("type = Unknown\n");
         case Type::Program:
 #define cur_node (reinterpret_cast<const ast::Program*>(node))
             put_tab(dep);
@@ -435,21 +437,40 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
-        case Type::IdentList:
+        case Type::IdentList: {
 #define cur_node (reinterpret_cast<const ast::IdentList*>(node))
             put_tab(dep);
             printf("{\n");
             put_tab(dep + 1);
             printf("type = IdentList\n");
-            for (auto ident: cur_node->idents) {
-                put_tab(dep + 2);
-                printf("%s\n", convertToString(ident).c_str());
+
+            std::vector<const Identifier*> ident = cur_node->idents;
+            for(int i=0;i<ident.size();i++){
+                for (int j = 0; j < strlen(ident[i]->content); j++) {
+                    printf("%d ", ident[i]->content[j]);
+                }
+                printf("%s\n", ident[i]->content);
+                printf("%s\n", convertToString(ident[i]).c_str());
             }
+
+
+
+            //for (auto ident: cur_node->idents) {
+            //    put_tab(dep + 2);
+            //    printf("idlist\n");
+            //    put_tab(dep + 2);
+            //
+            //    /*for (int i = 0; i < strlen(ident->content); i++)
+            //        printf("%c ", ident->content[i]);
+            //    printf("%s\n", ident->content);*/
+            //
+            //    printf("%s\n", convertToString(ident).c_str());
+            //}
 
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
-            break;
+            break; }
         case Type::ConstDecl:
 #define cur_node (reinterpret_cast<const ast::ConstDecl*>(node))
             put_tab(dep);
@@ -659,6 +680,17 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
+        case Type::ExpKeyword:
+#define cur_node (reinterpret_cast<const ast::ExpKeyword*>(node))
+          put_tab(dep);
+          printf("{\n");
+          put_tab(dep + 1);
+          printf("type = Expkeyword\n");
+          put_tab(dep + 1);
+          printf("keyword value = %s\n", convertToString(cur_node->value).c_str());
+
+          put_tab(dep);
+          printf("}\n");
+#undef cur_node
     }
 }
-

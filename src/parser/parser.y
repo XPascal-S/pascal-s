@@ -118,11 +118,9 @@ program id lparen idlist rparen {
 }
 | program id{
   $$ = new ProgramHead((const ExpKeyword*)$1, (Ident*)$2);
-  /* ProgramHead *node = reinterpret_cast<ProgramHead *>(ast_reduce_nodes(2, Type::ProgramHead)); */
-  /* node->programKeyword = ( ExpKeyword*)(node->children.front()); */
-  /* node->children.pop_front(); */
-  /* node->id = ( Ident*)(node->children.front()); */
-  /* node->children.pop_front(); */
+}
+| program id lparen rparen{
+  $$ = new ProgramHead((const ExpKeyword*)$1, (Ident*)$2);
 }
 //| program id error idlist {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
 //| program id lparen idlist error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
@@ -273,7 +271,7 @@ sub:MARKER_SUB {
 }
 ;
 
-var_declarations:              { $$ = new ExpVoid();  /*  */ }
+var_declarations:              { $$ = nullptr;  /* new ExpVoid(); */ }
 |var var_declaration semicolon {
   $$ = $2;
   /* VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(3, Type::VarDecls)); */
@@ -525,7 +523,6 @@ var idlist colon basic_type         {
   /* node->children.pop_front(); */
 }
 | idlist colon basic_type       {
-  printf("????\n\n");
   $$ = new ParamSpec(nullptr, (IdentList*)$1, (TypeSpec*)$3);
   /* ParamSpec* node = reinterpret_cast<ParamSpec*> (ast_reduce_nodes(3, Type::ParamSpec)); */
 
@@ -566,8 +563,8 @@ const_declarations var_declarations compound_statement  {
 }
 ;
 
-compound_statement:
-begin statement_list end         {
+compound_statement:             { $$ = new CompoundStatement(); }
+| begin statement_list end         {
   $$ = new CompoundStatement((StatementList*)$2);
   /* CompoundStatement* node = reinterpret_cast<CompoundStatement*> (ast_reduce_nodes(3, Type::CompoundStatement)); */
   /* node->children.pop_front();//pop begin */
@@ -579,7 +576,6 @@ begin statement_list end         {
   /* node->children.pop_front();//pop end */
   //ast_reduce_nodes(3, Type::Statement);
 }
-             { $$ = new CompoundStatement(); }
 //| error statement_list end   {printf("\n\n\n\nMissing begin\n"); yyerrok;}
 //| begin statement_list error {printf("\n\n\n\nMissing end\n"); yyerrok;}
 ////| error statement_list error {printf("\n\n\n\nMissing begin and end\n"); yyerrok;}
@@ -587,7 +583,7 @@ begin statement_list end         {
 
 begin:KEYWORD_BEGIN{
   $$ = new ExpKeyword((const Keyword *)($1));
-             }
+}
 ;
 
 end:KEYWORD_END{
@@ -628,8 +624,8 @@ semicolon: MARKER_SEMICOLON{
   $$ = new ExpMarker((const Marker *)($1));
 }
 
-statement:                                            {$$ = new ExpVoid();}
-| variable assign expression                          {$$ = new ExecStatement(new ExpAssign((Variable*)$1, (Exp*)$3));}
+statement: //                                            {$$ = new ExpVoid();}
+variable assign expression                          {$$ = new ExecStatement(new ExpAssign((Variable*)$1, (Exp*)$3));}
 | procedure_call                                      {$$ = new ExecStatement((Exp*)$1);}
 | compound_statement                                  {$$ = $1;}
 | if expression then statement else statement         {$$ = new IfElseStatement((Exp*)$2, (Statement*)$4, (Statement*)$6);}
@@ -813,11 +809,7 @@ simple_expression addop term { $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*
 ;
 
 term : term mulop factor{
-  // printf("\n\ntest term\n\n");
-  // printAST((Exp*)$1);
-  // printAST((Exp*)$3);
-  $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3); // TODO error!
-  // printf("\n\n pass \n\n");
+  $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3);
 }
 | factor { $$=$1; };
 
@@ -829,7 +821,6 @@ factor:
   $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$3);
 }
 | lparen expression_list rparen {
-  printf("test factor\n\n\n");
   $$ = $2;
 }
 | not factor{

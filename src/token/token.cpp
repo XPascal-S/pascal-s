@@ -90,7 +90,10 @@ std::string convertToString(const Token *pToken) {
                     "{{ .type = LexerError .content = {} }}",
                     reinterpret_cast<const ErrorToken *>(pToken)->content);
         default:
-            throw RuntimeReinterpretTokenException(pToken);
+           return fmt::format(
+                "{{ .type = LexerError .content = {} }}",
+                "default type");
+            //throw RuntimeReinterpretTokenException(pToken);
     }
     assert(false);
 }

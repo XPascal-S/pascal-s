@@ -20,15 +20,15 @@ bool LLVMBuilder::doInitialization() {
     return fn_pass_manager.doInitialization();
 }
 
-LLVMBuilder::Value *LLVMBuilder::code_gen_function(const ast::Function *pFunction) {
+LLVMBuilder::Function *LLVMBuilder::code_gen_function(const ast::Function *pFunction) {
     switch (pFunction->type) {
         // return gen_program() if function.type == program
         case ast::Type::Program:
             return code_gen_program(
                     reinterpret_cast<const ast::Program *>(pFunction));
-            // else return gen_procedure() if function.type == procedure(with ret type or without)
+            // else return gen_subprogram() if function.type == subprogram (with ret type or without)
         case ast::Type::Subprogram:
-            return code_gen_procedure(
+            return code_gen_subprogram(
                     reinterpret_cast<const ast::Subprogram *>(pFunction));
         default:
             llvm_pascal_s_report_semantic_error_n(pFunction, "gen method not found");
@@ -77,7 +77,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen(const ast::Node *node) {
             return code_gen_program(
                     reinterpret_cast<const ast::Program *>(node));
         case ast::Type::Subprogram:
-            return code_gen_procedure(
+            return code_gen_subprogram(
                     reinterpret_cast<const ast::Subprogram *>(node));
         case ast::Type::Function:
             return code_gen_function(
@@ -194,8 +194,8 @@ void LLVMBuilder::report_semantic_error(const char *fn, const pascal_s::Pos *pos
 
 
 void LLVMBuilder::report_semantic_warning(const char *fn, const pascal_s::Pos *pos, std::string &&msg) {
-    errors.push_back(new PascalSSemanticError(fn, pos,
-                                              "semantic warning: at function" + (fn + (": " + msg))));
+    warnings.push_back(new PascalSSemanticError(fn, pos,
+                                                "semantic warning: at function" + (fn + (": " + msg))));
 }
 
 

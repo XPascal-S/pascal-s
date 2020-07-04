@@ -16,6 +16,8 @@ int64_t LLVMBuilder::calc_periods_size(const ast::ArrayTypeSpec *spec) {
                             "the {}-th dim range of array is invalid, want left range({}) > right range({})",
                             i + 1, p.first, p.second));
         }
+
+        // multiply each delta(period) * period.offset of periods
         ret *= (p.second - p.first + 1);
     }
     return ret;
