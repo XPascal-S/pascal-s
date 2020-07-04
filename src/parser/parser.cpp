@@ -2,7 +2,7 @@
 #include <iostream>
 #include <pascal-s/interface.h>
 
-#include <pascal-s/yacc_ast.h>
+#include <pascal-s/llvm-ast.h>
 #include <pascal-s/yacc_parser.h>
 #include <pascal-s/mock.h>
 

@@ -105,8 +105,8 @@ dot: MARKER_DOT{
 
 program_head:
 program id lparen idlist rparen {
-  $$ = new ProgramHead((const ExpKeyword*)$1, (Ident*)$2, (IdentList*)$4);
-  /* ProgramHead *node = reinterpret_cast<ProgramHead *>(ast_reduce_nodes(5, Type::ProgramHead)); */
+  $$ = new ProgramHead((const ExpKeyword*)$1, new Ident((const Identifier*)$2), (IdentList*)$4);
+    /* ProgramHead *node = reinterpret_cast<ProgramHead *>(ast_reduce_nodes(5, Type::ProgramHead)); */
   /* node->programKeyword = (const ExpKeyword*)(node->children.front()); */
   /* node->children.pop_front(); */
   /* node->id = (Ident*)(node->children.front()); */
@@ -131,7 +131,7 @@ program:KEYWORD_PROGRAM{
 }
 ;
 
-program_body : const_declarations var_declarations subprogram_declarations compound_statement {
+program_body: const_declarations var_declarations subprogram_declarations compound_statement {
   $$ = new ProgramBody((ConstDecls*)$1, (VarDecls*)$2, (SubprogramDecls*)$3, (CompoundStatement*)$4);
   /* ProgramBody *node = reinterpret_cast<ProgramBody*> (ast_reduce_nodes(4, Type::ProgramBody)); */
 
@@ -153,6 +153,7 @@ idlist:
 idlist comma id  {
   $$ = $1;
   ((IdentList*)$$)->idents.push_back((Identifier*)$3);
+  ast::copy_pos_with_check((IdentList*)$$, (Identifier*)$3);
   /* IdentList* node = reinterpret_cast<IdentList*> (ast_reduce_nodes(3, Type::IdentList)); */
   /* node->idents = reinterpret_cast<IdentList*>(node->children.front())->idents; */
   /* node->children.pop_front(); */
@@ -164,6 +165,7 @@ idlist comma id  {
 | id      {
   $$ = new IdentList();
   ((IdentList*)$$)->idents.push_back((Identifier*)$1);
+  ast::copy_pos_with_check((IdentList*)$$, (Identifier*)$1);
   /* IdentList* node = reinterpret_cast<IdentList*> (ast_reduce_nodes(1, Type::IdentList)); */
   /* Identifier* id = (Identifier*)(node->children.front()); */
   /* node->idents.push_back(id); */
@@ -181,7 +183,7 @@ const const_declaration semicolon {
   /* node->children.pop_front(); */
   /* node->children.pop_front();// pop semicolon */
 }
-|                                       { $$ = new ConstDecls(); }
+|                                       { $$ = nullptr; }
 //| error const_declaration semicolon {printf("\n\n\n\nMissing const\n"); yyerrok;}
 //| const const_declaration error {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
@@ -251,9 +253,12 @@ const_value:
 
 bool:BOOL{$$ = new ExpConstantBoolean(((const ConstantBoolean*)($1)));}
 
-num:INT {
+num: INT {
   $$ = new ExpConstantInteger(((const ConstantInteger*)($1)));
 }
+| REAL {
+  $$ = new ExpConstantReal(((const ConstantReal*)($1)));
+  }
 ;
 
 char:CHAR {
@@ -288,6 +293,7 @@ var_declaration semicolon idlist colon type   {
   $$ = $1;
   VarDecl* vdecl = new VarDecl((IdentList*)$3, (TypeSpec*)$5);
   ((VarDecls*)$$)->decls.push_back(vdecl);
+  ast::copy_pos_with_check((VarDecls*)$$, vdecl);
   /* VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(5, Type::VarDecls)); */
 
   /* node->decls = reinterpret_cast<VarDecls*>(node->children.front())->decls; */
@@ -308,7 +314,9 @@ var_declaration semicolon idlist colon type   {
 | idlist colon type {
   $$ = new VarDecls();
   VarDecl* vdecl = new VarDecl((IdentList*)$1, (TypeSpec*)$3);
+  ast::copy_pos_with_check((VarDecls*)$$, (IdentList*)$1);
   ((VarDecls*)$$)->decls.push_back(vdecl);
+  ast::copy_pos_with_check((VarDecls*)$$, vdecl);
   /* VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(3, Type::VarDecls)); */
 
   /* // const->idents = (IdentList*)(node->children.front()); */
@@ -333,6 +341,7 @@ basic_type           {
 | array lbracket period rbracket of basic_type         {
   $$ = $3;
   ((ArrayTypeSpec*)$$)->keyword = ((BasicTypeSpec*)$6)->keyword;
+  ast::copy_pos_with_check((ArrayTypeSpec*)$$, ((BasicTypeSpec*)$6)->keyword);
 }
 ;
 
@@ -377,6 +386,7 @@ period:
 period comma num range num        {
   $$ = $1;
   ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)((ConstantInteger*)(((ExpConstantInteger*)$3)->value)->attr), (int64_t)((ConstantInteger*)(((ExpConstantInteger*)$5)->value)->attr)));
+
   //ast_reduce_nodes(5, Type::ArrayTypeSpec);
 }
 | num range num                    {
@@ -391,7 +401,11 @@ range: MARKER_RANGE{
 
 subprogram_declarations:
 subprogram_declarations subprogram semicolon  {
-  $$ = $1;
+  if( $1 == nullptr ){
+    $$ = new SubprogramDecls();
+  }else{
+    $$ = $1;
+  }
   ((SubprogramDecls*)$$)->subprogram.push_back(((Subprogram*)$2));
   /* SubprogramDecls* node = reinterpret_cast<SubprogramDecls*> (ast_reduce_nodes(3, Type::SubprogramDecls)); */
 
@@ -405,7 +419,7 @@ subprogram_declarations subprogram semicolon  {
 
   //ast_reduce_nodes(3, Type::SubprogramDecls);
 }
-| { $$ = new SubprogramDecls();  }
+| { $$ = nullptr;  }
 //| subprogram_declarations subprogram error  {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
@@ -424,7 +438,6 @@ subprogram_head semicolon subprogram_body {
 
 subprogram_head:
 procedure id formal_parameter   {
-  // printf("subpro head \n\n");
   $$ = new SubprogramHead((const Keyword*)$1, (const Identifier*)$2, (ParamList*)$3, nullptr);
   /* SubprogramHead* node = reinterpret_cast<SubprogramHead*> (ast_reduce_nodes(3, Type::SubprogramHead)); */
 
@@ -458,19 +471,21 @@ procedure id formal_parameter   {
 }
 ;
 
-procedure:KEYWORD_PROCEDURE{
-  $$ = new ExpKeyword((const Keyword *)($1));
+procedure: KEYWORD_PROCEDURE{
+  // $$ = new ExpKeyword((const Keyword *)($1));
+  $$ = $1;
 }
 ;
 
-function:KEYWORD_FUNCTION{
-  $$ = new ExpKeyword((const Keyword *)($1));
+function: KEYWORD_FUNCTION{
+  // $$ = new ExpKeyword((const Keyword *)($1));
+  $$ = $1;
 }
 ;
 
 formal_parameter: { $$ =  nullptr; /* new ParamList(); */  }
-|lparen parameter_list rparen {
-  $$ = $1;
+| lparen parameter_list rparen {
+  $$ = $2;
   /* ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(3, Type::ParamList)); */
   /* node->children.pop_front();//pop lparen */
   /* node->params = reinterpret_cast<ParamList*>(node->children.front())->params; */
@@ -487,6 +502,7 @@ parameter_list:
 parameter_list semicolon parameter   {
   $$ = $1;
   ((ParamList*)$$)->params.push_back((ParamSpec*)$3);
+  ast::copy_pos_with_check((ParamList*)$$, (ParamSpec*)$3);
   /* ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(3, Type::ParamList)); */
   /* node->params = reinterpret_cast<ParamList*>(node->children.front())->params; */
   /* node->children.pop_front(); */
@@ -499,6 +515,7 @@ parameter_list semicolon parameter   {
 | parameter                     {
   $$ = new ParamList();
   ((ParamList*)$$)->params.push_back((ParamSpec*)$1);
+  ast::copy_pos_with_check((ParamList*)$$, (ParamSpec*)$1);
   /* ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(1, Type::ParamList)); */
   /* ParamSpec* param = (ParamSpec*)(node->children.front()); */
   /* node->children.pop_front(); */
@@ -563,7 +580,7 @@ const_declarations var_declarations compound_statement  {
 }
 ;
 
-compound_statement:             { $$ = new CompoundStatement(); }
+compound_statement:             { $$ = nullptr; }
 | begin statement_list end         {
   $$ = new CompoundStatement((StatementList*)$2);
   /* CompoundStatement* node = reinterpret_cast<CompoundStatement*> (ast_reduce_nodes(3, Type::CompoundStatement)); */
@@ -594,7 +611,10 @@ end:KEYWORD_END{
 statement_list:
 statement_list semicolon statement     {
   $$ = $1;
-  ((StatementList*)$$)->statement.push_back((Statement*)$3);
+  if( $3 != nullptr ){
+    ((StatementList*)$$)->statement.push_back((Statement*)$3);
+    ast::copy_pos_with_check((StatementList*)$$, (Statement*)$3);
+  }
   /* StatementList* node = reinterpret_cast<StatementList*> (ast_reduce_nodes(3, Type::StatementList)); */
 
   /* node->statement = reinterpret_cast<StatementList*>(node->children.front())->statement; */
@@ -610,7 +630,10 @@ statement_list semicolon statement     {
 }
 | statement {
   $$ = new StatementList();
-  ((StatementList*)$$)->statement.push_back((Statement*)$1);
+  if( $1 != nullptr ){
+    ((StatementList*)$$)->statement.push_back((Statement*)$1);
+    ast::copy_pos_with_check((StatementList*)$$, (Statement*)$1);
+  }
   /* StatementList* node = reinterpret_cast<StatementList*> (ast_reduce_nodes(1, Type::StatementList)); */
 
   /* Statement* sta = (Statement*)(node->children.front()); */
@@ -628,11 +651,27 @@ statement: //                                            {$$ = new ExpVoid();}
 variable assign expression                            {$$ = new ExecStatement(new ExpAssign((Variable*)$1, (Exp*)$3));}
 | procedure_call                                      {$$ = new ExecStatement((Exp*)$1);}
 | compound_statement                                  {$$ = $1;}
-| if expression then statement else statement         {$$ = new IfElseStatement((Exp*)$2, (Statement*)$4, (Statement*)$6);}
-| if expression then statement                        {$$ = new IfElseStatement((Exp*)$2, (Statement*)$4, nullptr);}
+| if expression then statement else statement
+                                      {
+                                        $$ = new IfElseStatement((Exp*)$2, (Statement*)$4, (Statement*)$6);
+                                        ast::copy_pos_between_tokens((IfElseStatement*)$$, (ExpKeyword*)$1, (Statement*)$6);
+                                      }
+| if expression then statement
+{
+  $$ = new IfElseStatement((Exp*)$2, (Statement*)$4, nullptr);
+  ast::copy_pos_between_tokens((IfElseStatement*)$$, (ExpKeyword*)$1, (Statement*)$4);
+}
 | for id assign expression to expression do statement {$$ = new ForStatement((const Identifier *)$2, (Exp*)$4, (Exp*)$6, (Statement*)$8);}
-| KEYWORD_READ lparen variable_list rparen            {$$ = new Read((VariableList*)$3);}
-| KEYWORD_WRITE lparen expression_list rparen         {$$ = new Write((ExpressionList*)$3);}
+| KEYWORD_READ lparen variable_list rparen
+{
+  $$ = new Read((VariableList*)$3);
+  ast::copy_pos_with_check((Read*)$$, (VariableList*)$3);
+}
+| KEYWORD_WRITE lparen expression_list rparen
+{
+  $$ = new Write((ExpressionList*)$3);
+  ast::copy_pos_with_check((Write*)$$, (ExpressionList*)$3);
+}
 ;
 
 for:KEYWORD_FOR{
@@ -654,7 +693,7 @@ assign: MARKER_ASSIGN{
   $$ = new ExpMarker((const Marker *)($1));
 }
 
-if : KEYWORD_IF {
+if: KEYWORD_IF {
   $$ = new ExpKeyword((const Keyword *)($1));
 }
 ;
@@ -664,14 +703,17 @@ then: KEYWORD_THEN {
 }
 ;
 
- else : KEYWORD_ELSE {
+ else: KEYWORD_ELSE {
    $$ = new ExpKeyword((const Keyword *)($1));
         }
 ;
 
 variable_list:
 variable_list comma variable  {
-  $$ = new VariableList();
+  $$ = $1 ;
+  ((VariableList*)$$)->params.push_back((Variable*)$3);
+  ast::copy_pos_with_check((VariableList*)$$, (Variable*)$3);
+  // $$ = new VariableList();
   /* VariableList* node = reinterpret_cast<VariableList*> (ast_reduce_nodes(3, Type::VariableList)); */
 
   /* node->params = reinterpret_cast<VariableList*>(node->children.front())->params; */
@@ -687,7 +729,9 @@ variable_list comma variable  {
 }
 | variable      {
   $$ = new VariableList();
+  // printf("\n\n% variable %s\n\n", convertToString((Variable*)$1).c_str());
   ((VariableList*)$$)->params.push_back((Variable*)$1);
+  ast::copy_pos_with_check((VariableList*)$$, (Variable*)$1);
   /* VariableList* node = reinterpret_cast<VariableList*> (ast_reduce_nodes(1, Type::VariableList)); */
 
   /* Variable* var = (Variable*)(node->children.front()); */
@@ -699,10 +743,11 @@ variable_list comma variable  {
 
 variable:
 id id_varpart  {
-  $$ = new Variable((Identifier*)$1, (ExpressionList*)$2);
   if( $2 == nullptr ){
-    ast::copy_pos_with_check((Variable*)$$, (Identifier*)$1);
+    $$ = new Ident((Identifier*)$1);
+    // ast::copy_pos_with_check((Variable*)$$, (Identifier*)$1);
   }else{
+    $$ = new Variable((Identifier*)$1, (ExpressionList*)$2);
     ast::copy_pos_between_tokens((Variable*)$$, (Identifier*)$1, (ExpressionList*)$2);
   }
 }
@@ -736,6 +781,9 @@ id          {
 }
 | id lparen expression_list rparen    {
   $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$3);
+}
+| id lparen rparen    {
+  $$ = new ExpCall((const Identifier*)$1, nullptr);
 }
 //| id error expression_list rparen {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
 //| id lparen expression_list error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
@@ -784,12 +832,12 @@ expression_list comma expression {
 //| expression_list error expression {printf("\n\n\n\nMissing comma\n"); yyerrok;}
 ;
 
-comma : MARKER_COMMA {
+comma: MARKER_COMMA {
   $$ = new ExpMarker((const Marker *)($1));
 }
 ;
 
-expression : simple_expression relop simple_expression {
+expression: simple_expression relop simple_expression {
   $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3);
 }
 | simple_expression { $$ = $1; }
@@ -800,13 +848,13 @@ simple_expression addop term { $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*
 | term { $$ = $1; }
 ;
 
-term : term mulop factor{
+term: term mulop factor{
   $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3);
 }
 | factor { $$=$1; };
 
 factor:
-| variable {
+variable {
   $$ = $1;
 }
 | id lparen expression_list rparen {
@@ -825,15 +873,15 @@ factor:
   $$ = $1;
   }
 
-not : MARKER_LOGICNOT {
+not: MARKER_LOGICNOT {
   $$ = new ExpMarker((const Marker *)($1));
 }
 
-unimus : MARKER_SUB {
+unimus: MARKER_SUB {
   $$ = new ExpMarker((const Marker *)($1));
 }
 
-addop : MARKER_ADD {
+addop: MARKER_ADD {
   $$ = new ExpMarker((const Marker *)($1));
 }
 | MARKER_SUB {
@@ -844,7 +892,7 @@ addop : MARKER_ADD {
   }
 
 
-mulop : MARKER_MUL {
+mulop: MARKER_MUL {
   $$ = new ExpMarker((const Marker *)($1));
 }
 | MARKER_DIV {
@@ -857,7 +905,7 @@ mulop : MARKER_MUL {
   $$ = new ExpMarker((const Marker *)($1));
   }
 
-relop : MARKER_EQ {
+relop: MARKER_EQ {
   $$ = new ExpMarker((const Marker *)($1));
 }
 | MARKER_NEQ {
