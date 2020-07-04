@@ -33,7 +33,10 @@ int main(int argc, const char *argv[]) {
         delete parser;
         exit(code);
     });
-
+    
+    ast::Node* root = parser->parse();
+    printAST(root, 0);
+    
     int code = compiler.work(argc, argv);
     delete parser;
     return code;
