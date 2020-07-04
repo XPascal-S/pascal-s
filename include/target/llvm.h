@@ -54,10 +54,12 @@ struct LLVMBuilder {
     Module modules;
     // 语义错误
     std::vector<PascalSSemanticError *> errors;
+    // 语义警告
+    std::vector<PascalSSemanticError *> warnings;
 
     //访问链结构体
     struct LinkedContext {
-        LinkedContext *last;
+        LinkedContext *last = nullptr;
         std::map<std::string, pascal_s::ArrayInfo *> *array_infos;
         std::map<std::string, llvm::Value *> *ctx;
         std::map<std::string, Value *> *const_ctx;

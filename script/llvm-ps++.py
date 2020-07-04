@@ -53,7 +53,7 @@ if isinstance(args.library, str):
     args.library = args.library.split(',')
 
 if not args.use_self_main:
-    args.library.append("C:/work/cpp/llvm-pascal-s/lib/libstdps.a")
+    args.library.append("C:/work/cpp/pascal-s/lib/libstdps.a")
 
 if args.enable_optimize_default and args.assembler == default_assembler:
     args.assembler = default_optimized_assembler

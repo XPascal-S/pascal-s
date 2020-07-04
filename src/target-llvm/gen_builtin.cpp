@@ -44,7 +44,59 @@ void LLVMBuilder::prepend_lib_standard_pascal_s() {
     Function::Create(pascal_s_declare_read_write_fn_prototype(llvm::Type::getDoubleTy(ctx)),
                      Function::ExternalLinkage, "write_real", modules);
 
+    // 有损转换函数
+    auto convert_prototype = llvm::FunctionType::get(
+            llvm::Type::getInt64Ty(ctx), {
+                    llvm::Type::getDoubleTy(ctx),
+            }, false);
+    Function::Create(convert_prototype, Function::ExternalLinkage, "ps_real_to_int64", modules);
+    convert_prototype = llvm::FunctionType::get(
+            llvm::Type::getInt32Ty(ctx), {
+                    llvm::Type::getDoubleTy(ctx),
+            }, false);
+    Function::Create(convert_prototype, Function::ExternalLinkage, "ps_real_to_int32", modules);
+#define pascal_s_declare_i64_convert_prototype(ret_proto)  llvm::FunctionType::get(\
+    ret_proto, {\
+            llvm::Type::getInt64Ty(ctx),\
+    }, false)
+    Function::Create(pascal_s_declare_i64_convert_prototype(llvm::Type::getDoubleTy(ctx)),
+                     Function::ExternalLinkage, "ps_int64_to_real", modules);
+    Function::Create(pascal_s_declare_i64_convert_prototype(llvm::Type::getInt32Ty(ctx)),
+                     Function::ExternalLinkage, "ps_int64_to_int32", modules);
+    Function::Create(pascal_s_declare_i64_convert_prototype(llvm::Type::getInt8Ty(ctx)),
+                     Function::ExternalLinkage, "ps_int64_to_char", modules);
+    Function::Create(pascal_s_declare_i64_convert_prototype(llvm::Type::getInt1Ty(ctx)),
+                     Function::ExternalLinkage, "ps_int64_to_boolean", modules);
+#define pascal_s_declare_i32_convert_prototype(ret_proto)  llvm::FunctionType::get(\
+    ret_proto, {\
+            llvm::Type::getInt32Ty(ctx),\
+    }, false)
+    Function::Create(pascal_s_declare_i32_convert_prototype(llvm::Type::getDoubleTy(ctx)),
+                     Function::ExternalLinkage, "ps_int32_to_real", modules);
+    Function::Create(pascal_s_declare_i32_convert_prototype(llvm::Type::getInt8Ty(ctx)),
+                     Function::ExternalLinkage, "ps_int32_to_char", modules);
+    Function::Create(pascal_s_declare_i32_convert_prototype(llvm::Type::getInt1Ty(ctx)),
+                     Function::ExternalLinkage, "ps_int32_to_boolean", modules);
+#define pascal_s_declare_i8_convert_prototype(ret_proto)  llvm::FunctionType::get(\
+    ret_proto, {\
+            llvm::Type::getInt8Ty(ctx),\
+    }, false)
+    Function::Create(pascal_s_declare_i8_convert_prototype(llvm::Type::getDoubleTy(ctx)),
+                     Function::ExternalLinkage, "ps_char_to_real", modules);
+    Function::Create(pascal_s_declare_i8_convert_prototype(llvm::Type::getInt1Ty(ctx)),
+                     Function::ExternalLinkage, "ps_char_to_boolean", modules);
+#define pascal_s_declare_i1_convert_prototype(ret_proto)  llvm::FunctionType::get(\
+    ret_proto, {\
+            llvm::Type::getInt1Ty(ctx),\
+    }, false)
+    Function::Create(pascal_s_declare_i8_convert_prototype(llvm::Type::getDoubleTy(ctx)),
+                     Function::ExternalLinkage, "ps_boolean_to_real", modules);
+
 #undef pascal_s_declare_read_write_fn_prototype
+#undef pascal_s_declare_i64_convert_prototype
+#undef pascal_s_declare_i32_convert_prototype
+#undef pascal_s_declare_i8_convert_prototype
+#undef pascal_s_declare_i1_convert_prototype
 }
 
 void LLVMBuilder::LinkedContext::deconstruct() const {

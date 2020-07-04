@@ -16,7 +16,7 @@ ast::ProgramHead *RecursiveParser<Lexer>::parse_program_head() {
     next_token();
 
     for (;;) {
-        if (predicate::is_semicolon(current_token)) {
+        if (current_token == nullptr || predicate::is_semicolon(current_token)) {
             return new ast::ProgramHead(new ast::ExpKeyword(program), new ast::Ident(ident), nullptr);
         }
         // maybe ( id list )

@@ -12,7 +12,7 @@ llvm::Type *LLVMBuilder::create_type(const ast::TypeSpec *spec) {
     } else if (spec->type == ast::Type::ArrayTypeSpec) {
 
         // multiply对应辅助函数calc_periods_size
-        // sz = multiply each delta(period) of periods
+        // sz = multiply each delta(period) * period.offset of periods
         auto sz = calc_periods_size(reinterpret_cast<const ast::ArrayTypeSpec *>(spec));
 
         if (sz <= 0) {

@@ -17,7 +17,7 @@ int64_t LLVMBuilder::calc_periods_size(const ast::ArrayTypeSpec *spec) {
                             i + 1, p.first, p.second));
         }
 
-        // multiply each delta(period) of periods
+        // multiply each delta(period) * period.offset of periods
         ret *= (p.second - p.first + 1);
     }
     return ret;

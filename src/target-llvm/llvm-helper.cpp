@@ -36,8 +36,7 @@ std::string format_type(llvm::Type *t) {
             return "array-" + format_type(t->getArrayElementType());
         default:
             std::cerr << "format llvm type error type id: " << t->getTypeID();
-            assert(false);
-            return "";
+            return "llvm-type(" + std::to_string(t->getTypeID()) + ")";
     }
 }
 

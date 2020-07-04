@@ -92,7 +92,7 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_subprogram(const ast::Subprogram *p
                 }
                 auto a = fn->getArg(arg_cursor++);
                 if (llvm_arg_type != a->getType()) {
-                    llvm_pascal_s_report_semantic_warning(
+                    llvm_pascal_s_report_semantic_error_n(
                             ident, fmt::format("the i-th param-proto type is incompatible, "
                                                "old type = {}, new type = {}",
                                                format_type(a->getType()), format_type(llvm_arg_type)));
