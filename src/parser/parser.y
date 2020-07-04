@@ -525,7 +525,6 @@ var idlist colon basic_type         {
   /* node->children.pop_front(); */
 }
 | idlist colon basic_type       {
-  printf("????\n\n");
   $$ = new ParamSpec(nullptr, (IdentList*)$1, (TypeSpec*)$3);
   /* ParamSpec* node = reinterpret_cast<ParamSpec*> (ast_reduce_nodes(3, Type::ParamSpec)); */
 
@@ -813,11 +812,7 @@ simple_expression addop term { $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*
 ;
 
 term : term mulop factor{
-  // printf("\n\ntest term\n\n");
-  // printAST((Exp*)$1);
-  // printAST((Exp*)$3);
-  $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3); // TODO error!
-  // printf("\n\n pass \n\n");
+  $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3);
 }
 | factor { $$=$1; };
 
@@ -829,7 +824,6 @@ factor:
   $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$3);
 }
 | lparen expression_list rparen {
-  printf("test factor\n\n\n");
   $$ = $2;
 }
 | not factor{
