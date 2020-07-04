@@ -566,8 +566,8 @@ const_declarations var_declarations compound_statement  {
 }
 ;
 
-compound_statement:
-begin statement_list end         {
+compound_statement:             { $$ = new CompoundStatement(); }
+| begin statement_list end         {
   $$ = new CompoundStatement((StatementList*)$2);
   /* CompoundStatement* node = reinterpret_cast<CompoundStatement*> (ast_reduce_nodes(3, Type::CompoundStatement)); */
   /* node->children.pop_front();//pop begin */
@@ -579,7 +579,6 @@ begin statement_list end         {
   /* node->children.pop_front();//pop end */
   //ast_reduce_nodes(3, Type::Statement);
 }
-             { $$ = new CompoundStatement(); }
 //| error statement_list end   {printf("\n\n\n\nMissing begin\n"); yyerrok;}
 //| begin statement_list error {printf("\n\n\n\nMissing end\n"); yyerrok;}
 ////| error statement_list error {printf("\n\n\n\nMissing begin and end\n"); yyerrok;}
