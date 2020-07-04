@@ -1,3 +1,4 @@
+/*
 #ifndef PASCAL_S_AST_H
 
 #define PASCAL_S_AST_H
@@ -704,3 +705,4 @@ struct Program : public Function {
 
 
 #endif
+ */
