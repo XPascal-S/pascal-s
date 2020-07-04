@@ -4,8 +4,8 @@
 #define YYDEBUG 1
 
 #include <pascal-s/llvm-ast.h>
-#include <pascal-s/yacc_bison.h>
 #include <pascal-s/parser.h>
+#include <pascal-s/yacc_bison.h>
 #include <cstdio>
 #include <pascal-s/interface.h>
 #include <pascal-s/mock.h>
@@ -30,7 +30,7 @@ public:
     ast::Node *parsed_result;
     // Node *ast_root;
 
-    std::vector<Node *> astTreeStack;
+    std::vector<ast::Node *> astTreeStack;
 
 private:
     int yylex(void **current_token) override {
@@ -42,42 +42,45 @@ private:
         switch (token->type) {
             case TokenType::Keyword: {
                 const Keyword *keyword_token = reinterpret_cast<const Keyword *>(token);
-                printf("\ntoken keyword: %x %s\n",
-                       static_cast<int>(KEYWORDTYPE(keyword_token->key_type)), convertToString(keyword_token).c_str());
+                // printf("\ntoken keyword: %x %s\n",
+                //        static_cast<int>(KEYWORDTYPE(keyword_token->key_type)), convertToString(keyword_token).c_str());
                 return static_cast<int>(KEYWORDTYPE(keyword_token->key_type));
             }
             case TokenType::Marker: {
                 const Marker *marker_token = reinterpret_cast<const Marker *>(token);
-                printf("\ntoken marker: %x %s\n",
-                       static_cast<int>(MARKERTYPE(marker_token->marker_type)), convertToString(marker_token).c_str());
+                // printf("\ntoken marker: %x %s\n",
+                //        static_cast<int>(MARKERTYPE(marker_token->marker_type)), convertToString(marker_token).c_str());
                 return static_cast<int>(MARKERTYPE(marker_token->marker_type));
             }
             default:
+                // printf("\ndefault token: %s\n", convertToString(token).c_str());
                 return static_cast<int>(token->type);
         }
         return static_cast<int>(token->type);
     }
 
     void access_ast(void *ast) override {
-        parsed_result = (ast::Node *) ast;
+        // parsed_result = (ast::Program *) ast;
+        parsed_result = reinterpret_cast<ast::Node*>(ast);
+        // printf("access ast %x %d\n\n", parsed_result, parsed_result->type);
+        // ast::printAST(parsed_result);
     }
-
-    Node *ast_reduce_nodes(int k, Type type) override {
-        // if (astTreeStack.size() < k) {
-        //   // Node* errNode = astTreeStack.back();
-        //   // throw RuntimeReinterpretASTException(*errNode);
-        // }
-        // Node *par_node = new Node(type);
-        // for (int i = 0; i < k; ++i) {
-        //   Node *n = astTreeStack.back();
-        //   astTreeStack.pop_back();
-        //   par_node->children.push_back(n);
-        // }
-        // reverse(par_node->children.begin(), par_node->children.end());
-        // astTreeStack.push_back(par_node);
-        // ast_root = par_node;
-        // // printAST(ast_root);
-        // return par_node;
+    Node* ast_reduce_nodes(int k, Type type) override {
+      // if (astTreeStack.size() < k) {
+      //   // Node* errNode = astTreeStack.back();
+      //   // throw RuntimeReinterpretASTException(*errNode);
+      // }
+      // Node *par_node = new Node(type);
+      // for (int i = 0; i < k; ++i) {
+      //   Node *n = astTreeStack.back();
+      //   astTreeStack.pop_back();
+      //   par_node->children.push_back(n);
+      // }
+      // reverse(par_node->children.begin(), par_node->children.end());
+      // astTreeStack.push_back(par_node);
+      // ast_root = par_node;
+      // // printAST(ast_root);
+      // return par_node;
     }
 };
 
@@ -92,8 +95,11 @@ public:
     virtual ~YaccParser() override;
 
     ast::Node *parse() {
-        assert(yyparser.parse() == 0);
-        return yyparser.parsed_result;
+      // assert(yyparser.parse() == 0);
+      if( yyparser.parse() != 0 ){
+        yyparser.parsed_result = nullptr;
+      }
+      return yyparser.parsed_result;
     }
 
     bool has_error() {
