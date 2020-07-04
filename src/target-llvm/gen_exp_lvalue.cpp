@@ -8,7 +8,7 @@
 
 llvm::Value *LLVMBuilder::get_lvalue_pointer(const ast::Exp *lvalue) {
 
-    const char *content = nullptr;
+    const char *content;
     const ast::ExpressionList *exp_list = nullptr;
     switch (lvalue->type) {
         case ast::Type::Ident:
@@ -29,15 +29,22 @@ llvm::Value *LLVMBuilder::get_lvalue_pointer(const ast::Exp *lvalue) {
          resolving_ctx; resolving_ctx = resolving_ctx->last) {
         auto &value_ctx = resolving_ctx->ctx;
         if (value_ctx->count(content)) {
+
+            // pointer stored in the this.ctx
             auto ptr = (*value_ctx).at(content);
 
+            // if lvalue is a array
             if (resolving_ctx->array_infos->count(content)) {
                 if (exp_list != nullptr) {
                     offset.push_back(llvm::ConstantInt::get(ctx, llvm::APInt(64, 0, true)));
+                    // offset = gen_offset(lvalue.explist)
                     code_gen_offset(offset, resolving_ctx->array_infos->at(content), exp_list);
                     if (offset.empty()) {
                         return nullptr;
                     } else {
+                        // 先取地址得到数组类型 [ lvalue.array_size x i64]，再取偏移量offset
+                        // 相当于lvalue在C代码中的类型相当于array_type **lvalue
+                        // 则此指令完成 gep_tmp = lvalue[0][offset]
                         return ir_builder.CreateGEP(ptr, offset, "gep_tmp");
                     }
                 } else {
@@ -46,6 +53,8 @@ llvm::Value *LLVMBuilder::get_lvalue_pointer(const ast::Exp *lvalue) {
                     return nullptr;
                 }
             }
+            // if lvalue is a variable
+            // else { do nothing }
 
             return ptr;
         }

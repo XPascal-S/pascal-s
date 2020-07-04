@@ -47,6 +47,7 @@ llvm::Value *LLVMBuilder::assign_lvalue(const pascal_s::Pos *lvalue_pos, Value *
         return nullptr;
     }
 
+    // out_code( store rhs into lvalue )
     ir_builder.CreateStore(rhs, ptr);
     return rhs;
 }

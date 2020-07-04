@@ -30,8 +30,10 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_exp_call(const ast::ExpCall *pCall) {
         auto *argument_proto = calleeFunc->getArg(i);
         Value *argument_value = nullptr;
         if (argument_proto->getType()->isPointerTy()) {
+            // args[i] = gen_lvalue(call_stmt.args[i])
             argument_value = get_lvalue_pointer(pCall->params->explist[i]);
         } else {
+            // args[i] = gen_rvalue(call_stmt.args[i])
             argument_value = code_gen(pCall->params->explist[i]);
         }
         if (argument_value == nullptr) {

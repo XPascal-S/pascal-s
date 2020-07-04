@@ -6,11 +6,14 @@
 #include <fmt/core.h>
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_unary_exp(const ast::UnExp *pExp) {
+
+    // lhs = gen_exp(un_exp.lhs)
     auto lhs = code_gen(pExp->lhs);
     if (lhs == nullptr) {
         return nullptr;
     }
 
+    // out_code( tmp_value = un_exp.op lhs )
     switch (pExp->marker->marker_type) {
         case MarkerType::LogicNot:
             switch (lhs->getType()->getTypeID()) {

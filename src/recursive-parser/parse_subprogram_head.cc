@@ -10,12 +10,41 @@ ast::SubprogramHead *RecursiveParser<Lexer>::parse_subprogram_head() {
 
     // program id
     auto fn_def = reinterpret_cast<const Keyword *>(current_token);
+    bool is_fn = predicate::is_function(fn_def);
     next_token();
     assert(fn_def->key_type == KeywordType::Procedure || fn_def->key_type == KeywordType::Function);
 
     auto ident = reinterpret_cast<const Identifier *>(current_token);
     expected_type(TokenType::Identifier);
     next_token();
+
+    for (;;) {
+
+        // may be end of function def
+        if (predicate::is_semicolon(current_token)) {
+
+            // function should with type spec
+            if (is_fn) {
+                errors.push_back(new PascalSParseExpectSGotError(
+                        __FUNCTION__, "function param list or function type spec", current_token));
+            }
+            return new ast::SubprogramHead(fn_def, ident, nullptr, nullptr);
+        }
+
+        // maybe param list
+        if (predicate::is_lparen(current_token)) { break; }
+
+        // may be function definition
+        if (is_fn && predicate::is_colon(current_token)) { break; }
+
+        if (!(predicate::is_begin(current_token) ||
+              predicate::is_var(current_token) ||
+              predicate::is_const(current_token))) {
+            skip_any_but_eof_token_v(&predicate::marker_lparen)
+        }
+        errors.push_back(new PascalSParseExpectVGotError(__FUNCTION__, &predicate::marker_lparen, current_token));
+        return new ast::SubprogramHead(fn_def, ident, nullptr, nullptr);
+    }
 
     // maybe param list
     ast::ParamList *pl = nullptr;
@@ -25,7 +54,7 @@ ast::SubprogramHead *RecursiveParser<Lexer>::parse_subprogram_head() {
 
     // function should with type
     ast::BasicTypeSpec *rt = nullptr;
-    if (predicate::is_function(fn_def)) {
+    if (is_fn) {
 
         // :
         expected_enum_type_r(predicate::is_colon, predicate::marker_colon, new ast::SubprogramHead(fn_def, ident, pl,

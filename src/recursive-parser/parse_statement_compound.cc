@@ -24,6 +24,8 @@ ast::CompoundStatement *RecursiveParser<Lexer>::_parse_compound_statement(std::s
     // end
     ast::Statement *stmt;
     while (!predicate::is_end(current_token)) {
+
+        // eof
         if (current_token == nullptr) {
             sl->statement.swap(stmts);
             return fall_expect_v(&predicate::keyword_end), block;
@@ -62,8 +64,8 @@ ast::CompoundStatement *RecursiveParser<Lexer>::_parse_compound_statement(std::s
                 sl->statement.swap(stmts);
                 return fall_expect_s("keyword 'end' or marker ';'"), block;
             }
-            // look ahead
 
+            // recover end
             maybe_recover_keyword(KeywordType::End)
             if (predicate::is_semicolon(current_token)) {
                 break;
@@ -79,7 +81,6 @@ ast::CompoundStatement *RecursiveParser<Lexer>::_parse_compound_statement(std::s
         }
 
         // eat ; if possible
-
         if (!predicate::is_semicolon(current_token)) {
             return fall_expect_v(&predicate::marker_semicolon), block;
         }

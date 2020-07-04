@@ -6,6 +6,27 @@
 template<typename Lexer>
 ast::ProgramBody *RecursiveParser<Lexer>::parse_program_body() {
 
+    // function procedure var const begin, all belong to keyword
+    if (current_token == nullptr || current_token->type != TokenType::Keyword) {
+        for (;;) {
+            if (current_token == nullptr) {
+                return fall_expect_t(TokenType::Keyword);
+            }
+            if (predicate::is_dot(current_token)) {
+                return fall_expect_t(TokenType::Keyword);
+            }
+
+            maybe_recover_keyword(KeywordType::Function)
+            maybe_recover_keyword(KeywordType::Procedure)
+            maybe_recover_keyword(KeywordType::Var)
+            maybe_recover_keyword(KeywordType::Const)
+            maybe_recover_keyword(KeywordType::Begin)
+
+            skip_error_token_t(TokenType::Keyword)
+            return fall_expect_t(TokenType::Keyword);
+        }
+    }
+
     // const declarations
     ast::ConstDecls *const_decls = nullptr;
     if (predicate::is_const(current_token)) {
@@ -24,12 +45,6 @@ ast::ProgramBody *RecursiveParser<Lexer>::parse_program_body() {
         fn_decls = parse_subprogram_decls();
     }
 
-//    std::set<const Token *> till;
-//    till.insert(reinterpret_cast<const Token *>(&predicate::marker_semicolon));
-//    // program statement
-//    return new ast::Program(
-//            program, ident, ident_list,
-//            const_decls, var_decls, fn_decls, parse_statement(&till));
-
+    // compound statement
     return new ast::ProgramBody(const_decls, var_decls, fn_decls, parse_compound_statement());
 }
