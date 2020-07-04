@@ -61,9 +61,9 @@ private:
 
     void access_ast(void *ast) override {
         // parsed_result = (ast::Program *) ast;
-      parsed_result = reinterpret_cast<ast::Node*>(ast);
+        parsed_result = reinterpret_cast<ast::Node*>(ast);
         // printf("access ast %x %d\n\n", parsed_result, parsed_result->type);
-        ast::printAST(parsed_result);
+        // ast::printAST(parsed_result);
     }
     Node* ast_reduce_nodes(int k, Type type) override {
       // if (astTreeStack.size() < k) {
@@ -95,8 +95,11 @@ public:
     virtual ~YaccParser() override;
 
     ast::Node *parse() {
-        assert(yyparser.parse() == 0);
-        return yyparser.parsed_result;
+      // assert(yyparser.parse() == 0);
+      if( yyparser.parse() != 0 ){
+        yyparser.parsed_result = nullptr;
+      }
+      return yyparser.parsed_result;
     }
 
     bool has_error() {

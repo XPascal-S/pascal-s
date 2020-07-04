@@ -13,9 +13,11 @@ using namespace ast;
 %token  INT                5
 %token  BOOL               6
 %token  IDENT              7
-//                 %token   MARKER  8
+ //                 %token   MARKER  8
 %token  NULLPTR            9
-%token  LENGTH             10
+%token  ERRORTOKEN         10
+%token  COMMENT            11
+%token  LENGTH             12
 
 //                 KEYWORD  =       0x100  +  type
 %token  KEYWORD_PROGRAM    0x100
@@ -94,7 +96,6 @@ programstruct:  program_head semicolon program_body dot {
  }
 //|  program_head semicolon program_body error{ printf("\n\n\n\n Missing dot\n"); yyerrok; }
 //|  program_head error program_body { printf("\n\n\n\nMissing semicolon\n"); yyerrok; }
-
 ;
 
 dot: MARKER_DOT{
@@ -425,6 +426,7 @@ subprogram_head semicolon subprogram_body {
 
 subprogram_head:
 procedure id formal_parameter   {
+  // printf("subpro head \n\n");
   $$ = new SubprogramHead((const Keyword*)$1, (const Identifier*)$2, (ParamList*)$3, nullptr);
   /* SubprogramHead* node = reinterpret_cast<SubprogramHead*> (ast_reduce_nodes(3, Type::SubprogramHead)); */
 
@@ -468,7 +470,7 @@ function:KEYWORD_FUNCTION{
 }
 ;
 
-formal_parameter: { $$ = new ParamList();  /*  */  }
+formal_parameter: { $$ =  nullptr; /* new ParamList(); */  }
 |lparen parameter_list rparen {
   $$ = $1;
   /* ParamList* node =  reinterpret_cast<ParamList*> (ast_reduce_nodes(3, Type::ParamList)); */
@@ -702,15 +704,15 @@ variable_list comma variable  {
 variable:
 id id_varpart  {
   $$ = new Variable((Identifier*)$1, (ExpressionList*)$2);
-  /* Variable* node = reinterpret_cast<Variable*> (ast_reduce_nodes(2, Type::Variable)); */
-  /* node->id = (Identifier*)(node->children.front()); */
-  /* node->children.pop_front(); */
-  /* node->id_var = (ExpressionList*)(node->children.front()); */
-  /* node->children.pop_front(); */
+  if( $2 == nullptr ){
+    ast::copy_pos_with_check((Variable*)$$, (Identifier*)$1);
+  }else{
+    ast::copy_pos_between_tokens((Variable*)$$, (Identifier*)$1, (ExpressionList*)$2);
+  }
 }
 ;
 
-id_varpart:           { $$ = new ExpressionList(); }      /*empty*/
+id_varpart:           { $$ = nullptr; /* new ExpressionList(); */ }      /*empty*/
 | lbracket expression_list rbracket {
   $$ = $2;
   /* ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(3, Type::ExpressionList)); */
@@ -769,6 +771,7 @@ expression_list:
 expression_list comma expression {
   $$ = $1;
   ((ExpressionList*)$$)->explist.push_back((Exp*)$3);
+  ast::copy_pos_with_check((ExpressionList*)$$, (Exp*)$3);
   /* ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(3, Type::ExpressionList)); */
 
   /* node->explist = reinterpret_cast<ExpressionList*> (node->children.front())->explist; */
@@ -783,6 +786,7 @@ expression_list comma expression {
 | expression        {
   $$ = new ExpressionList();
   ((ExpressionList*)$$)->explist.push_back((Exp*)$1);
+  ast::copy_pos_with_check((ExpressionList*)$$, (Exp*)$1);
   /* ExpressionList* node = reinterpret_cast<ExpressionList*> (ast_reduce_nodes(1, Type::ExpressionList)); */
 
   /* Exp* exp = (Exp*)(node->children.front()); */
@@ -798,7 +802,7 @@ comma : MARKER_COMMA {
 ;
 
 expression : simple_expression relop simple_expression {
-  $$ = new ExpAssign((Exp*)$1, (Exp*)$3);
+  $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3);
 }
 | simple_expression { $$ = $1; }
 ;
@@ -809,6 +813,7 @@ simple_expression addop term { $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*
 ;
 
 term : term mulop factor{
+  // printf("\n\ntest term\n\n");
   // printAST((Exp*)$1);
   // printAST((Exp*)$3);
   $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3); // TODO error!
@@ -824,6 +829,7 @@ factor:
   $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$3);
 }
 | lparen expression_list rparen {
+  printf("test factor\n\n\n");
   $$ = $2;
 }
 | not factor{
