@@ -8,12 +8,14 @@
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_if_else_statement(const ast::IfElseStatement *if_else_stmt) {
 
+    // cond_value = gen_exp(if_else_stmt.cond)
     Value *cond = code_gen(if_else_stmt->expression);
     if (!cond) {
         llvm_pascal_s_report_semantic_error_n(if_else_stmt->expression, "gen expression error");
         return nullptr;
     }
 
+    // out_code(cond = cond_value is zero value)
     switch (cond->getType()->getTypeID()) {
         case llvm::Type::TypeID::IntegerTyID:
             cond = ir_builder.CreateICmpNE(
@@ -34,11 +36,16 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_if_else_statement(const ast::IfElseSta
 
 
     Function *cur_function = ir_builder.GetInsertBlock()->getParent();
+    // push then block
+    // create basic block then_block
     llvm::BasicBlock *then_block = llvm::BasicBlock::Create(ctx, "then", cur_function);
+    // create basic block else_block
     llvm::BasicBlock *else_block = llvm::BasicBlock::Create(ctx, "else");
+    // create basic block merge_block
     llvm::BasicBlock *merge_block = llvm::BasicBlock::Create(ctx, "follow_ie");
 
     // link before if to -> cond ? then_block : else_block
+    // out_code(cond_br cond ? then_block : else_block)
     ir_builder.CreateCondBr(cond, then_block, else_block);
 
     // already pushed then block

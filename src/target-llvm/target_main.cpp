@@ -65,6 +65,13 @@ struct ErrorProxy<PascalSSemanticError *> {
 
     auto value = builder.code_gen(task->source);
 
+    if (!builder.warnings.empty()) {
+        for (auto e : builder.warnings) {
+            feature::format_line_column_error(
+                    task->f, ErrorProxy<PascalSSemanticError *>(e), task->os, task->file_path);
+        }
+    }
+
     if (!builder.errors.empty()) {
         for (auto e : builder.errors) {
             feature::format_line_column_error(

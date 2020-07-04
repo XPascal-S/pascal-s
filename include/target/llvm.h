@@ -54,10 +54,12 @@ struct LLVMBuilder {
     Module modules;
     // 语义错误
     std::vector<PascalSSemanticError *> errors;
+    // 语义警告
+    std::vector<PascalSSemanticError *> warnings;
 
     //访问链结构体
     struct LinkedContext {
-        LinkedContext *last;
+        LinkedContext *last = nullptr;
         std::map<std::string, pascal_s::ArrayInfo *> *array_infos;
         std::map<std::string, llvm::Value *> *ctx;
         std::map<std::string, Value *> *const_ctx;
@@ -135,7 +137,8 @@ struct LLVMBuilder {
 
     Value *code_gen(const ast::Node *node);
 
-    Value *code_gen_function(const ast::Function *pFunction);
+    // ast::Function function: -> llvm::Function
+    Function *code_gen_function(const ast::Function *pFunction);
 
     Value *code_gen_statement(const ast::Statement *stmt);
 
@@ -149,53 +152,71 @@ struct LLVMBuilder {
 
     // gen function
 
-    Function *code_gen_program(const ast::Program *pProgram);
+    // ast::Program program: -> llvm::Function
+    Function *code_gen_program(const ast::Program *program);
 
-    Function *code_gen_procedure(const ast::Subprogram *pSubprogram);
+    // ast::Subprogram subprogram: -> llvm::Function
+    Function *code_gen_subprogram(const ast::Subprogram *subprogram);
 
     // gen statement
 
-    Value *code_gen_statement_block(const ast::StatementList *pBlock);
+    // ast::StatementBlock block: -> llvm::Value
+    Value *code_gen_statement_block(const ast::StatementList *block);
 
-    Value *code_gen_exec_statement(const ast::ExecStatement *pStatement) {
-        return code_gen(pStatement->exp);
-    }
+    // ast::ExecStatement exec_stmt: -> llvm::Value
+    Value *code_gen_exec_statement(const ast::ExecStatement *exec_stmt);
 
+    // ast::IfElseStatement if_else_stmt: -> llvm::Value
     Value *code_gen_if_else_statement(const ast::IfElseStatement *if_else_stmt);
 
+    // ast::ForStatement for_stmt: -> llvm::Value
     Value *code_gen_for_statement(const ast::ForStatement *for_stmt);
+
+    // ast::ReadStatement read_stmt: -> llvm::Value
+    Value *code_gen_read_statement(const ast::Read *read_stmt);
+
+    // ast::WriteStatement write_stmt: -> llvm::Value
+    Value *code_gen_write_statement(const ast::Write *write_stmt);
 
     // gen complex expression
 
-    Value *code_gen_exp_call(const ast::ExpCall *pCall);
+    // ast::ExpCall call_stmt: -> llvm::Value
+    Value *code_gen_exp_call(const ast::ExpCall *call_stmt);
 
-    Value *code_gen_exp_assign(const ast::ExpAssign *pAssign);
+    // ast::ExpAssign assign_exp: -> llvm::Value
+    Value *code_gen_exp_assign(const ast::ExpAssign *bi_exp);
 
-    Value *code_gen_binary_exp(const ast::BiExp *pExp);
+    // ast::ExpCall bi_exp: -> llvm::Value
+    Value *code_gen_binary_exp(const ast::BiExp *bi_exp);
 
-    Value *code_gen_unary_exp(const ast::UnExp *pExp);
-
-    Value *code_gen_read_statement(const ast::Read *stmt);
-
-    Value *code_gen_write_statement(const ast::Write *stmt);
+    // ast::UnExp un_exp: -> llvm::Value
+    Value *code_gen_unary_exp(const ast::UnExp *un_exp);
 
     // gen expression factor
 
+    // ast::ConstantXXX const: -> llvm::Value
     Value *code_gen_exp_constant_integer(const ast::ExpConstantInteger *pInteger);
 
+    // ast::ConstantXXX const: -> llvm::Value
     Value *code_gen_exp_constant_char(const ast::ExpConstantChar *pChar);
 
+    // ast::ConstantXXX const: -> llvm::Value
     Value *code_gen_exp_constant_real(const ast::ExpConstantReal *pReal);
 
+    // ast::ConstantXXX const: -> llvm::Value
     Value *code_gen_exp_constant_boolean(const ast::ExpConstantBoolean *pBoolean);
 
+    // ast::ConstantXXX const: -> llvm::Value
     Value *code_gen_exp_constant_string(const ast::ExpConstantString *);
 
-    Value *get_lvalue_pointer(const ast::Exp *lvalue);
-
+    // ast::ExpIdent ident: -> llvm::Value
     Value *code_gen_ident(const ast::Ident *pIdent);
 
-    Value *code_gen_variable(const ast::Variable *node);
+    // ast::Exp lvalue: -> llvm::Value
+    Value *get_lvalue_pointer(const ast::Exp *lvalue);
+
+    // ast::Variable var: -> llvm::Value
+    Value *code_gen_variable(const ast::Variable *var);
 };
 
 

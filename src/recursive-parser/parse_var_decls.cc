@@ -3,8 +3,6 @@
 //
 
 
-#include <pascal-s/parser_recursive.h>
-
 template<typename Lexer>
 ast::VarDecls *RecursiveParser<Lexer>::parse_var_decls() {
 

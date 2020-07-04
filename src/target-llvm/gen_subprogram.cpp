@@ -5,10 +5,10 @@
 #include <target/llvm.h>
 #include <fmt/core.h>
 
-LLVMBuilder::Function *LLVMBuilder::code_gen_procedure(const ast::Subprogram *pSubprogram) {
+LLVMBuilder::Function *LLVMBuilder::code_gen_subprogram(const ast::Subprogram *pSubprogram) {
     Function *fn = modules.getFunction(pSubprogram->subhead->name->content);
 
-    // create function proto llvm_func
+    // check and gen function proto llvm_func
     if (!fn) {
         llvm::Type *llvm_ret_type = nullptr;
         if (pSubprogram->subhead->ret_type == nullptr) {
@@ -92,7 +92,7 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_procedure(const ast::Subprogram *pS
                 }
                 auto a = fn->getArg(arg_cursor++);
                 if (llvm_arg_type != a->getType()) {
-                    llvm_pascal_s_report_semantic_warning(
+                    llvm_pascal_s_report_semantic_error_n(
                             ident, fmt::format("the i-th param-proto type is incompatible, "
                                                "old type = {}, new type = {}",
                                                format_type(a->getType()), format_type(llvm_arg_type)));
@@ -104,18 +104,21 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_procedure(const ast::Subprogram *pS
         return fn;
     }
 
-    // out_code('entry:')
+    // function_entry = out_code('entry:')
     llvm::BasicBlock *body = llvm::BasicBlock::Create(ctx, "entry", fn);
     ir_builder.SetInsertPoint(body);
 
     // create local const map this.const_ctx
     std::map<std::string, Value *> program_const_this;
+    // insert subprogram.var_decls to this.ctx
     insert_const_decls(program_const_this, pSubprogram->subbody->constdecls);
     // create local variable map this.ctx
     std::map<std::string, pascal_s::ArrayInfo *> program_array_infos;
     std::map<std::string, llvm::Value *> program_this;
+    // insert subprogram.const_decls to this.const_ctx
     insert_var_decls(fn, program_array_infos, program_this, pSubprogram->subbody->vardecls);
 
+    // check this.const_ctx and this.ctx to avoid conflict
     if (pSubprogram->subbody->constdecls != nullptr) {
         for (auto d : pSubprogram->subbody->constdecls->decls) {
             if (program_this.count(d->ident->content)) {
@@ -124,16 +127,29 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_procedure(const ast::Subprogram *pS
             }
         }
     }
-    if (pSubprogram->subhead->decls) {
-        insert_param_decls(pSubprogram->subhead->decls->visit_pos(), fn, program_this, program_const_this);
-    }
 
     // push 'this' into scope stack
     auto link = LinkedContext{scope_stack, &program_array_infos, &program_this, &program_const_this};
     scope_stack = &link;
 
-    // out_code( define variable ret_type: %procedure.name )
-    llvm::IRBuilder<> dfn_block(&fn->getEntryBlock(), fn->getEntryBlock().begin());
+//    if (pSubprogram->subbody->subprogram != nullptr) {
+//        for (auto fn_decl : pSubprogram->subbody->subprogram->subprogram) {
+//            if (program_this.count(fn_decl->subhead->name->content) ||
+//                program_const_this.count(fn_decl->subhead->name->content)) {
+//                llvm_pascal_s_report_semantic_error_n(
+//                        fn_decl->subhead->name,
+//                        fmt::format("function redeclared, another variable is in this context"));
+//            }
+//            code_gen_subprogram(fn_decl);
+//        }
+//    }
+
+    // insert subprogram.param_decls to this.ctx and this.const_ctx
+    if (pSubprogram->subhead->decls) {
+        insert_param_decls(pSubprogram->subhead->decls->visit_pos(), fn, program_this, program_const_this);
+    }
+
+    // out_code( define variable ret_type: %subprogram.name )
     if (!fn->getReturnType()->isVoidTy()) {
         if (program_this.count(pSubprogram->subhead->name->content) ||
             program_const_this.count(pSubprogram->subhead->name->content)) {
@@ -142,9 +158,14 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_procedure(const ast::Subprogram *pS
                     fmt::format("ident redeclared"));
         }
 
+        llvm::IRBuilder<> dfn_block(&fn->getEntryBlock(), fn->getEntryBlock().begin());
         program_this[pSubprogram->subhead->name->content] = dfn_block.CreateAlloca(
                 fn->getReturnType(), nullptr, pSubprogram->subhead->name->content);
     }
+
+    // 重新设置builder指向的basic block，虽然没有函数嵌套，但执行这个动作可以保证生成是正确的
+    // reset_insert_point(function_entry)
+    ir_builder.SetInsertPoint(body);
 
     // generate body
     if (pSubprogram->subbody->compound->state->statement.empty() ||
@@ -154,11 +175,12 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_procedure(const ast::Subprogram *pS
             // out_code( ret void )
             ir_builder.CreateRetVoid();
         } else {
-            // out_code( %ret_tmp = load ret_type from %procedure.name )
+            // out_code( %ret_tmp = load ret_type from %subprogram.name )
             // out_code( ret ret_type: %ret_tmp )
             ir_builder.CreateRet(
                     ir_builder.CreateLoad(program_this[pSubprogram->subhead->name->content], "ret_tmp"));
         }
+
         llvm::verifyFunction(*fn);
         fn_pass_manager.run(*fn);
 

@@ -11,7 +11,8 @@ ast::ConstDecls *RecursiveParser<Lexer>::parse_const_decls() {
 
     // const
     expected_enum_type_r_e(predicate::is_const, predicate::keyword_const, nullptr,
-                           || predicate::is_var(current_token));
+                           || predicate::is_var(current_token) || predicate::is_function(current_token)
+                                   || predicate::is_procedure(current_token) || predicate::is_begin(current_token));
     auto const_tok = current_token;
     next_token();
 
@@ -49,12 +50,15 @@ ast::ConstDecls *RecursiveParser<Lexer>::_parse_const_decls(ast::ConstDecls *dec
             }
             maybe_recover_keyword(KeywordType::Var)
             maybe_recover_keyword(KeywordType::Begin)
+            maybe_recover_keyword(KeywordType::Function)
+            maybe_recover_keyword(KeywordType::Procedure)
 
-            skip_any_but_eof_token_s("next const decl or var/begin");
-            return fall_expect_s("next const decl or var/begin"), decls;
+            skip_any_but_eof_token_s("next const decl or var/begin/function/procedure");
+            return fall_expect_s("next const decl or var/begin/function/procedure"), decls;
         }
 
-        if (predicate::is_var(current_token) || predicate::is_begin(current_token)) {
+        if (predicate::is_var(current_token) || predicate::is_function(current_token)
+            || predicate::is_procedure(current_token) || predicate::is_begin(current_token)) {
             return decls;
         }
     }
@@ -69,7 +73,8 @@ ast::ConstDecl *RecursiveParser<Lexer>::parse_const_decl() {
 
     // =
     expected_enum_type_r_e(predicate::is_eq, predicate::marker_eq, nullptr,
-                           || predicate::is_var(current_token));
+                           || predicate::is_var(current_token) || predicate::is_function(current_token)
+                                   || predicate::is_procedure(current_token) || predicate::is_begin(current_token));
     next_token();
 
     // const exp
@@ -77,7 +82,8 @@ ast::ConstDecl *RecursiveParser<Lexer>::parse_const_decl() {
 
     // ;
     expected_enum_type_r_e(predicate::is_semicolon, predicate::marker_semicolon, decl,
-                           || predicate::is_var(current_token));
+                           || predicate::is_var(current_token) || predicate::is_function(current_token)
+                                   || predicate::is_procedure(current_token) || predicate::is_begin(current_token));
     next_token();
 
     return decl;

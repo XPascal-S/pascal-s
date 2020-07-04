@@ -6,7 +6,10 @@
 #include <fmt/core.h>
 
 LLVMBuilder::Value *LLVMBuilder::code_gen_binary_exp(const ast::BiExp *pExp) {
+
+    // lhs = gen_exp(bi_exp.lhs)
     auto lhs = code_gen(pExp->lhs);
+    // rhs = gen_exp(bi_exp.rhs)
     auto rhs = code_gen(pExp->rhs);
     if (lhs == nullptr || rhs == nullptr) {
         return nullptr;
@@ -16,6 +19,7 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_binary_exp(const ast::BiExp *pExp) {
         return nullptr;
     }
 
+    // out_code( tmp_value = lhs bi_exp.op rhs )
     switch (lhs->getType()->getTypeID()) {
         case llvm::Type::IntegerTyID:
             switch (pExp->marker->marker_type) {
