@@ -229,7 +229,7 @@ namespace target_c {
                     return 1;
                 default:
                     addErrMsg(node, "no const type match");
-                    assert(false);
+//                    assert(false);
                     return 0;
             }
         }
