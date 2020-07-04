@@ -42,18 +42,18 @@ private:
         switch (token->type) {
             case TokenType::Keyword: {
                 const Keyword *keyword_token = reinterpret_cast<const Keyword *>(token);
-                printf("\ntoken keyword: %x %s\n",
-                       static_cast<int>(KEYWORDTYPE(keyword_token->key_type)), convertToString(keyword_token).c_str());
+                // printf("\ntoken keyword: %x %s\n",
+                //        static_cast<int>(KEYWORDTYPE(keyword_token->key_type)), convertToString(keyword_token).c_str());
                 return static_cast<int>(KEYWORDTYPE(keyword_token->key_type));
             }
             case TokenType::Marker: {
                 const Marker *marker_token = reinterpret_cast<const Marker *>(token);
-                printf("\ntoken marker: %x %s\n",
-                       static_cast<int>(MARKERTYPE(marker_token->marker_type)), convertToString(marker_token).c_str());
+                // printf("\ntoken marker: %x %s\n",
+                //        static_cast<int>(MARKERTYPE(marker_token->marker_type)), convertToString(marker_token).c_str());
                 return static_cast<int>(MARKERTYPE(marker_token->marker_type));
             }
             default:
-                printf("\ndefault token: %s\n", convertToString(token).c_str());
+                // printf("\ndefault token: %s\n", convertToString(token).c_str());
                 return static_cast<int>(token->type);
         }
         return static_cast<int>(token->type);
