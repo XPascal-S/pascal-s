@@ -61,6 +61,7 @@ int main(){
 [[maybe_unused]] int target_compile(int, const char **, CompilerTargetTask * task) {
     target_c::Buffer tempBuffer(std::cout);
     std::vector<std::string> include_files;
+    include_files.push_back("stdio.h");
     target_c::CBuilder theBuilder(include_files, tempBuffer);
     theBuilder.code_gen(task->source);
 
