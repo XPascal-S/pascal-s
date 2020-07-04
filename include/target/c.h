@@ -123,14 +123,7 @@ namespace target_c {
             this->startST_pointer = new SymbolTable;
             this->nowST_pointer = this->startST_pointer;
             this->nowST_pointer->prev = NULL;
-            this->nowST_pointer->tableName = "main";
-            struct FuncInfo functionInfo;
-            functionInfo.funcName = "main";
-            functionInfo.returnType = "int";
-            functionInfo.funcBody = "";
-            functionInfo.formalPara = "";
-            functionInfo.additionPara = "";
-            this->functionBuff.insert(std::pair<std::string, struct FuncInfo>(this->nowST_pointer->tableName, functionInfo));
+            //this->nowST_pointer->tableName = "main";
         }
 
         ~CBuilder() {
@@ -189,7 +182,7 @@ namespace target_c {
 
             //输出函数定义
             for (auto x : this->functionBuff) {
-                if(x.first == "main")
+                if(x.first == this->startST_pointer->tableName)
                     continue;
                 x.second.formalPara.pop_back();
                 x.second.formalPara.pop_back();
@@ -396,6 +389,14 @@ namespace target_c {
         }
 
         int code_gen_programHead(const ProgramHead *node) {
+            this->startST_pointer->tableName = node->id->ident->content;
+            struct FuncInfo functionInfo;
+            functionInfo.funcName = node->id->ident->content;
+            functionInfo.returnType = "int";
+            functionInfo.funcBody = "";
+            functionInfo.formalPara = "";
+            functionInfo.additionPara = "";
+            this->functionBuff.insert(std::pair<std::string, struct FuncInfo>(node->id->ident->content, functionInfo));
             // Currently there is no corresponding relation
             // from pascal head to C head
             return OK;
@@ -685,6 +686,10 @@ namespace target_c {
                 //Take Ident as variable
                 auto *tempVariable = new Variable;
                 tempVariable->id = node->ident;
+                tempVariable->line = node->line;
+                tempVariable->column = node->column;
+                tempVariable->length = node->length;
+                tempVariable->offset = node->offset;
                 delete node;
                 return code_gen_Variable(tempVariable, buffer, expType);
             }
