@@ -117,10 +117,10 @@ program id lparen idlist rparen {
   /* node->children.pop_front();//pop rparen */
 }
 | program id{
-  $$ = new ProgramHead((const ExpKeyword*)$1, (Ident*)$2);
+  $$ = new ProgramHead((const ExpKeyword*)$1, new Ident((const Identifier*)$2));
 }
 | program id lparen rparen{
-  $$ = new ProgramHead((const ExpKeyword*)$1, (Ident*)$2);
+  $$ = new ProgramHead((const ExpKeyword*)$1, new Ident((const Identifier*)$2));
 }
 //| program id error idlist {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
 //| program id lparen idlist error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
@@ -376,12 +376,12 @@ boolean:KEYWORD_BOOLEAN{
 period:
 period comma num range num        {
   $$ = $1;
-  ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)$3, (int64_t)$5));
+  ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)((ConstantInteger*)(((ExpConstantInteger*)$3)->value)->attr), (int64_t)((ConstantInteger*)(((ExpConstantInteger*)$5)->value)->attr)));
   //ast_reduce_nodes(5, Type::ArrayTypeSpec);
 }
 | num range num                    {
   $$ = new ArrayTypeSpec(nullptr);
-  ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)$1, (int64_t)$3));
+  ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)((ConstantInteger*)(((ExpConstantInteger*)$1)->value)->attr), (int64_t)((ConstantInteger*)(((ExpConstantInteger*)$3)->value)->attr)));
   //ast_reduce_nodes(3, Type::ArrayTypeSpec);
 }
 ;
@@ -625,7 +625,7 @@ semicolon: MARKER_SEMICOLON{
 }
 
 statement: //                                            {$$ = new ExpVoid();}
-variable assign expression                          {$$ = new ExecStatement(new ExpAssign((Variable*)$1, (Exp*)$3));}
+variable assign expression                            {$$ = new ExecStatement(new ExpAssign((Variable*)$1, (Exp*)$3));}
 | procedure_call                                      {$$ = new ExecStatement((Exp*)$1);}
 | compound_statement                                  {$$ = $1;}
 | if expression then statement else statement         {$$ = new IfElseStatement((Exp*)$2, (Statement*)$4, (Statement*)$6);}
@@ -733,18 +733,9 @@ rbracket: MARKER_RBRACKET{
 procedure_call:
 id          {
   $$ = new ExpCall((const Identifier*)$1, nullptr);
-  //ast_reduce_nodes(1,Type::ExpCall);
 }
 | id lparen expression_list rparen    {
-  $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$2);
-  /* ExpCall* node = reinterpret_cast<ExpCall*> (ast_reduce_nodes(4, Type::ExpCall)); */
-  /* node->fn = (Identifier*)(node->children.front()); */
-  /* node->children.pop_front(); */
-  /* node->children.pop_front();//pop lparen */
-  /* node->params = (ExpressionList*)(node->children.front()); */
-  /* node->children.pop_front(); */
-  /* node->children.pop_front();//pop rparen */
-  //ast_reduce_nodes(4,Type::ExpCall);
+  $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$3);
 }
 //| id error expression_list rparen {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
 //| id lparen expression_list error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
@@ -760,7 +751,8 @@ rparen: MARKER_RPAREN{
 }
 
 id: IDENT{
-  $$ = new Ident((const Identifier *)($1));
+  // $$ = new Ident((const Identifier *)($1));
+  $$ = $1;
 }
 
 expression_list:

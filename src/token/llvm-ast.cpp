@@ -149,7 +149,7 @@ void ast::printAST(const ast::Node *node, int dep) {
         default:
         case Type::Unknown:
             //throw RuntimeReinterpretASTException(node);
-            printf("type = Unknown\n");
+            printf("type = Unknown %d\n", node->type);
         case Type::Program:
 #define cur_node (reinterpret_cast<const ast::Program*>(node))
             put_tab(dep);
@@ -279,10 +279,11 @@ void ast::printAST(const ast::Node *node, int dep) {
             put_tab(dep + 1);
             printf("invoke_params = \n");
 
-            for (auto exp: cur_node->params->explist) {
-                printAST(exp, dep + 1);
+            if( cur_node->params ){
+                for (auto exp: cur_node->params->explist) {
+                    printAST(exp, dep + 1);
+                }
             }
-
 
             put_tab(dep);
             printf("}\n");
@@ -345,8 +346,10 @@ void ast::printAST(const ast::Node *node, int dep) {
             put_tab(dep + 1);
             printf("cond = \n");
             printAST(cur_node->expression, dep + 1);
+            put_tab(dep + 1);
             printf("if_part = \n");
             printAST(cur_node->if_part, dep + 1);
+            put_tab(dep + 1);
             printf("else_part = \n");
             printAST(cur_node->else_part, dep + 1);
 
@@ -446,13 +449,9 @@ void ast::printAST(const ast::Node *node, int dep) {
 
             std::vector<const Identifier*> ident = cur_node->idents;
             for(int i=0;i<ident.size();i++){
-                for (int j = 0; j < strlen(ident[i]->content); j++) {
-                    printf("%d ", ident[i]->content[j]);
-                }
-                printf("%s\n", ident[i]->content);
+                put_tab(dep + 1);
                 printf("%s\n", convertToString(ident[i]).c_str());
             }
-
 
 
             //for (auto ident: cur_node->idents) {
@@ -671,7 +670,7 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("range = \n");
             for (auto &pr: cur_node->periods) {
                 put_tab(dep + 2);
-                printf("[%lld, %lld]\n", pr.first, pr.second);
+                printf("[%ld, %ld]\n", pr.first, pr.second);
             }
             put_tab(dep + 1);
             printf("key_type = %s\n", convertToString(cur_node->keyword).c_str());
@@ -680,6 +679,18 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
+        case Type::ExpMarker:
+#define cur_node (reinterpret_cast<const ast::ExpMarker*>(node))
+          put_tab(dep);
+          printf("{\n");
+          put_tab(dep + 1);
+          printf("type = ExpMarker\n");
+          put_tab(dep + 1);
+          printf("marker value = %s\n", convertToString(cur_node->value).c_str());
+
+          put_tab(dep);
+          printf("}\n");
+#undef cur_node
         case Type::ExpKeyword:
 #define cur_node (reinterpret_cast<const ast::ExpKeyword*>(node))
           put_tab(dep);
