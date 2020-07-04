@@ -1121,4 +1121,3 @@ namespace target_c {
 }
 
 #endif //PASCAL_S_TARGET_C_H
-

@@ -109,4 +109,3 @@ struct PascalSParseExpectSGotError : public PascalSParseError {
 };
 
 #endif
-
