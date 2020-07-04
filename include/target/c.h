@@ -15,11 +15,11 @@
 #include <string>
 #include <deque>
 
+
 using namespace ast;
 using namespace std::string_literals;
 
 namespace target_c {
-
     std::map<char, std::string> escapeTable = {
             {'\0', "\\0"},
             {'\1', "\\1"},
@@ -1116,6 +1116,7 @@ namespace target_c {
             code_gen_String_helper(tempStr, buffer);
             buffer += "\"";
             expType = "char*";
+            return OK;
         }
     };
 }

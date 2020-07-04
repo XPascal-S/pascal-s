@@ -5,11 +5,34 @@
 #include <iostream>
 #include <target/task.h>
 #include "pascal-s/features.h"
-#include <iostream>
 
 using namespace ast;
 
+template<>
+struct ErrorProxy<PascalSSemanticError *> {
+    DefaultProxyConstructor(ErrorProxy, PascalSSemanticError*, err)
 
+    [[maybe_unused]] [[nodiscard]] pascal_s::line_t visit_line() const {
+        return err->line;
+    }
+
+    [[maybe_unused]] [[nodiscard]] pascal_s::column_t visit_column() const {
+        return err->column;
+    }
+
+    [[maybe_unused]] [[nodiscard]] pascal_s::length_t visit_length() const {
+        return err->length;
+    }
+
+    [[maybe_unused]] [[nodiscard]] pascal_s::offset_t visit_offset() const {
+        return err->offset;
+    }
+
+    // 如果没有hint，为nullptr
+    [[maybe_unused]] [[nodiscard]] const char *visit_hint() const {
+        return err->msg.c_str();
+    }
+};
 
 /*
 program main;
