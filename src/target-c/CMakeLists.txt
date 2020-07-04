@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 project(pascal-s)
 
 
-add_subdirectory(target_test)
+#add_subdirectory(target_test)
 
 file(GLOB PASCAL_S_TARGET_C_SOURCE_FILES **.cpp)
 
