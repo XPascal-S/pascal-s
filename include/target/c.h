@@ -147,7 +147,7 @@ namespace target_c {
 
         int code_gen(const Node *node) {
             if (node->type != Type::Program) {
-                addErrMsg(node, "node type is not program");
+                addErrMsg(node, "node type is not program", __FUNCTION__);
                 return TranslateFailed;
             }
             int code = code_gen_node(node);
@@ -228,7 +228,7 @@ namespace target_c {
                     result = "char*";
                     return 1;
                 default:
-                    addErrMsg(node, "no const type match");
+                    addErrMsg(node, "no const type match", __FUNCTION__);
 //                    assert(false);
                     return 0;
             }
@@ -341,16 +341,16 @@ namespace target_c {
             }
         }
 
-        void addWarningMsg(const Node *node, const std::string msg){
-            auto fn = __FUNCTION__ ;
-            this->errors.push_back(new PascalSSemanticError(fn, node->visit_pos(),
-                    "semantic Warning: at function" + (fn + (": " + msg))));
+        void addWarningMsg(const Node *node, const std::string msg, const char * fn){
+//            auto fn = __FUNCTION__ ;
+            std::string warnMsg = "semantic Warning: at function" + (fn + (": " + msg));
+            this->errors.push_back(new PascalSSemanticError(fn, node->visit_pos(), warnMsg));
         }
 
-        void addErrMsg(const Node *node, const std::string msg) {
-            auto fn = __FUNCTION__ ;
-            this->errors.push_back(new PascalSSemanticError(fn, node->visit_pos(),
-                                                            "semantic error: at function" + (fn + (": " + msg))));
+        void addErrMsg(const Node *node, const std::string msg, const char * fn) {
+//            auto fn = __FUNCTION__ ;
+            std::string errMsg = "semantic error: at function" + (fn + (": " + msg));
+            this->errors.push_back(new PascalSSemanticError(fn, node->visit_pos(), errMsg));
         }
 
         void printTab(std::string &buffer) {
@@ -363,11 +363,11 @@ namespace target_c {
                 return OK;
             switch (node->type) {
                 default:
-                    addErrMsg(node, "no node type match");
+                    addErrMsg(node, "no node type match", __FUNCTION__);
 //                    assert(false);
                     return TranslateFailed;
                 case Type::Unknown:
-                    addErrMsg(node, "unknown node type");
+                    addErrMsg(node, "unknown node type", __FUNCTION__);
 //                    assert(false);
                     return TranslateFailed;
                 case Type::Program:
@@ -463,7 +463,7 @@ namespace target_c {
                     break;
                 default:
 //                    assert(false);
-                    addErrMsg(node, "no constant type match");
+                    addErrMsg(node, "no constant type match", __FUNCTION__);
                     return TranslateFailed;
             }
 
@@ -496,7 +496,7 @@ namespace target_c {
                 //se.newName = name + "_" + this->nowST_pointer->tableName;
                 if (node->type_spec->type == Type::BasicTypeSpec) {
                     if (!keyword2str(reinterpret_cast<const BasicTypeSpec *>(node->type_spec)->keyword->key_type, se.typeDecl)) {
-                        addErrMsg(node, "no keyword type match");
+                        addErrMsg(node, "no keyword type match", __FUNCTION__);
                         check = false;
                     }
                     se.varType = ISBASIC;
@@ -507,7 +507,7 @@ namespace target_c {
                     se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(node->type_spec);
                     se.varType = ISARRAY;
                     if (!keyword2str(se.arrayInfo->keyword->key_type, se.typeDecl)) {
-                        addErrMsg(node, "no keyword type match");
+                        addErrMsg(node, "no keyword type match", __FUNCTION__);
                         check = false;
                     }
                     printTab(buffer);
@@ -520,7 +520,7 @@ namespace target_c {
                     }
                     buffer += ";\n";
                 } else {
-                    addErrMsg(node, "no var type match");
+                    addErrMsg(node, "no var type match", __FUNCTION__);
                     check = false;
                 }
                 this->nowST_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(name, se));
@@ -560,7 +560,7 @@ namespace target_c {
                 functionInfo.returnType = "void";
             }else {
                 if (!keyword2str(node->ret_type->keyword->key_type, functionInfo.returnType)) {
-                    addErrMsg(node, "no keyword type match");
+                    addErrMsg(node, "no keyword type match", __FUNCTION__);
                     check = false;
                 }
             }
@@ -571,7 +571,7 @@ namespace target_c {
                         if (param->spec->type == Type::BasicTypeSpec) {
                             if (!keyword2str(reinterpret_cast<const BasicTypeSpec *>(param->spec)->keyword->key_type,
                                     se.typeDecl)) {
-                                addErrMsg(node, "no keyword type match");
+                                addErrMsg(node, "no keyword type match", __FUNCTION__);
                                 check = false;
                             }
                             functionInfo.paraType.push_back(se.typeDecl);
@@ -579,7 +579,7 @@ namespace target_c {
                         } else if (param->spec->type == Type::ArrayTypeSpec) {
                             if (!keyword2str(reinterpret_cast<const ArrayTypeSpec *>(param->spec)->keyword->key_type,
                                     se.typeDecl)) {
-                                addErrMsg(node, "no keyword type match");
+                                addErrMsg(node, "no keyword type match", __FUNCTION__);
                                 check = false;
                             }
                             for (int i = 0; i < reinterpret_cast<const ArrayTypeSpec *>(param->spec)->periods.size(); i++) {
@@ -589,7 +589,7 @@ namespace target_c {
                             se.varType = ISARRAY;
                             se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(param->spec);
                         } else {
-                            addErrMsg(node, "no var type match");
+                            addErrMsg(node, "no var type match", __FUNCTION__);
                             check = false;
                         }
 
@@ -609,7 +609,7 @@ namespace target_c {
         int code_gen_SubprogramBody(const SubprogramBody *node) {
             auto iter = this->functionBuff.find(this->nowST_pointer->tableName);
             if (iter == this->functionBuff.end()) {
-                addErrMsg(node, "func or proc not found in functionBuff");
+                addErrMsg(node, "func or proc not found in functionBuff", __FUNCTION__);
                 return TranslateFailed;
             }
             bool check = true;
@@ -665,7 +665,7 @@ namespace target_c {
                     return code_gen_Ident(reinterpret_cast<const Ident *>(node), buffer, expType);
                 default:
 //                    assert(false);
-                    addErrMsg(node, "no exp type match");
+                    addErrMsg(node, "no exp type match", __FUNCTION__);
                     return TranslateFailed;
             }
             return OK;
@@ -708,7 +708,7 @@ namespace target_c {
                 case Type::Write:
                     return code_gen_Write(reinterpret_cast<const Write*>(node), buffer);
                 default:
-                    addErrMsg(node, "no statement type match");
+                    addErrMsg(node, "no statement type match", __FUNCTION__);
                     return TranslateFailed;
             }
         }
@@ -718,7 +718,7 @@ namespace target_c {
                 if(lhs == "int" && rhs == "char"){
                     return OK;
                 }else if(lhs == "char" && rhs == "int"){
-                    addWarningMsg(node, "truncation from int to char");
+                    addWarningMsg(node, "truncation from int to char", __FUNCTION__);
                     return OK;
                 }else{
                     return TranslateFailed;
@@ -744,7 +744,7 @@ namespace target_c {
                     expType = lhsType;
                 }
                 else {
-                    addErrMsg(node, "left type does not match right type");
+                    addErrMsg(node, "left type does not match right type", __FUNCTION__);
                 }
             }
             buffer += ")";
@@ -754,7 +754,7 @@ namespace target_c {
         int code_gen_ExpCall(const ExpCall *node, std::string &buffer, std::string &expType) {
             auto iter = this->functionBuff.find(node->fn->content);
             if (iter == this->functionBuff.end()) {
-                addErrMsg(node, "no func or proc found in functionBuff");
+                addErrMsg(node, "no func or proc found in functionBuff", __FUNCTION__);
 //                assert(false); //未找到函数
                 return TranslateFailed;
             }
@@ -764,16 +764,17 @@ namespace target_c {
             buffer += node->fn->content;
             buffer += "(";
             if(node->params != nullptr) {
-                if (node->params->explist.size() != callInfo.paraType.size()) {
+                if (node->params->explist.size() !=
+                (callInfo.paraType.size() - std::count(callInfo.additionPara.begin(), callInfo.additionPara.end(), ','))) {
                     check = false;
-                    addErrMsg(node, "num of parameter passed in does not match the function definition");
+                    addErrMsg(node, "num of parameter passed in does not match the function definition", __FUNCTION__);
                 }
                 else for (int i = 0; i < node->params->explist.size(); i++) {
                     auto x = node->params->explist[i];
                     check &= code_gen_exp(x, buffer, expType);
                     if (!type_check(expType, callInfo.paraType[i], node)) {
                         check = false;
-                        addErrMsg(node, "type of parameter passed in does not match the formal parameter");
+                        addErrMsg(node, "type of parameter passed in does not match the formal parameter", __FUNCTION__);
 //                        return TranslateFailed;
                     }
                     buffer += ", ";
@@ -810,7 +811,7 @@ namespace target_c {
                         auto iterFunc = this->functionBuff.find(funcName);
                         if (iterFunc == this->functionBuff.end()) {
                             //没找到函数定义
-                            addErrMsg(node, "func or proc not found in functionBuff");
+                            addErrMsg(node, "func or proc not found in functionBuff", __FUNCTION__);
 //                            assert(false);
                             return TranslateFailed;
                         }
@@ -842,7 +843,7 @@ namespace target_c {
                     std::string periodType;
                     if (iterTable->second.arrayInfo->periods.size() != node->id_var->explist.size()){
 //                        assert(false); // 定义数组维数与下标不符
-                        addErrMsg(node, "size of array does not match that in definition");
+                        addErrMsg(node, "size of array does not match that in definition", __FUNCTION__);
                         return TranslateFailed;
                     }
 
@@ -865,7 +866,7 @@ namespace target_c {
                          */
                         check &= code_gen_exp(node->id_var->explist.at(i), buffer, periodType);
                         if(periodType != "int"){
-                            addErrMsg(node, "array range must be int");
+                            addErrMsg(node, "array range must be int", __FUNCTION__);
                             check = false;
                             break;
 //                            assert(false);
@@ -878,7 +879,7 @@ namespace target_c {
                     }
                 }
             } else {
-                addErrMsg(node, "var not found in current symbol table and its parent");
+                addErrMsg(node, "var not found in current symbol table and its parent", __FUNCTION__);
                 check = false;
             }
             return check;
@@ -904,7 +905,7 @@ namespace target_c {
                     auto funcIter = this->functionBuff.find(this->nowST_pointer->tableName);
                     if(funcIter->second.returnType != rhsType){
                         //函数返回值类型不符
-                        addErrMsg(node, "type of return value does not match function definition");
+                        addErrMsg(node, "type of return value does not match function definition", __FUNCTION__);
 //                        assert(false);
                         return TranslateFailed;
                     }
@@ -922,7 +923,7 @@ namespace target_c {
                     expType = lhsType;
                 }
                 else {
-                    addErrMsg(node, "left type does not match right type in assign");
+                    addErrMsg(node, "left type does not match right type in assign", __FUNCTION__);
                     check = false;
 //                    assert(false);
                 }
@@ -973,7 +974,7 @@ namespace target_c {
                     readBuffer += tempVariableBuffer;
                 }
                 else {
-                    addErrMsg(node, "no var type match in read");
+                    addErrMsg(node, "no var type match in read", __FUNCTION__);
                     check = false;
 //                    assert(false);
 //                    return TranslateFailed;
@@ -997,7 +998,7 @@ namespace target_c {
                     buffer += ioType;
                 }
                 else {
-                    addErrMsg(node, "no var type match in write");
+                    addErrMsg(node, "no var type match in write", __FUNCTION__);
 //                    assert(false);
                     check = false;
                 }
@@ -1055,7 +1056,7 @@ namespace target_c {
             check &= code_gen_exp(node->express1, buffer, expType);
             buffer += "; ";
             if (expType != "int") {
-                addErrMsg(node, "initial value must be int");
+                addErrMsg(node, "initial value must be int", __FUNCTION__);
                 check = false;
 //                assert(false);
             }
@@ -1063,7 +1064,7 @@ namespace target_c {
             check &= code_gen_exp(node->express2, buffer, expType);
             buffer += "; ";
             if (expType != "int") {
-                addErrMsg(node, "final value must be int");
+                addErrMsg(node, "final value must be int", __FUNCTION__);
                 check = false;
 //                assert(false);
             }
