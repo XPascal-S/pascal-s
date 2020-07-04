@@ -118,11 +118,9 @@ program id lparen idlist rparen {
 }
 | program id{
   $$ = new ProgramHead((const ExpKeyword*)$1, (Ident*)$2);
-  /* ProgramHead *node = reinterpret_cast<ProgramHead *>(ast_reduce_nodes(2, Type::ProgramHead)); */
-  /* node->programKeyword = ( ExpKeyword*)(node->children.front()); */
-  /* node->children.pop_front(); */
-  /* node->id = ( Ident*)(node->children.front()); */
-  /* node->children.pop_front(); */
+}
+| program id lparen rparen{
+  $$ = new ProgramHead((const ExpKeyword*)$1, (Ident*)$2);
 }
 //| program id error idlist {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
 //| program id lparen idlist error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
@@ -273,7 +271,7 @@ sub:MARKER_SUB {
 }
 ;
 
-var_declarations:              { $$ = new ExpVoid();  /*  */ }
+var_declarations:              { $$ = nullptr;  /* new ExpVoid(); */ }
 |var var_declaration semicolon {
   $$ = $2;
   /* VarDecls* node = reinterpret_cast<VarDecls*> (ast_reduce_nodes(3, Type::VarDecls)); */
@@ -585,7 +583,7 @@ compound_statement:             { $$ = new CompoundStatement(); }
 
 begin:KEYWORD_BEGIN{
   $$ = new ExpKeyword((const Keyword *)($1));
-             }
+}
 ;
 
 end:KEYWORD_END{
@@ -626,8 +624,8 @@ semicolon: MARKER_SEMICOLON{
   $$ = new ExpMarker((const Marker *)($1));
 }
 
-statement:                                            {$$ = new ExpVoid();}
-| variable assign expression                          {$$ = new ExecStatement(new ExpAssign((Variable*)$1, (Exp*)$3));}
+statement: //                                            {$$ = new ExpVoid();}
+variable assign expression                          {$$ = new ExecStatement(new ExpAssign((Variable*)$1, (Exp*)$3));}
 | procedure_call                                      {$$ = new ExecStatement((Exp*)$1);}
 | compound_statement                                  {$$ = $1;}
 | if expression then statement else statement         {$$ = new IfElseStatement((Exp*)$2, (Statement*)$4, (Statement*)$6);}

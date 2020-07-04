@@ -5,6 +5,7 @@
 #include <pascal-s/exception.h>
 #include <pascal-s/llvm-ast.h>
 #include <cassert>
+#include <cstring>
 
 void ast::deleteAST(Node *node) {
     if (node == nullptr) {
@@ -452,17 +453,17 @@ void ast::printAST(const ast::Node *node, int dep) {
                 printf("%s\n", convertToString(ident[i]).c_str());
             }
 
-           
+
 
             //for (auto ident: cur_node->idents) {
             //    put_tab(dep + 2);
             //    printf("idlist\n");
             //    put_tab(dep + 2);
-            //    
+            //
             //    /*for (int i = 0; i < strlen(ident->content); i++)
             //        printf("%c ", ident->content[i]);
             //    printf("%s\n", ident->content);*/
-            //    
+            //
             //    printf("%s\n", convertToString(ident).c_str());
             //}
 
@@ -679,5 +680,17 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
+        case Type::ExpKeyword:
+#define cur_node (reinterpret_cast<const ast::ExpKeyword*>(node))
+          put_tab(dep);
+          printf("{\n");
+          put_tab(dep + 1);
+          printf("type = Expkeyword\n");
+          put_tab(dep + 1);
+          printf("keyword value = %s\n", convertToString(cur_node->value).c_str());
+
+          put_tab(dep);
+          printf("}\n");
+#undef cur_node
     }
 }
