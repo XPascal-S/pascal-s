@@ -8,7 +8,7 @@
 
 template<typename Lexer>
 Parser *parser_factory(Lexer &lexer) {
-  return new YaccParser<Lexer>(LexerProxy<Lexer>(lexer));
+    return new YaccParser<Lexer>(LexerProxy<Lexer>(lexer));
 }
 
 #ifdef WITH_MOCK
@@ -27,13 +27,13 @@ template Parser* parser_factory(MockLexer& lexer);
 template
 struct YaccParser<FullInMemoryLexer>;
 
-template Parser* parser_factory(FullInMemoryLexer &lexer);
+template Parser *parser_factory(FullInMemoryLexer &lexer);
 
 template<typename Lexer>
 YaccParser<Lexer>::~YaccParser() {
-  for (auto e: errors) {
-    delete e;
-  }
+    for (auto e: errors) {
+        delete e;
+    }
 }
 
 

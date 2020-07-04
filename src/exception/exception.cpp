@@ -46,7 +46,8 @@ PascalSParseExpectVGotError::PascalSParseExpectVGotError(const char *fn, const T
     }
 }
 
-PascalSParseExpectTGotError::PascalSParseExpectTGotError(const char *fn, TokenType expected, const Token *got, std::string msg) :
+PascalSParseExpectTGotError::PascalSParseExpectTGotError(const char *fn, TokenType expected, const Token *got,
+                                                         std::string msg) :
         PascalSParseError(fn,
                           fmt::format("{} parse failed: "
                                       "expected type: {}, "

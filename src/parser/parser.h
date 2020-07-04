@@ -44,28 +44,28 @@ private:
     }
     case TokenType::Marker: {
       const Marker* marker_token = reinterpret_cast<const Marker *>(token);
-      printf("\ntoken marker: %x\n",
-             static_cast<int>(MARKERTYPE(marker_token->marker_type)));
-      return static_cast<int>(MARKERTYPE(marker_token->marker_type));
+        printf("\ntoken marker: %x\n",
+               static_cast<int>(MARKERTYPE(marker_token->marker_type)));
+        return static_cast<int>(MARKERTYPE(marker_token->marker_type));
     }
-    default:
+        default:
+            return static_cast<int>(token->type);
+    }
       return static_cast<int>(token->type);
+  }
+
+    void access_ast(void *ast) override {
+        parsed_result = (Node *) ast;
     }
-    return static_cast<int>(token->type);
-  }
 
-  void access_ast(void *ast) override {
-    parsed_result = (Node*)ast;
-  }
-
-  Node* ast_reduce_nodes(int k, Type type) override {
-    // if (astTreeStack.size() < k) {
-    //   // Node* errNode = astTreeStack.back();
-    //   // throw RuntimeReinterpretASTException(*errNode);
-    // }
-    // Node *par_node = new Node(type);
-    // for (int i = 0; i < k; ++i) {
-    //   Node *n = astTreeStack.back();
+    Node *ast_reduce_nodes(int k, Type type) override {
+        // if (astTreeStack.size() < k) {
+        //   // Node* errNode = astTreeStack.back();
+        //   // throw RuntimeReinterpretASTException(*errNode);
+        // }
+        // Node *par_node = new Node(type);
+        // for (int i = 0; i < k; ++i) {
+        //   Node *n = astTreeStack.back();
     //   astTreeStack.pop_back();
     //   par_node->children.push_back(n);
     // }
