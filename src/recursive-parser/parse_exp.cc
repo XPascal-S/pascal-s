@@ -174,8 +174,10 @@ ast::Exp *RecursiveParser<Lexer>::parse_fac(const std::set<const Token *> *till)
                 next_token();
 
                 auto exp = parse_exp(&predicate::predicateContainers.rParenContainer);
-                expected_enum_type_r(predicate::is_rparen, predicate::marker_rparen, exp);
-                next_token();
+                if (exp != nullptr) {
+                    expected_enum_type_r(predicate::is_rparen, predicate::marker_rparen, exp);
+                    next_token();
+                }
                 return exp;
         }
 
