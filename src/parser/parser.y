@@ -77,7 +77,6 @@ using namespace ast;
 
  // %nonassoc IFX
  // %nonassoc ELSE
-
 %start programstruct
  // %start statement
 %%
@@ -86,6 +85,7 @@ programstruct:  program_head semicolon program_body dot {
   $$ = new ast::Program((ProgramHead*)$1, (ProgramBody*)$3);
   // printf("%x %d %d\n", $$, ((Program*)$$)->type, ((Node*)$$)->type);
   access_ast($$);
+  //printf("finish!\n");
   /* Program *node = reinterpret_cast<Program*> (ast_reduce_nodes(4, Type::Program)); */
   /* node->programHead = (ProgramHead*)(node->children.front()); */
   /* node->children.pop_front(); */
@@ -102,6 +102,8 @@ dot: MARKER_DOT{
   $$ = new ExpMarker((const Marker *)($1));
  }
 ;
+
+errort:ERRORTOKEN;
 
 program_head:
 program id lparen idlist rparen {
@@ -383,6 +385,15 @@ period comma num range num        {
   $$ = new ArrayTypeSpec(nullptr);
   ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)((ConstantInteger*)(((ExpConstantInteger*)$1)->value)->attr), (int64_t)((ConstantInteger*)(((ExpConstantInteger*)$3)->value)->attr)));
   //ast_reduce_nodes(3, Type::ArrayTypeSpec);
+}
+| num range unimus num error{
+    pascal_s::Pos* pos = ((Node*)$2)->visit_pos();
+    //printf("%d\n",yychar);
+    #define cur_node (reinterpret_cast<const ast::ExpMarker*>($3))
+    printf("\nperiod parse failed at line:%d column:%d: expect: num but got %s\n", pos->line,pos->column+pos->length+1,convertToString(cur_node->value).c_str());
+    #undef  cur_node
+    //printf("the error occur at line:%d   column:%d\n", pos->line,pos->column+pos->length+1);
+    yyerrok;
 }
 ;
 range: MARKER_RANGE{
