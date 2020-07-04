@@ -147,11 +147,13 @@ namespace target_c {
 
         int code_gen(const Node *node) {
             if (node->type != Type::Program) {
-                assert(false);
-                throw std::runtime_error("node type is not program");
+                addErrMsg(node, "node type is not program");
                 return TranslateFailed;
             }
             int code = code_gen_node(node);
+            if (code == TranslateFailed) {
+                return TranslateFailed;
+            }
 
             this->tabNum = 0;
             //输出头文件
@@ -259,8 +261,6 @@ namespace target_c {
                     result = "!";
                     return 1;
                 default:
-                    assert(false);
-                    throw std::runtime_error("semantic error: no keyword type match");
                     return 0;
             }
         }
@@ -337,8 +337,6 @@ namespace target_c {
                     result = "||";
                     return OK;
                 default:
-                    //assert(false);
-                    throw std::runtime_error("semantic error: no marker type match");
                     return TranslateFailed;
             }
         }
@@ -366,11 +364,11 @@ namespace target_c {
             switch (node->type) {
                 default:
                     addErrMsg(node, "no node type match");
-                    assert(false);
+//                    assert(false);
                     return TranslateFailed;
                 case Type::Unknown:
                     addErrMsg(node, "unknown node type");
-                    assert(false);
+//                    assert(false);
                     return TranslateFailed;
                 case Type::Program:
                     return code_gen_program(
@@ -464,7 +462,7 @@ namespace target_c {
                     se.value = std::to_string(reinterpret_cast<const ExpConstantBoolean *>(node->rhs)->value->attr);
                     break;
                 default:
-                    assert(false);
+//                    assert(false);
                     addErrMsg(node, "no constant type match");
                     return TranslateFailed;
             }
@@ -491,12 +489,16 @@ namespace target_c {
         }
 
         int code_gen_VarDecl(const VarDecl *node, std::string &buffer) {
+            bool check = true;
             for (auto x : node->idents->idents) {
                 std::string name = x->content;
                 struct SymbolEntry se;
                 //se.newName = name + "_" + this->nowST_pointer->tableName;
                 if (node->type_spec->type == Type::BasicTypeSpec) {
-                    keyword2str(reinterpret_cast<const BasicTypeSpec *>(node->type_spec)->keyword->key_type, se.typeDecl);
+                    if (!keyword2str(reinterpret_cast<const BasicTypeSpec *>(node->type_spec)->keyword->key_type, se.typeDecl)) {
+                        addErrMsg(node, "no keyword type match");
+                        check = false;
+                    }
                     se.varType = ISBASIC;
                     se.arrayInfo = nullptr;
                     printTab(buffer);
@@ -504,7 +506,10 @@ namespace target_c {
                 } else if (node->type_spec->type == Type::ArrayTypeSpec) {
                     se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(node->type_spec);
                     se.varType = ISARRAY;
-                    keyword2str(se.arrayInfo->keyword->key_type, se.typeDecl);
+                    if (!keyword2str(se.arrayInfo->keyword->key_type, se.typeDecl)) {
+                        addErrMsg(node, "no keyword type match");
+                        check = false;
+                    }
                     printTab(buffer);
                     buffer += fmt::format("{0} {1}", se.typeDecl, name);
                     for(int i=0; i<se.arrayInfo->periods.size(); i++){
@@ -516,12 +521,11 @@ namespace target_c {
                     buffer += ";\n";
                 } else {
                     addErrMsg(node, "no var type match");
-                    assert(false);
-                    return TranslateFailed;
+                    check = false;
                 }
                 this->nowST_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(name, se));
             }
-            return OK;
+            return check;
         }
 
         int code_gen_SubprogramDecls(const SubprogramDecls *node) {
@@ -555,24 +559,30 @@ namespace target_c {
             if(node->ret_type == nullptr){
                 functionInfo.returnType = "void";
             }else {
-                check &= keyword2str(node->ret_type->keyword->key_type, functionInfo.returnType);
+                if (!keyword2str(node->ret_type->keyword->key_type, functionInfo.returnType)) {
+                    addErrMsg(node, "no keyword type match");
+                    check = false;
+                }
             }
             if(node->decls != nullptr) {
                 for (const auto param : node->decls->params) {
                     for (const auto id : param->id_list->idents) {
                         struct SymbolEntry se;
                         if (param->spec->type == Type::BasicTypeSpec) {
-                            check &= keyword2str(
-                                    reinterpret_cast<const BasicTypeSpec *>(param->spec)->keyword->key_type,
-                                    se.typeDecl);
+                            if (!keyword2str(reinterpret_cast<const BasicTypeSpec *>(param->spec)->keyword->key_type,
+                                    se.typeDecl)) {
+                                addErrMsg(node, "no keyword type match");
+                                check = false;
+                            }
                             functionInfo.paraType.push_back(se.typeDecl);
                             se.varType = ISBASIC;
                         } else if (param->spec->type == Type::ArrayTypeSpec) {
-                            check &= keyword2str(
-                                    reinterpret_cast<const ArrayTypeSpec *>(param->spec)->keyword->key_type,
-                                    se.typeDecl);
-                            for (int i = 0;
-                                 i < reinterpret_cast<const ArrayTypeSpec *>(param->spec)->periods.size(); i++) {
+                            if (!keyword2str(reinterpret_cast<const ArrayTypeSpec *>(param->spec)->keyword->key_type,
+                                    se.typeDecl)) {
+                                addErrMsg(node, "no keyword type match");
+                                check = false;
+                            }
+                            for (int i = 0; i < reinterpret_cast<const ArrayTypeSpec *>(param->spec)->periods.size(); i++) {
                                 se.typeDecl += "*"; //数组类型
                             }
                             functionInfo.paraType.push_back(se.typeDecl);
@@ -580,8 +590,7 @@ namespace target_c {
                             se.arrayInfo = reinterpret_cast<const ArrayTypeSpec *>(param->spec);
                         } else {
                             addErrMsg(node, "no var type match");
-                            assert(false);
-                            return TranslateFailed;
+                            check = false;
                         }
 
                         st_pointer->content.insert(std::pair<std::string, struct SymbolEntry>(id->content, se));
@@ -655,7 +664,8 @@ namespace target_c {
                 case Type::Ident:
                     return code_gen_Ident(reinterpret_cast<const Ident *>(node), buffer, expType);
                 default:
-                    assert(false);
+//                    assert(false);
+                    addErrMsg(node, "no exp type match");
                     return TranslateFailed;
             }
             return OK;
@@ -676,7 +686,6 @@ namespace target_c {
                 tempVariable->id = node->ident;
                 delete node;
                 return code_gen_Variable(tempVariable, buffer, expType);
-                return OK;
             }
         }
 
@@ -736,7 +745,6 @@ namespace target_c {
                 }
                 else {
                     addErrMsg(node, "left type does not match right type");
-                    assert(false);
                 }
             }
             buffer += ")";
@@ -747,7 +755,7 @@ namespace target_c {
             auto iter = this->functionBuff.find(node->fn->content);
             if (iter == this->functionBuff.end()) {
                 addErrMsg(node, "no func or proc found in functionBuff");
-                assert(false); //未找到函数
+//                assert(false); //未找到函数
                 return TranslateFailed;
             }
 
@@ -756,13 +764,17 @@ namespace target_c {
             buffer += node->fn->content;
             buffer += "(";
             if(node->params != nullptr) {
-                for (int i = 0; i < node->params->explist.size(); i++) {
+                if (node->params->explist.size() != callInfo.paraType.size()) {
+                    check = false;
+                    addErrMsg(node, "num of parameter passed in does not match the function definition");
+                }
+                else for (int i = 0; i < node->params->explist.size(); i++) {
                     auto x = node->params->explist[i];
                     check &= code_gen_exp(x, buffer, expType);
                     if (!type_check(expType, callInfo.paraType[i], node)) {
                         check = false;
                         addErrMsg(node, "type of parameter passed in does not match the formal parameter");
-                        return TranslateFailed;
+//                        return TranslateFailed;
                     }
                     buffer += ", ";
                 }
@@ -799,7 +811,7 @@ namespace target_c {
                         if (iterFunc == this->functionBuff.end()) {
                             //没找到函数定义
                             addErrMsg(node, "func or proc not found in functionBuff");
-                            assert(false);
+//                            assert(false);
                             return TranslateFailed;
                         }
                         expType = iterTable->second.typeDecl;
@@ -829,7 +841,8 @@ namespace target_c {
                 if(expType.find("*") != std::string::npos) {
                     std::string periodType;
                     if (iterTable->second.arrayInfo->periods.size() != node->id_var->explist.size()){
-                        assert(false); // 定义数组维数与下标不符
+//                        assert(false); // 定义数组维数与下标不符
+                        addErrMsg(node, "size of array does not match that in definition");
                         return TranslateFailed;
                     }
 
@@ -854,7 +867,8 @@ namespace target_c {
                         if(periodType != "int"){
                             addErrMsg(node, "array range must be int");
                             check = false;
-                            assert(false);
+                            break;
+//                            assert(false);
                         }
                         buffer += " - ";
                         buffer += std::to_string(iterTable->second.arrayInfo->periods[i].first);
@@ -890,8 +904,8 @@ namespace target_c {
                     auto funcIter = this->functionBuff.find(this->nowST_pointer->tableName);
                     if(funcIter->second.returnType != rhsType){
                         //函数返回值类型不符
-                        addErrMsg(node, "type of return value does not match func");
-                        assert(false);
+                        addErrMsg(node, "type of return value does not match function definition");
+//                        assert(false);
                         return TranslateFailed;
                     }
                     expType = rhsType;
@@ -910,7 +924,7 @@ namespace target_c {
                 else {
                     addErrMsg(node, "left type does not match right type in assign");
                     check = false;
-                    assert(false);
+//                    assert(false);
                 }
             }
             return check;
@@ -935,13 +949,14 @@ namespace target_c {
             }else if(typeStr == "char"){
                 result = "%c";
             }else{
-                assert(false);
+//                assert(false);
                 return TranslateFailed;
             }
             return OK;
         }
 
         int code_gen_Read(const Read *node, std::string &buffer) {
+            bool check = true;
             buffer += "scanf(\"";
             std::string readBuffer;
             for (auto const x: node->var_list->params) {
@@ -958,21 +973,22 @@ namespace target_c {
                     readBuffer += tempVariableBuffer;
                 }
                 else {
-                    addErrMsg(node, "no var type match");
-                    assert(false);
-                    return TranslateFailed;
+                    addErrMsg(node, "no var type match in read");
+                    check = false;
+//                    assert(false);
+//                    return TranslateFailed;
                 }
             }
             buffer += "\"";
             buffer += readBuffer;
             buffer += ")";
-            return OK;
+            return check;
         }
 
         int code_gen_Write(const Write *node, std::string &buffer) {
+            bool check = true;
             buffer += "printf(\"";
             std::string writeBuffer = "";
-            bool check = true;
             for (auto x: node->exp_list->explist) {
                 writeBuffer += ", ";
                 std::string expType, ioType;
@@ -981,9 +997,9 @@ namespace target_c {
                     buffer += ioType;
                 }
                 else {
-                    addErrMsg(node, "no var type match");
-                    assert(false);
-                    return TranslateFailed;
+                    addErrMsg(node, "no var type match in write");
+//                    assert(false);
+                    check = false;
                 }
             }
             buffer += "\"";
@@ -1041,7 +1057,7 @@ namespace target_c {
             if (expType != "int") {
                 addErrMsg(node, "initial value must be int");
                 check = false;
-                assert(false);
+//                assert(false);
             }
             buffer += fmt::format("{} <= ", node->id->content);
             check &= code_gen_exp(node->express2, buffer, expType);
@@ -1049,7 +1065,7 @@ namespace target_c {
             if (expType != "int") {
                 addErrMsg(node, "final value must be int");
                 check = false;
-                assert(false);
+//                assert(false);
             }
             buffer += fmt::format("{}++", node->id->content);
             buffer += ") {\n";
