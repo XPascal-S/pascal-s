@@ -974,7 +974,7 @@ namespace target_c {
                     readBuffer += tempVariableBuffer;
                 }
                 else {
-                    addErrMsg(node, "no var type match in read", __FUNCTION__);
+                    addErrMsg(node, "var type not support in read", __FUNCTION__);
                     check = false;
 //                    assert(false);
 //                    return TranslateFailed;
@@ -998,7 +998,7 @@ namespace target_c {
                     buffer += ioType;
                 }
                 else {
-                    addErrMsg(node, "no var type match in write", __FUNCTION__);
+                    addErrMsg(node, "var type not support in write", __FUNCTION__);
 //                    assert(false);
                     check = false;
                 }
