@@ -6,6 +6,7 @@
 #include <iostream>
 #include <target/task.h>
 #include "pascal-s/features.h"
+#include <pascal-s/errno.h>
 
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Host.h"
@@ -78,11 +79,11 @@ struct ErrorProxy<PascalSSemanticError *> {
             feature::format_line_column_error(
                     task->f, ErrorProxy<PascalSSemanticError *>(e), task->os, task->file_path);
         }
-        return 252;
+        return pascal_s::ProgramErrorCode::BuildFailed;
     }
 
     if (value == nullptr) {
-        return 251;
+        return pascal_s::ProgramErrorCode::BuilderCouldNotGenTarget;
     }
 
     if (task->out_ir) {
@@ -120,7 +121,7 @@ struct ErrorProxy<PascalSSemanticError *> {
     llvm::raw_fd_ostream dest(task->target, EC, llvm::sys::fs::OF_None);
     if (EC) {
         std::cerr << "Could not open file: " << EC.message();
-        return 1;
+        return pascal_s::ProgramErrorCode::CantOpenTargetFile;
     }
 
     llvm::legacy::PassManager pass;
@@ -128,7 +129,7 @@ struct ErrorProxy<PascalSSemanticError *> {
     auto ft = llvm::CGFT_ObjectFile;
     if (machine->addPassesToEmitFile(pass, dest, nullptr, ft)) {
         std::cerr << "TheTargetMachine can't emit a file of this type";
-        return 1;
+        return pascal_s::ProgramErrorCode::TargetFileEmitFailed;
     }
 
     pass.run(builder.modules);
@@ -138,5 +139,5 @@ struct ErrorProxy<PascalSSemanticError *> {
 
     dest.close();
 
-    return 0;
+    return pascal_s::ProgramErrorCode::CodeOK;
 }
