@@ -1,6 +1,7 @@
 # please move py_pascal_s.cpXX-win_YYY.pyd to your python/src/DLLs
 # cmake-build-debug/src/py-module/py_pascal_s.cp37-win_amd64.pyd
 #
+import json
 from typing import List
 
 import py_pascal_s
@@ -13,6 +14,10 @@ def reinterpret_pascal_s_token(tok_ptr):
         return py_pascal_s.reinterpret_as_marker(tok_ptr)  # type: py_pascal_s.PascalSTokenMarker
     elif tok_ptr.type == py_pascal_s.PascalSTokenType.ConstantString:
         return py_pascal_s.reinterpret_as_constant_string(tok_ptr)  # type: py_pascal_s.PascalSTokenConstantString
+    elif tok_ptr.type == py_pascal_s.PascalSTokenType.Comment:
+        return py_pascal_s.reinterpret_as_comment(tok_ptr)  # type: py_pascal_s.PascalSTokenComment
+    elif tok_ptr.type == py_pascal_s.PascalSTokenType.ErrorToken:
+        return py_pascal_s.reinterpret_as_error_token(tok_ptr)  # type: py_pascal_s.PascalSTokenErrorToken
     elif tok_ptr.type == py_pascal_s.PascalSTokenType.ConstantBoolean:
         return py_pascal_s.reinterpret_as_constant_boolean(tok_ptr)  # type: py_pascal_s.PascalSTokenConstantBoolean
     elif tok_ptr.type == py_pascal_s.PascalSTokenType.ConstantInteger:
@@ -26,106 +31,56 @@ def reinterpret_pascal_s_token(tok_ptr):
     return tok_ptr
 
 
-rc = """
-program example();
-var x,y:integer;
-function gcd(a,b:integer):integer;
-    begin
-        if b=0 then gcd:=a
-        else gcd:=gcd(b, a mod b)
-    end
+rc = """program main(input,output);
+var
+    n,i:integer;
+    list:array[0..1000] of integer;
+    c:char;
+procedure qsort(low, high:integer);
+var
+    11l,h,22m:integer;
+    i,j:integer;
+    temp:integer;
+    flag:integer;
 begin
-    read_int64(x);
-    read_int64(y);
-    write_int64(gcd(x, y))
-end
+    flag:=0;  #       ???????????
+    l:=low; h:=high;
+    m:=list[(l+h) div 2];
+    for i:=1 to 1000 do
+    begin
+    if flag=0 then begin
+        for j:=1 to 1000 do
+            if list[l]<m then l:=l+1;
+        for j:=1 to 1000 do
+            if list[h]>m then h:=h-1;
+        if l<=h then
+        begin
+            temp:=list[l]; list[l]:=list[h]; list[h]:=temp;
+            l:=l+1; h:=h-1;
+        end;
+        if (l>h) then flag:=1;
+    end;
+    end;
+    if l<high then qsort(l,high);
+    if h>low then qsort(low,h);
+end; {qsort end}
+
+begin
+    read(n);
+    for i:=0 to n-1 do
+        read(list[i]);
+    qsort(0,n-1);
+        for i:=0 to n-1 do
+        begin
+            write(list[i], '\\n', '\\x233');
+        end
+end. {main end}
     """
 rx = rc
 
-if __name__ == '__main__':
-    lexer = py_pascal_s.PascalSLexer()
-    toks = lexer.lex(rc)  # type: List[py_pascal_s.PascalSToken]
 
-    str_slice = []
-    source_slice = []
-    for tok in reversed(toks):
-        # if tok.type != py_pascal_s.PascalSTokenType.Identifier:
-        tok = reinterpret_pascal_s_token(tok)
-        # print(tok.type)
-        # print(tok.offset)
-        # print(tok.length)
-        # print(tok.line)
-        # print(tok.column + 1)
-        if tok.type == py_pascal_s.PascalSTokenType.Keyword:
-            source_slice.append(
-                f"<p><span class='lc'>{tok.line}:{tok.column + 1}:</span> "
-                f"<span class='t-type'>type = TokenType.Keyword</span>, key_type = {tok.key_type}</p>")
-            print(tok.key_type)
-            str_slice.append(rc[tok.offset + tok.length:])
-            str_slice.append(f'<span class="token keyword">{rc[tok.offset:tok.offset + tok.length]}</span>')
-            rc = rc[:tok.offset]
-        elif tok.type == py_pascal_s.PascalSTokenType.Marker:
-            source_slice.append(
-                f"<p><span class='lc'>{tok.line}:{tok.column + 1}:</span> "
-                f"<span class='t-type'>type = TokenType.Marker</span>, marker_type = {tok.marker_type}</p>")
-            print(tok.marker_type)
-            str_slice.append(rc[tok.offset + tok.length:])
-            str_slice.append(f'<span class="token marker">{rc[tok.offset:tok.offset + tok.length]}</span>')
-            rc = rc[:tok.offset]
-        elif tok.type == py_pascal_s.PascalSTokenType.Identifier:
-            source_slice.append(
-                f"<p><span class='lc'>{tok.line}:{tok.column + 1}:</span> "
-                f"<span class='t-type'>type = TokenType.Identifier</span>, content = {tok.content}</p>")
-            print(tok.content)
-            str_slice.append(rc[tok.offset + tok.length:])
-            str_slice.append(f'<span class="token identifier">{rc[tok.offset:tok.offset + tok.length]}</span>')
-            rc = rc[:tok.offset]
-        elif tok.type == py_pascal_s.PascalSTokenType.ConstantString:
-            source_slice.append(
-                f"<p><span class='lc'>{tok.line}:{tok.column + 1}:</span> "
-                f"<span class='t-type'>type = TokenType.ConstantString</span>, attr = {tok.attr}</p>")
-            print(tok.attr)
-            str_slice.append(rc[tok.offset + tok.length:])
-            str_slice.append(f'<span class="token const-string">{rc[tok.offset:tok.offset + tok.length]}</span>')
-            rc = rc[:tok.offset]
-        elif tok.type == py_pascal_s.PascalSTokenType.ConstantBoolean:
-            source_slice.append(
-                f"<p><span class='lc'>{tok.line}:{tok.column + 1}:</span> "
-                f"<span class='t-type'>type = TokenType.ConstantBoolean</span>, attr = {tok.attr}</p>")
-            print(tok.attr)
-            str_slice.append(rc[tok.offset + tok.length:])
-            str_slice.append(f'<span class="token const-boolean">{rc[tok.offset:tok.offset + tok.length]}</span>')
-            rc = rc[:tok.offset]
-        elif tok.type == py_pascal_s.PascalSTokenType.ConstantInteger:
-            source_slice.append(
-                f"<p><span class='lc'>{tok.line}:{tok.column + 1}:</span> "
-                f"<span class='t-type'>type = TokenType.ConstantInteger</span>, attr = {tok.attr}</p>")
-            print(tok.attr)
-            str_slice.append(rc[tok.offset + tok.length:])
-            str_slice.append(f'<span class="token const-integer">{rc[tok.offset:tok.offset + tok.length]}</span>')
-            rc = rc[:tok.offset]
-        elif tok.type == py_pascal_s.PascalSTokenType.ConstantReal:
-            source_slice.append(
-                f"<p><span class='lc'>{tok.line}:{tok.column + 1}:</span> "
-                f"<span class='t-type'>type = TokenType.ConstantReal</span>, attr = {tok.attr}</p>")
-            print(tok.attr)
-            print(tok.content)
-            str_slice.append(rc[tok.offset + tok.length:])
-            str_slice.append(f'<span class="token const-real">{rc[tok.offset:tok.offset + tok.length]}</span>')
-            rc = rc[:tok.offset]
-        elif tok.type == py_pascal_s.PascalSTokenType.ConstantChar:
-            source_slice.append(
-                f"<p><span class='lc'>{tok.line}:{tok.column + 1}:</span> "
-                f"<span class='t-type'>type = TokenType.ConstantChar</span>, attr = {tok.attr}</p>")
-            print(tok.attr)
-            str_slice.append(rc[tok.offset + tok.length:])
-            str_slice.append(f'<span class="token const-char">{rc[tok.offset:tok.offset + tok.length]}</span>')
-            rc = rc[:tok.offset]
-    str_slice.append(rc)
-    print(rx)
-    with open('C:\\Users\\kamiyoru\\Desktop\\test.html', 'w') as f:
-        f.write(
-            """
+class PascalSLexerRenderer(object):
+    html_template = """
 <html lang="en">
 <head>
 <title>Pascal-S-Lexer-View</title>
@@ -145,9 +100,17 @@ if __name__ == '__main__':
     .identifier {
             color: #f08d49;
     }
+    
+    .error-token {
+            color: #ff6347;
+    }
 
     .keyword {
             color: #cc99cd;
+    }
+    
+    .comment {
+            color: #999;
     }
 
     .marker {
@@ -170,7 +133,7 @@ if __name__ == '__main__':
     body  p {
         font-size: 1.5vw;
     }
-    .source-mapping {
+    #source-mapping {
         overflow-x:scroll;
         max-height: 50vh;
     }
@@ -178,8 +141,209 @@ if __name__ == '__main__':
 </head>
 <body>
 <div class='source-code'><pre class="language-pascal-s"><code class="language-pascal-s">{{content}}</code></pre></div>
-<div class='source-mapping'>{{source-mapping}}</div>
+<div id='source-mapping'></div>
 </body>
-</html>""".replace("{{content}}", ''.join(reversed(str_slice))).replace('{{source-mapping}}',
-                                                                        ''.join(reversed(source_slice))))
-    del lexer
+<script>
+    window.tokens = 'token_definition_replacement';
+    let source_mapping = '';
+    // noinspection JSUnresolvedVariable
+    for(let i in window.tokens) {
+    // noinspection JSUnfilteredForInLoop, JSUnresolvedVariable
+    let tok = window.tokens[i];
+    switch (tok.type) {
+    case "PascalSTokenType.Keyword":
+        document.getElementById(`token-ref-${i}`).title = `${tok['offset']}:${tok['line']}:${tok['column']}`;
+            source_mapping += (
+                `<p><span class='lc'>${tok['offset']}:${tok['line']}:${tok['column']}:</span>` + 
+                `<span class='t-type'>type = ${tok['type']}</span>, key_type = ${tok['key_type']}</p>`)
+                ;
+            break;
+        case "PascalSTokenType.Marker":
+            document.getElementById(`token-ref-${i}`).title = `${tok['offset']}:${tok['line']}:${tok['column']}`;
+            source_mapping += (
+                `<p><span class='lc'>${tok['offset']}:${tok['line']}:${tok['column']}:</span>` + 
+                `<span class='t-type'>type = ${tok['type']}</span>, marker_type = ${tok['marker_type']}</p>`) 
+               ;
+            break;
+        case "PascalSTokenType.Identifier":
+            document.getElementById(`token-ref-${i}`).title = `${tok['offset']}:${tok['line']}:${tok['column']}`;
+            source_mapping += (
+                `<p><span class='lc'>${tok['offset']}:${tok['line']}:${tok['column']}:</span>` + 
+                `<span class='t-type'>type = ${tok['type']}</span>, content = ${tok['content']}</p>`);
+            break;
+        case "PascalSTokenType.ConstantString":
+            document.getElementById(`token-ref-${i}`).title = `${tok['offset']}:${tok['line']}:${tok['column']}`;
+            source_mapping += (
+                `<p><span class='lc'>${tok['offset']}:${tok['line']}:${tok['column']}:</span>` + 
+                `<span class='t-type'>type = ${tok['type']}</span>, attr = ${tok['attr']}</p>`);
+            break;
+        case "PascalSTokenType.Comment":
+            document.getElementById(`token-ref-${i}`).title = `${tok['offset']}:${tok['line']}:${tok['column']}`;
+            source_mapping += (
+                `<p><span class='lc'>${tok['offset']}:${tok['line']}:${tok['column']}:</span>` + 
+                `<span class='t-type'>type = ${tok['type']}</span>, content = ${tok['content']}</p>`);
+            break;
+        case "PascalSTokenType.ErrorToken":
+            document.getElementById(`token-ref-${i}`).title = `${tok['offset']}:${tok['line']}:${tok['column']}`
+             + (tok['hint'] === '' ? '' : (' ' + tok['hint']));
+            source_mapping += (
+                `<p><span class='lc'>${tok['offset']}:${tok['line']}:${tok['column']}:</span>` + 
+                `<span class='t-type'>type = ${tok['type']}` + 
+                `</span>, content = ${tok['content']}, hint = ${tok['hint']}</p>`);
+            break;
+        case "PascalSTokenType.ConstantBoolean":
+            document.getElementById(`token-ref-${i}`).title = `${tok['offset']}:${tok['line']}:${tok['column']}`;
+            source_mapping += (
+                `<p><span class='lc'>${tok['offset']}:${tok['line']}:${tok['column']}:</span>` + 
+                `<span class='t-type'>type = ${tok['type']}</span>, attr = ${tok['attr']}</p>`);
+            break;
+        case "PascalSTokenType.ConstantInteger":
+            document.getElementById(`token-ref-${i}`).title = `${tok['offset']}:${tok['line']}:${tok['column']}`;
+            source_mapping += (
+                `<p><span class='lc'>${tok['offset']}:${tok['line']}:${tok['column']}:</span>` + 
+                `<span class='t-type'>type = ${tok['type']}</span>, attr = ${tok['attr']}</p>`);
+            break;
+        case "PascalSTokenType.ConstantReal":
+            document.getElementById(`token-ref-${i}`).title = `${tok['offset']}:${tok['line']}:${tok['column']}`;
+            source_mapping += (
+                `<p><span class='lc'>${tok['offset']}:${tok['line']}:${tok['column']}:</span>` + 
+                `<span class='t-type'>type = ${tok['type']}</span>, attr = ${tok['attr']}</p>`);
+            break;
+        case "PascalSTokenType.ConstantChar":
+            document.getElementById(`token-ref-${i}`).title = `${tok['offset']}:${tok['line']}:${tok['column']}`;
+            source_mapping += (
+                `<p><span class='lc'>${tok['offset']}:${tok['line']}:${tok['column']}:</span>` + 
+                `<span class='t-type'>type = ${tok['type']}</span>, attr = ${tok['attr']}</p>`);
+            break;
+            default:
+            console.error(JSON.stringify(tok));
+            break;
+            }
+      }
+        document.getElementById('source-mapping').innerHTML = source_mapping;
+</script>
+</html>"""
+
+    @staticmethod
+    def half_serialize_tokens(tokens):
+        dicts = []
+
+        for i, tok in enumerate(tokens):
+
+            tok_dict = {"type": str(tok.type), "offset": tok.offset, "length": tok.length, "line": tok.line,
+                        "column": tok.column + 1}
+            dicts.append(tok_dict)
+
+            if tok.type == py_pascal_s.PascalSTokenType.Keyword:
+                tok_dict['key_type'] = str(tok.key_type)
+            elif tok.type == py_pascal_s.PascalSTokenType.Marker:
+                tok_dict['marker_type'] = str(tok.marker_type)
+            elif tok.type == py_pascal_s.PascalSTokenType.Identifier:
+                tok_dict['content'] = tok.content
+            elif tok.type == py_pascal_s.PascalSTokenType.ConstantString:
+                tok_dict['attr'] = tok.attr
+            elif tok.type == py_pascal_s.PascalSTokenType.Comment:
+                tok_dict['content'] = tok.content
+            elif tok.type == py_pascal_s.PascalSTokenType.ErrorToken:
+                tok_dict['content'] = tok.content
+                tok_dict['hint'] = tok.hint
+            elif tok.type == py_pascal_s.PascalSTokenType.ConstantBoolean:
+                tok_dict['attr'] = tok.attr
+            elif tok.type == py_pascal_s.PascalSTokenType.ConstantInteger:
+                tok_dict['attr'] = tok.attr
+            elif tok.type == py_pascal_s.PascalSTokenType.ConstantReal:
+                tok_dict['attr'] = tok.attr
+            elif tok.type == py_pascal_s.PascalSTokenType.ConstantChar:
+                tok_dict['attr'] = tok.attr
+
+        return dicts
+
+    @staticmethod
+    def render_source(source_stream, tokens):
+        str_slice = []
+
+        tok_len = len(tokens)
+        if tok_len != 0:
+            end_first = next(reversed(tokens))
+            str_slice.append(source_stream[end_first.offset + end_first.length:])
+            source_stream = source_stream[:end_first.offset + end_first.length]
+
+        for i, tok in enumerate(reversed(tokens)):
+
+            if tok.type == py_pascal_s.PascalSTokenType.Keyword:
+                str_slice.append(source_stream[tok.offset + tok.length:])
+                str_slice.append(
+                    f'<span id="token-ref-{tok_len - 1 - i}" class="token keyword">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
+                source_stream = source_stream[:tok.offset]
+            elif tok.type == py_pascal_s.PascalSTokenType.Marker:
+                str_slice.append(source_stream[tok.offset + tok.length:])
+                str_slice.append(
+                    f'<span id="token-ref-{tok_len - 1 - i}" class="token marker">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
+                source_stream = source_stream[:tok.offset]
+            elif tok.type == py_pascal_s.PascalSTokenType.Identifier:
+                str_slice.append(source_stream[tok.offset + tok.length:])
+                str_slice.append(
+                    f'<span id="token-ref-{tok_len - 1 - i}" class="token identifier">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
+                source_stream = source_stream[:tok.offset]
+            elif tok.type == py_pascal_s.PascalSTokenType.ConstantString:
+                str_slice.append(source_stream[tok.offset + tok.length:])
+                str_slice.append(
+                    f'<span id="token-ref-{tok_len - 1 - i}" class="token const-string">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
+                source_stream = source_stream[:tok.offset]
+            elif tok.type == py_pascal_s.PascalSTokenType.Comment:
+                str_slice.append(source_stream[tok.offset + tok.length:])
+                str_slice.append(
+                    f'<span id="token-ref-{tok_len - 1 - i}" class="token comment">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
+                source_stream = source_stream[:tok.offset]
+            elif tok.type == py_pascal_s.PascalSTokenType.ErrorToken:
+                str_slice.append(source_stream[tok.offset + tok.length:])
+                str_slice.append(
+                    f'<span id="token-ref-{tok_len - 1 - i}" class="token error-token">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
+                source_stream = source_stream[:tok.offset]
+            elif tok.type == py_pascal_s.PascalSTokenType.ConstantBoolean:
+                str_slice.append(source_stream[tok.offset + tok.length:])
+                str_slice.append(
+                    f'<span id="token-ref-{tok_len - 1 - i}" class="token const-boolean">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
+                source_stream = source_stream[:tok.offset]
+            elif tok.type == py_pascal_s.PascalSTokenType.ConstantInteger:
+                str_slice.append(source_stream[tok.offset + tok.length:])
+                str_slice.append(
+                    f'<span id="token-ref-{tok_len - 1 - i}" class="token const-integer">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
+                source_stream = source_stream[:tok.offset]
+            elif tok.type == py_pascal_s.PascalSTokenType.ConstantReal:
+                str_slice.append(source_stream[tok.offset + tok.length:])
+                str_slice.append(
+                    f'<span id="token-ref-{tok_len - 1 - i}" class="token const-real">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
+                source_stream = source_stream[:tok.offset]
+            elif tok.type == py_pascal_s.PascalSTokenType.ConstantChar:
+                str_slice.append(source_stream[tok.offset + tok.length:])
+                str_slice.append(
+                    f'<span id="token-ref-{tok_len - 1 - i}" class="token const-char">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
+                source_stream = source_stream[:tok.offset]
+        str_slice.append(source_stream)
+
+        return ''.join(reversed(str_slice))
+
+    def render(self, source_path, target_path):
+        return self.renders(open(source_path).read(), target_path)
+
+    @staticmethod
+    def lex(source):
+        lexer = py_pascal_s.PascalSLexer()
+        toks = list(map(reinterpret_pascal_s_token, lexer.lex(source)))  # type: List[py_pascal_s.PascalSToken]
+        return lexer, toks
+
+    def renders(self, source, target_path):
+        handler, toks = self.lex(source)
+
+        rendered_string = self.render_source(rc, toks)
+        tok_dicts = self.half_serialize_tokens(toks)
+
+        with open(target_path, 'w') as f:
+            f.write(PascalSLexerRenderer.html_template.replace("{{content}}", ''.join(rendered_string))
+                    .replace("'token_definition_replacement'", json.dumps(tok_dicts)))
+        del handler
+
+
+if __name__ == '__main__':
+    PascalSLexerRenderer().renders(rc, 'C:\\Users\\kamiyoru\\Desktop\\test.html')
