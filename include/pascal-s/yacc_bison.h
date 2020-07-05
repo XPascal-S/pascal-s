@@ -2281,7 +2281,7 @@ namespace yy {
   case 98:
 #line 587 "parser.y"
                       {
-  yylhs.value = new ExpCall((const Identifier*)yystack_[2].value, nullptr);printf("Expcall %d %d %d\n ", ((ExpCall*)yylhs.value)->line, ((ExpCall*)yylhs.value)->column, ((ExpCall*)yylhs.value)->offset);
+  yylhs.value = new ExpCall((const Identifier*)yystack_[2].value, nullptr);
 }
 #line 2284 "yacc_bison.h"
     break;
