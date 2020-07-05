@@ -260,6 +260,11 @@ namespace ast {
             }
         }
 
+        ~ParamSpec() {
+            deleteAST(id_list);
+            deleteAST(spec);
+        }
+
     };
 
     struct ParamList : public Node {
@@ -287,6 +292,16 @@ namespace ast {
         std::vector<Exp *> explist;
 
         explicit ExpressionList() : Node(Type::ExpressionList) {}
+
+        ~ExpressionList() {
+
+            for (auto exp : explist) {
+
+                deleteAST(exp);
+
+            }
+
+        }
     };
 
 
@@ -299,6 +314,10 @@ namespace ast {
         explicit Variable() : Exp(Type::Variable) {}
 
         explicit Variable(Identifier *id, ExpressionList *id_var) : Exp(Type::Variable), id(id), id_var(id_var) {}
+
+        ~Variable() {
+            deleteAST(id_var);
+        }
     };
 
 
@@ -334,6 +353,9 @@ namespace ast {
             copy_pos_between_tokens(this, ident, rhs);
         }
 
+        ~ConstDecl() {
+            deleteAST(rhs);
+        }
     };
 
 
@@ -371,11 +393,9 @@ namespace ast {
         }
 
         ~VarDecl() {
-
+            deleteAST(type_spec);
             deleteAST(idents);
-
         }
-
     };
 
 
@@ -420,6 +440,10 @@ namespace ast {
             copy_pos_between_tokens(this, lhs, rhs);
         }
 
+        ~ExpAssign() {
+            deleteAST(lhs);
+            deleteAST(rhs);
+        }
     };
 
 
@@ -511,6 +535,13 @@ namespace ast {
 
         explicit StatementList() : Node(Type::StatementList) {}
 
+        ~StatementList() {
+            for (auto stm : statement) {
+
+                deleteAST(stm);
+
+            }
+        }
     };
 
 
@@ -518,7 +549,12 @@ namespace ast {
         VariableList *var_list = nullptr;
 
         explicit Read() : Statement(Type::Read) {}
+
         explicit Read(VariableList *var_list) : Statement(Type::Read), var_list(var_list) {}
+
+        ~Read() {
+            deleteAST(var_list);
+        }
     };
 
 
@@ -526,7 +562,12 @@ namespace ast {
         ExpressionList *exp_list = nullptr;
 
         explicit Write() : Statement(Type::Write) {}
+
         explicit Write(ExpressionList *exp_list) : Statement(Type::Write), exp_list(exp_list) {}
+
+        ~Write() {
+            deleteAST(exp_list);
+        }
     };
 
 
@@ -548,8 +589,16 @@ namespace ast {
 
         IfElseStatement() : Statement(Type::IfElseStatement) {}
 
-        IfElseStatement(Exp* expression, Statement* if_part, Statement* else_part) : Statement(Type::IfElseStatement), expression(expression), if_part(if_part), else_part(else_part) {}
+        IfElseStatement(Exp *expression, Statement *if_part, Statement *else_part) : Statement(Type::IfElseStatement),
+                                                                                     expression(expression),
+                                                                                     if_part(if_part),
+                                                                                     else_part(else_part) {}
 
+        ~IfElseStatement() {
+            deleteAST(expression);
+            deleteAST(if_part);
+            deleteAST(else_part);
+        }
     };
 
 
@@ -565,8 +614,14 @@ namespace ast {
 
         ForStatement() : Statement(Type::ForStatement) {}
 
-      ForStatement(const Identifier *id, Exp *express1, Exp *express2, Statement *for_stmt) : Statement(Type::ForStatement), id(id), express1(express1), express2(express2), for_stmt(for_stmt) {}
+        ForStatement(const Identifier *id, Exp *express1, Exp *express2, Statement *for_stmt) : Statement(
+                Type::ForStatement), id(id), express1(express1), express2(express2), for_stmt(for_stmt) {}
 
+        ~ForStatement() {
+            deleteAST(express1);
+            deleteAST(express2);
+            deleteAST(for_stmt);
+        }
     };
 
 
@@ -667,6 +722,10 @@ namespace ast {
         explicit CompoundStatement(StatementList *state) : Statement(Type::CompoundStatement), state(state) {
             copy_pos_with_check(this, state);
         }
+
+        ~CompoundStatement() {
+            deleteAST(state);
+        }
     };
 
 
@@ -696,7 +755,6 @@ namespace ast {
         ~SubprogramHead() {
             deleteAST(decls);
             deleteAST(ret_type);
-
         }
     };
 
@@ -718,6 +776,12 @@ namespace ast {
 
             copy_pos_between_tokens(this, l, compound);
         }
+
+        ~SubprogramBody() {
+            deleteAST(constdecls);
+            deleteAST(vardecls);
+            deleteAST(compound);
+        }
     };
 
 
@@ -731,6 +795,11 @@ namespace ast {
 
         explicit Subprogram(SubprogramHead *subhead, SubprogramBody *subbody) : Function(Type::Subprogram),
                                                                                 subhead(subhead), subbody(subbody) {}
+
+        ~Subprogram() {
+            deleteAST(subhead);
+            deleteAST(subbody);
+        }
     };
 
 
@@ -739,6 +808,12 @@ namespace ast {
         std::vector<Subprogram *> subprogram;
 
         explicit SubprogramDecls() : Node(Type::SubprogramDecls) {}
+
+        ~SubprogramDecls() {
+            for (auto subp : subprogram) {
+                deleteAST(subp);
+            }
+        }
     };
 
 
@@ -761,7 +836,10 @@ namespace ast {
         explicit ProgramHead(const ExpKeyword *programKeyword, Ident *id) :
                 Node(Type::ProgramHead), programKeyword(programKeyword), id(id), idlist(nullptr) {}
 
-
+        ~ProgramHead() {
+            deleteAST(id);
+            deleteAST(idlist);
+        }
     };
 
 
@@ -787,6 +865,12 @@ namespace ast {
             copy_pos_between_tokens(this, l, compound);
         }
 
+        ~ProgramBody() {
+            deleteAST(constdecls);
+            deleteAST(vardecls);
+            deleteAST(subprogram);
+            deleteAST(compound);
+        }
     };
 
 
@@ -814,7 +898,6 @@ namespace ast {
         ~Program() {
             deleteAST(programHead);
             deleteAST(programBody);
-
         }
     };
 }

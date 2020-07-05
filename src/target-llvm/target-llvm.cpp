@@ -189,13 +189,13 @@ LLVMBuilder::Value *LLVMBuilder::code_gen(const ast::Node *node) {
 
 void LLVMBuilder::report_semantic_error(const char *fn, const pascal_s::Pos *pos, std::string &&msg) {
     errors.push_back(new PascalSSemanticError(fn, pos,
-                                              "semantic error: at function" + (fn + (": " + msg))));
+                                              "semantic error: at function " + (fn + (": " + msg))));
 }
 
 
 void LLVMBuilder::report_semantic_warning(const char *fn, const pascal_s::Pos *pos, std::string &&msg) {
     warnings.push_back(new PascalSSemanticError(fn, pos,
-                                                "semantic warning: at function" + (fn + (": " + msg))));
+                                                "semantic warning: at function " + (fn + (": " + msg))));
 }
 
 

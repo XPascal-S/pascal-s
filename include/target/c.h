@@ -337,13 +337,13 @@ namespace target_c {
 
         void addWarningMsg(const Node *node, const std::string msg, const char * fn){
 //            auto fn = __FUNCTION__ ;
-            std::string warnMsg = "semantic Warning: at function" + (fn + (": " + msg));
+            std::string warnMsg = "semantic Warning: at function " + (fn + (": " + msg));
             this->errors.push_back(new PascalSSemanticError(fn, node->visit_pos(), warnMsg));
         }
 
         void addErrMsg(const Node *node, const std::string msg, const char * fn) {
 //            auto fn = __FUNCTION__ ;
-            std::string errMsg = "semantic error: at function" + (fn + (": " + msg));
+            std::string errMsg = "semantic error: at function " + (fn + (": " + msg));
             this->errors.push_back(new PascalSSemanticError(fn, node->visit_pos(), errMsg));
         }
 
@@ -469,8 +469,12 @@ namespace target_c {
                     return TranslateFailed;
             }
 
-            if(se.typeDecl == "char*"){
+            if(se.typeDecl == "char*") {
                 auto *arrayType = new ArrayTypeSpec(new Keyword(KeywordType::Char));
+                arrayType->line = node->line;
+                arrayType->column = node->column;
+                arrayType->length = node->length;
+                arrayType->offset = node->offset;
                 arrayType->periods.push_back(std::pair<int, int>(0, se.value.size()));
                 se.arrayInfo = arrayType;
             }
@@ -678,16 +682,23 @@ namespace target_c {
             return OK;
         }
 
-        int code_gen_Ident(const Ident *node, std::string &buffer, std::string &expType){
+        int code_gen_Ident(const Ident *node, std::string &buffer, std::string &expType) {
             // Deal with Ident
             std::string identName = node->ident->content;
-            auto funcFinder = this->functionBuff.find(identName);
-            if(funcFinder != this->functionBuff.end()){
+            auto varFinder = this->nowST_pointer->content.find(identName);
+            if (false && varFinder == this->nowST_pointer->content.end()) {
                 //Ident is function call
-                auto *tempCall = new ExpCall(node->ident, nullptr);
-                delete node;
-                return code_gen_ExpCall(tempCall, buffer, expType);
-            }else{
+                auto funcFinder = this->functionBuff.find(identName);
+                if (funcFinder != this->functionBuff.end()) {
+                    auto *tempCall = new ExpCall(node->ident, nullptr);
+                    tempCall->line = node->line;
+                    tempCall->column = node->column;
+                    tempCall->length = node->length;
+                    tempCall->offset = node->offset;
+                    delete node;
+                    return code_gen_ExpCall(tempCall, buffer, expType);
+                }
+            } else {
                 //Take Ident as variable
                 auto *tempVariable = new Variable;
                 tempVariable->id = node->ident;
@@ -901,20 +912,25 @@ namespace target_c {
             bool check = true;
             std::string lhsType;
             std::string rhsType;
-            if(node->lhs->type == Type::Variable || node->lhs->type == Type::Ident){
+            if(node->lhs->type == Type::Variable || node->lhs->type == Type::Ident) {
                 //处理函数返回值的问题
                 std::string varName;
-                if(node->lhs->type == Type::Variable) {
+                if (node->lhs->type == Type::Variable) {
                     varName = reinterpret_cast<const Variable *>(node->lhs)->id->content;
-                }else{
+                } else {
                     varName = reinterpret_cast<const Ident *>(node->lhs)->ident->content;
                 }
-                if(varName == this->nowST_pointer->tableName){
+                auto varFinder = this->nowST_pointer->content.find(varName);
+                bool inTable = false;
+                if (varFinder != this->nowST_pointer->content.end()) {
+                    inTable = true;
+                }
+                if (!inTable && varName == this->nowST_pointer->tableName) {
                     buffer += "return ";
                     code_gen_exp(node->rhs, buffer, rhsType);
                     //buffer += ";\n";
                     auto funcIter = this->functionBuff.find(this->nowST_pointer->tableName);
-                    if(funcIter->second.returnType != rhsType){
+                    if (funcIter->second.returnType != rhsType) {
                         //函数返回值类型不符
                         addErrMsg(node, "type of return value does not match function definition", __FUNCTION__);
 //                        assert(false);
@@ -975,7 +991,8 @@ namespace target_c {
                 std::string io_type;
                 std::string var_type;
                 std::string tempVariableBuffer = "";
-                code_gen_exp(x, tempVariableBuffer, var_type);
+
+                check &= code_gen_exp(x, tempVariableBuffer, var_type);
                 if (typeStr2ioStr(var_type, io_type)) {
                     buffer += io_type;
                     readBuffer += ", ";
@@ -983,8 +1000,7 @@ namespace target_c {
                         readBuffer += "&";
                     }
                     readBuffer += tempVariableBuffer;
-                }
-                else {
+                } else {
                     addErrMsg(node, "var type not support in read", __FUNCTION__);
                     check = false;
 //                    assert(false);
