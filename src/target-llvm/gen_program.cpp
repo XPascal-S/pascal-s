@@ -49,24 +49,11 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_program(const ast::Program *pProgra
     auto link = LinkedContext{scope_stack, &program_array_infos, &program_this, &program_const_this};
     scope_stack = &link;
 
-    // todo: after gen function decls?
     // out_code( define variable i32*: %program.name )
     llvm::IRBuilder<> dfn_block(&program->getEntryBlock(),
                                 program->getEntryBlock().begin());
     auto ptr = dfn_block.CreateAlloca(llvm::Type::getInt32Ty(
             ctx), nullptr, pProgram->programHead->id->ident->content);
-
-    // check and insert %program.name to this.ctx
-    if (program_this.count(pProgram->programHead->id->ident->content) ||
-        program_const_this.count(pProgram->programHead->id->ident->content)) {
-        llvm_pascal_s_report_semantic_error_n(
-                pProgram->programHead->id->ident, fmt::format("ident redeclared"));
-    }
-    program_this[pProgram->programHead->id->ident->content] = ptr;
-
-    // out_code( store i32 0, i32* %program.name )
-    ir_builder.CreateStore(llvm::Constant::getIntegerValue(llvm::Type::getInt32Ty(
-            ctx), llvm::APInt(32, 0)), ptr);
 
     // gen(program.func_decls)
     if (pProgram->programBody->subprogram != nullptr) {
@@ -84,6 +71,18 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_program(const ast::Program *pProgra
     // 生成子函数会改变当前builder指向的basic block
     // reset_insert_point(program_entry)
     ir_builder.SetInsertPoint(body);
+
+    // check and insert %program.name to this.ctx
+    if (program_this.count(pProgram->programHead->id->ident->content) ||
+        program_const_this.count(pProgram->programHead->id->ident->content)) {
+        llvm_pascal_s_report_semantic_error_n(
+                pProgram->programHead->id->ident, fmt::format("ident redeclared"));
+    }
+    program_this[pProgram->programHead->id->ident->content] = ptr;
+
+    // out_code( store i32 0, i32* %program.name )
+    ir_builder.CreateStore(llvm::Constant::getIntegerValue(llvm::Type::getInt32Ty(
+            ctx), llvm::APInt(32, 0)), ptr);
 
     // gen_statement(program.body) if not null
     if (pProgram->programBody->compound->state->statement.empty() ||

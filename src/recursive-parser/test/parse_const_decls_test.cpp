@@ -95,47 +95,101 @@ INSTANTIATE_TEST_SUITE_P(Simple, GuessStopConstDeclsTest, testing::Values( /* NO
                 {
                         new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Const),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Var),
                 }
         },
         ParserTestCase{
                 {
+                        new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Const),
+                        new ErrorToken("error", raw_length_of("error")),
+                        new Keyword(KeywordType::Const),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("error", raw_length_of("error")),
+                        new Keyword(KeywordType::Const),
+                        new ErrorToken("error", raw_length_of("error")),
+                        new Keyword(KeywordType::Function),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("error", raw_length_of("error")),
+                        new Keyword(KeywordType::Const),
+                        new ErrorToken("error", raw_length_of("error")),
+                        new Keyword(KeywordType::Procedure),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("error", raw_length_of("error")),
+                        new Keyword(KeywordType::Const),
+                        new ErrorToken("error", raw_length_of("error")),
+                        new Keyword(KeywordType::Begin),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("error", raw_length_of("error")),
+                        new Keyword(KeywordType::Const),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Var),
                 }
         },
         ParserTestCase{
                 {
+                        new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Const),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Identifier("a"),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Var),
                 }
         },
         ParserTestCase{
                 {
+                        new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Const),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Identifier("a"),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Marker(MarkerType::EQ),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Var),
                 }
         },
         ParserTestCase{
                 {
+                        new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Const),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Identifier("a"),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Marker(MarkerType::EQ),
+                        new ErrorToken("error", raw_length_of("error")),
                         new ConstantInteger(1),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Var),
                 }
         },
         ParserTestCase{
                 {
+                        new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Const),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Identifier("a"),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Marker(MarkerType::EQ),
+                        new ErrorToken("error", raw_length_of("error")),
                         new ConstantInteger(1),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Marker(MarkerType::Semicolon),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Identifier("a"),
+                        new ErrorToken("error", raw_length_of("error")),
                         new Keyword(KeywordType::Var),
                 }
         }

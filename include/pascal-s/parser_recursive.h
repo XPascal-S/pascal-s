@@ -126,6 +126,7 @@ private:
     ast::SubprogramDecls *_parse_subprogram_decls(ast::SubprogramDecls *decls);
 
     ast::CompoundStatement *_parse_compound_statement(std::set<const Token *> *till = nullptr);
+    ast::CompoundStatement *__parse_compound_statement(std::set<const Token *> *till = nullptr);
 
     bool guess_keyword(KeywordType k);
 

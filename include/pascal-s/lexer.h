@@ -76,6 +76,10 @@ private:
 
     int addComment();
 
+    int addInlineComment();
+
+    int addCommentAux();
+
     int addASCIIChar();
 
     int addChar();
@@ -89,6 +93,7 @@ class FullInMemoryLexer : public Lexer {
     token_container tokens;
     error_references errors;
     int64_t current_token_cursor;
+    bool all_lexed = false;
 public:
     explicit FullInMemoryLexer(std::istream *in = nullptr, std::ostream *out = nullptr);
 

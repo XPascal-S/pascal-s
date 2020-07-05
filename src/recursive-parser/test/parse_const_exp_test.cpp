@@ -48,6 +48,12 @@ INSTANTIATE_TEST_SUITE_P(Simple, ConstFacTest, testing::Values( /* NOLINT */
                 {
                         new ConstantReal("1.", 1.),
                 }
+        },
+        ParserTestCase{
+                {
+                        new Marker(MarkerType::Add),
+                        new ConstantReal("1.", 1.),
+                }
         }
 ));
 
@@ -62,6 +68,12 @@ INSTANTIATE_TEST_SUITE_P(Simple, GuessConstFacTest, testing::Values( /* NOLINT *
         ParserTestCase{
                 {
                         new Keyword(KeywordType::Const),
+                        new ConstantReal("1.", 1.),
+                }
+        },
+        ParserTestCase{
+                {
+                        new ErrorToken("error", raw_length_of("error")),
                         new ConstantReal("1.", 1.),
                 }
         },

@@ -291,6 +291,22 @@ char *removeSkipRule(char *content, int yyleng) {
 int Lexer::addComment() {
     current_offset += yyleng - 1;
 
+    int code = addCommentAux();
+    for (int i = 0; i < yyleng; i++) {
+        if (yytext[i] == '\n') {
+            line_offset = current_offset - yyleng + 1 + i;
+        }
+    }
+    return code;
+}
+
+int Lexer::addInlineComment() {
+    int code = addCommentAux();
+    line_offset = current_offset;
+    return code;
+}
+
+int Lexer::addCommentAux() {
     if (option_mask & LexerOptionLexComment) {
         return addToken(new Comment(removeSkipRule(yytext, yyleng)));
     }
