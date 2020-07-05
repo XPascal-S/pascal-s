@@ -871,7 +871,7 @@ variable {
 | id lparen expression_list rparen {
   $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$3);
 }
-| lparen expression_list rparen {
+| lparen expression rparen {
   $$ = $2;
 }
 | not factor{
