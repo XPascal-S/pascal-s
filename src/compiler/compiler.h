@@ -12,6 +12,7 @@
 #include <dep/stl.h>
 #include <target/task.h>
 #include <functional>
+#include <pascal-s/errno.h>
 
 string_view_return basename(string_view s) {
     for (size_t i = s.length() - 1; i >= 0; i--) {
@@ -94,7 +95,7 @@ private:
             std::cout << "usage: " << basename(argv[0]) << " [--version] [-h | --help]\n\n";
 
             std::cout << dep::print_helps();
-            exit(0);
+            exit(pascal_s::ProgramErrorCode::CodeOK);
         }
     }
 
@@ -102,7 +103,7 @@ private:
         if (exited) return;
         if (options.version) {
             std::cout << "Pascal-S Compiler, version " VERSION "\n";
-            exit(0);
+            exit(pascal_s::ProgramErrorCode::CodeOK);
         }
     }
 
@@ -139,7 +140,11 @@ private:
         task.source = get_ast();
 
         if (lexer.has_error() || parser.has_error()) {
-            exit(1);
+            exit(pascal_s::ProgramErrorCode::ParseFailed);
+        }
+
+        if (task.source == nullptr) {
+            exit(pascal_s::ProgramErrorCode::ParserReturnNullNode);
         }
 
         fflush(stdout);
@@ -191,7 +196,7 @@ private:
     }
 
     bool exited = false;
-    int _code = 0;
+    int _code = pascal_s::ProgramErrorCode::CodeOK;
 };
 
 #endif //PASCAL_S_COMPILER_H
