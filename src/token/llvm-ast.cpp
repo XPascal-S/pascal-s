@@ -330,21 +330,6 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("}\n");
 #undef  cur_node
             break;
-        case Type::ExpressionList:
-#define cur_node (reinterpret_cast<const ast::ExpressionList*>(node))
-            put_tab(dep);
-            printf("{\n");
-            put_tab(dep + 1);
-            printf("type = ExpressionList\n");
-            if( cur_node->explist.size() > 0 ){
-              for (auto param: cur_node->explist) {
-                printAST(param, dep + 1);
-              }
-            }
-            put_tab(dep);
-            printf("}\n");
-#undef  cur_node
-            break;
         case Type::ExecStatement:
 #define cur_node (reinterpret_cast<const ast::ExecStatement*>(node))
 //            printf("{\n");
@@ -592,14 +577,7 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = BiExp\n");
-            put_tab(dep + 1);
-            printf("lhs = \n");
-            printAST(cur_node->lhs, dep + 1);
-            put_tab(dep + 1);
-            printf("marker = %s\n", convertToString(cur_node->marker).c_str());
-            put_tab(dep + 1);
-            printf("rhs = \n");
-            printAST(cur_node->rhs, dep + 1);
+
             put_tab(dep);
             printf("}\n");
 #undef  cur_node

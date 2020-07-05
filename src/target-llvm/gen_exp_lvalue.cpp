@@ -42,10 +42,14 @@ llvm::Value *LLVMBuilder::get_lvalue_pointer(const ast::Exp *lvalue) {
                     if (offset.empty()) {
                         return nullptr;
                     } else {
-                        // 先取地址得到数组类型 [ lvalue.array_size x i64]，再取偏移量offset
-                        // 相当于lvalue在C代码中的类型相当于array_type **lvalue
-                        // 则此指令完成 gep_tmp = lvalue[0][offset]
-                        return ir_builder.CreateGEP(ptr, offset, "gep_tmp");
+                        if (ptr->getType()->getPointerElementType()->isArrayTy()) {
+                            // 先取地址得到数组类型 [ lvalue.array_size x i64]，再取偏移量offset
+                            // 相当于lvalue在C代码中的类型相当于array_type **lvalue
+                            // 则此指令完成 gep_tmp = lvalue[0][offset]
+                            return ir_builder.CreateGEP(ptr, offset, "gep_tmp");
+                        } else {
+                            return ir_builder.CreateGEP(ptr, offset[1], "gep_tmp");
+                        }
                     }
                 } else {
                     llvm_pascal_s_report_semantic_error_n(

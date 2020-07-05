@@ -474,11 +474,7 @@ namespace ast {
 
 
         explicit ExpCall(const Identifier *fn, ExpressionList *params) : Exp(Type::ExpCall), fn(fn), params(params) {
-          if( params != nullptr ){
             copy_pos_between_tokens(this, fn, params);
-          }else{
-            copy_pos_with_check(this, fn);
-          }
         }
 
         ~ExpCall() {
