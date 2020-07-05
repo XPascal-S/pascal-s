@@ -135,6 +135,9 @@ void ast::deleteAST(Node *node) {
         case Type::StatementList:
             delete reinterpret_cast<StatementList *>(node);
             break;
+        case Type::ExpMarker:
+            delete reinterpret_cast<ExpMarker *>(node);
+            break;
     }
 }
 

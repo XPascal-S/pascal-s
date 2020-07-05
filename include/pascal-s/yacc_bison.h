@@ -1507,49 +1507,48 @@ namespace yy {
   case 3:
 #line 93 "parser.y"
         {
-  // printf("keep error");
   YYABORT;
   }
-#line 1509 "yacc_bison.h"
+#line 1508 "yacc_bison.h"
     break;
 
   case 4:
-#line 101 "parser.y"
+#line 100 "parser.y"
                {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
  }
-#line 1517 "yacc_bison.h"
+#line 1516 "yacc_bison.h"
     break;
 
   case 5:
-#line 107 "parser.y"
+#line 106 "parser.y"
                                 {
   yylhs.value = new ProgramHead((const ExpKeyword*)yystack_[4].value, new Ident((const Identifier*)yystack_[3].value), (IdentList*)yystack_[1].value);
 }
-#line 1525 "yacc_bison.h"
+#line 1524 "yacc_bison.h"
     break;
 
   case 6:
-#line 110 "parser.y"
+#line 109 "parser.y"
             {
   yylhs.value = new ProgramHead((const ExpKeyword*)yystack_[1].value, new Ident((const Identifier*)yystack_[0].value));
 }
-#line 1533 "yacc_bison.h"
+#line 1532 "yacc_bison.h"
     break;
 
   case 7:
-#line 113 "parser.y"
+#line 112 "parser.y"
                           {
   IdentList* idlist = new IdentList();
   ast::copy_pos_with_check(idlist, (ExpMarker*)yystack_[1].value);
   ast::copy_pos_with_check(idlist, (ExpMarker*)yystack_[0].value);
   yylhs.value = new ProgramHead((const ExpKeyword*)yystack_[3].value, new Ident((const Identifier*)yystack_[2].value), idlist);
 }
-#line 1544 "yacc_bison.h"
+#line 1543 "yacc_bison.h"
     break;
 
   case 8:
-#line 119 "parser.y"
+#line 118 "parser.y"
                                 {
   char* errinfo = "Program Head failed at";
   PascalSParseError* err = new PascalSParseError(__FUNCTION__, errinfo, PascalSErrno::ParseError);
@@ -1561,187 +1560,187 @@ namespace yy {
   add_error(err);
   yyerrok;
 }
-#line 1560 "yacc_bison.h"
+#line 1559 "yacc_bison.h"
     break;
 
   case 9:
-#line 135 "parser.y"
+#line 134 "parser.y"
                         {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
 }
-#line 1568 "yacc_bison.h"
+#line 1567 "yacc_bison.h"
     break;
 
   case 10:
-#line 140 "parser.y"
+#line 139 "parser.y"
                                                                                              {
   yylhs.value = new ProgramBody((ConstDecls*)yystack_[3].value, (VarDecls*)yystack_[2].value, (SubprogramDecls*)yystack_[1].value, (CompoundStatement*)yystack_[0].value);
 }
-#line 1576 "yacc_bison.h"
+#line 1575 "yacc_bison.h"
     break;
 
   case 11:
-#line 146 "parser.y"
+#line 145 "parser.y"
                  {
   yylhs.value = yystack_[2].value;
   ((IdentList*)yylhs.value)->idents.push_back((Identifier*)yystack_[0].value);
   ast::copy_pos_with_check((IdentList*)yylhs.value, (Identifier*)yystack_[0].value);
 }
-#line 1586 "yacc_bison.h"
+#line 1585 "yacc_bison.h"
     break;
 
   case 12:
-#line 151 "parser.y"
+#line 150 "parser.y"
           {
   yylhs.value = new IdentList();
   ((IdentList*)yylhs.value)->idents.push_back((Identifier*)yystack_[0].value);
   ast::copy_pos_with_check((IdentList*)yylhs.value, (Identifier*)yystack_[0].value);
 }
-#line 1596 "yacc_bison.h"
+#line 1595 "yacc_bison.h"
     break;
 
   case 13:
-#line 160 "parser.y"
+#line 159 "parser.y"
                                   {
   yylhs.value = yystack_[1].value;
 }
-#line 1604 "yacc_bison.h"
+#line 1603 "yacc_bison.h"
     break;
 
   case 14:
-#line 163 "parser.y"
+#line 162 "parser.y"
                                         { yylhs.value = nullptr; }
-#line 1610 "yacc_bison.h"
+#line 1609 "yacc_bison.h"
     break;
 
   case 15:
-#line 168 "parser.y"
+#line 167 "parser.y"
                    {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
 }
-#line 1618 "yacc_bison.h"
+#line 1617 "yacc_bison.h"
     break;
 
   case 16:
-#line 174 "parser.y"
+#line 173 "parser.y"
                                               {
   yylhs.value = yystack_[4].value;
   ConstDecl* constDecl = new ConstDecl((const Identifier*)yystack_[2].value, (Exp*)yystack_[0].value);
   ((ConstDecls*)yylhs.value)->decls.push_back(constDecl);
 }
-#line 1628 "yacc_bison.h"
+#line 1627 "yacc_bison.h"
     break;
 
   case 17:
-#line 179 "parser.y"
+#line 178 "parser.y"
                     {
   ConstDecl* constDecl = new ConstDecl((const Identifier*)yystack_[2].value, (Exp*)yystack_[0].value);
   yylhs.value = new ConstDecls();
   ((ConstDecls*)yylhs.value)->decls.push_back(constDecl);
 }
-#line 1638 "yacc_bison.h"
+#line 1637 "yacc_bison.h"
     break;
 
   case 18:
-#line 186 "parser.y"
+#line 185 "parser.y"
              {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 1646 "yacc_bison.h"
+#line 1645 "yacc_bison.h"
     break;
 
   case 19:
-#line 192 "parser.y"
+#line 191 "parser.y"
           {yylhs.value = new UnExp((const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);}
-#line 1652 "yacc_bison.h"
+#line 1651 "yacc_bison.h"
     break;
 
   case 20:
-#line 193 "parser.y"
+#line 192 "parser.y"
           {yylhs.value = new UnExp((const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);}
-#line 1658 "yacc_bison.h"
+#line 1657 "yacc_bison.h"
     break;
 
   case 21:
-#line 194 "parser.y"
+#line 193 "parser.y"
           {yylhs.value = yystack_[0].value;}
-#line 1664 "yacc_bison.h"
+#line 1663 "yacc_bison.h"
     break;
 
   case 22:
-#line 195 "parser.y"
+#line 194 "parser.y"
           {yylhs.value = yystack_[0].value;}
-#line 1670 "yacc_bison.h"
+#line 1669 "yacc_bison.h"
     break;
 
   case 23:
-#line 196 "parser.y"
+#line 195 "parser.y"
           {yylhs.value = yystack_[0].value;}
-#line 1676 "yacc_bison.h"
+#line 1675 "yacc_bison.h"
     break;
 
   case 24:
-#line 199 "parser.y"
+#line 198 "parser.y"
          {yylhs.value = new ExpConstantBoolean(((const ConstantBoolean*)(yystack_[0].value)));}
-#line 1682 "yacc_bison.h"
+#line 1681 "yacc_bison.h"
     break;
 
   case 25:
-#line 201 "parser.y"
+#line 200 "parser.y"
         {
   yylhs.value = new ExpConstantInteger(((const ConstantInteger*)(yystack_[0].value)));
 }
-#line 1690 "yacc_bison.h"
+#line 1689 "yacc_bison.h"
     break;
 
   case 26:
-#line 204 "parser.y"
+#line 203 "parser.y"
        {
   yylhs.value = new ExpConstantReal(((const ConstantReal*)(yystack_[0].value)));
   }
-#line 1698 "yacc_bison.h"
+#line 1697 "yacc_bison.h"
     break;
 
   case 27:
-#line 209 "parser.y"
+#line 208 "parser.y"
           {
   yylhs.value = new ExpConstantChar(((const ConstantChar*)(yystack_[0].value)));
 }
-#line 1706 "yacc_bison.h"
+#line 1705 "yacc_bison.h"
     break;
 
   case 28:
-#line 214 "parser.y"
+#line 213 "parser.y"
                {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 1714 "yacc_bison.h"
+#line 1713 "yacc_bison.h"
     break;
 
   case 29:
-#line 219 "parser.y"
+#line 218 "parser.y"
                {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 1722 "yacc_bison.h"
+#line 1721 "yacc_bison.h"
     break;
 
   case 30:
-#line 224 "parser.y"
+#line 223 "parser.y"
                                { yylhs.value = nullptr;  /* new ExpVoid(); */ }
-#line 1728 "yacc_bison.h"
+#line 1727 "yacc_bison.h"
     break;
 
   case 31:
-#line 225 "parser.y"
+#line 224 "parser.y"
                                {
   yylhs.value = yystack_[1].value;
 }
-#line 1736 "yacc_bison.h"
+#line 1735 "yacc_bison.h"
     break;
 
   case 32:
-#line 228 "parser.y"
+#line 227 "parser.y"
         {
   yylhs.value = yystack_[1].value;
   ast::printAST((Node*)yystack_[1].value);
@@ -1755,22 +1754,22 @@ namespace yy {
   add_error(err);
   yyerrok;
 }
-#line 1754 "yacc_bison.h"
+#line 1753 "yacc_bison.h"
     break;
 
   case 33:
-#line 245 "parser.y"
+#line 244 "parser.y"
                                               {
   yylhs.value = yystack_[4].value;
   VarDecl* vdecl = new VarDecl((IdentList*)yystack_[2].value, (TypeSpec*)yystack_[0].value);
   ((VarDecls*)yylhs.value)->decls.push_back(vdecl);
   ast::copy_pos_with_check((VarDecls*)yylhs.value, vdecl);
 }
-#line 1765 "yacc_bison.h"
+#line 1764 "yacc_bison.h"
     break;
 
   case 34:
-#line 251 "parser.y"
+#line 250 "parser.y"
                     {
   yylhs.value = new VarDecls();
   VarDecl* vdecl = new VarDecl((IdentList*)yystack_[2].value, (TypeSpec*)yystack_[0].value);
@@ -1778,11 +1777,11 @@ namespace yy {
   ((VarDecls*)yylhs.value)->decls.push_back(vdecl);
   ast::copy_pos_with_check((VarDecls*)yylhs.value, vdecl);
 }
-#line 1777 "yacc_bison.h"
+#line 1776 "yacc_bison.h"
     break;
 
   case 35:
-#line 258 "parser.y"
+#line 257 "parser.y"
                                {
   yylhs.value = new VarDecls();
   ast::copy_pos_between_tokens((VarDecls*)yylhs.value, (IdentList*)yystack_[3].value, (Token*)yystack_[0].value);
@@ -1796,29 +1795,29 @@ namespace yy {
   add_error(err);
   // yyerrok;
 }
-#line 1795 "yacc_bison.h"
+#line 1794 "yacc_bison.h"
     break;
 
   case 36:
-#line 274 "parser.y"
+#line 273 "parser.y"
                      {
   yylhs.value = yystack_[0].value;
 }
-#line 1803 "yacc_bison.h"
+#line 1802 "yacc_bison.h"
     break;
 
   case 37:
-#line 277 "parser.y"
+#line 276 "parser.y"
                                                        {
   yylhs.value = yystack_[3].value;
   ((ArrayTypeSpec*)yylhs.value)->keyword = ((BasicTypeSpec*)yystack_[0].value)->keyword;
   ast::copy_pos_with_check((ArrayTypeSpec*)yylhs.value, ((BasicTypeSpec*)yystack_[0].value)->keyword);
 }
-#line 1813 "yacc_bison.h"
+#line 1812 "yacc_bison.h"
     break;
 
   case 38:
-#line 282 "parser.y"
+#line 281 "parser.y"
                                              {
   yylhs.value = new ArrayTypeSpec(nullptr);
   ((ArrayTypeSpec*)yylhs.value)->keyword = ((BasicTypeSpec*)yystack_[0].value)->keyword;
@@ -1826,103 +1825,103 @@ namespace yy {
   ast::copy_pos_between_tokens((ArrayTypeSpec*)yylhs.value, (const Keyword*)yystack_[4].value, (BasicTypeSpec*)yystack_[0].value);
   yyerrok;
 }
-#line 1825 "yacc_bison.h"
+#line 1824 "yacc_bison.h"
     break;
 
   case 39:
-#line 291 "parser.y"
+#line 290 "parser.y"
                     {
   // $$ = new ExpKeyword((const Keyword *)($1));
   yylhs.value = yystack_[0].value;
 }
-#line 1834 "yacc_bison.h"
+#line 1833 "yacc_bison.h"
     break;
 
   case 40:
-#line 297 "parser.y"
+#line 296 "parser.y"
               {
   // $$ = new ExpKeyword((const Keyword *)($1));
   yylhs.value = yystack_[0].value;
 }
-#line 1843 "yacc_bison.h"
+#line 1842 "yacc_bison.h"
     break;
 
   case 41:
-#line 304 "parser.y"
+#line 303 "parser.y"
                   {yylhs.value = yystack_[0].value;}
-#line 1849 "yacc_bison.h"
+#line 1848 "yacc_bison.h"
     break;
 
   case 42:
-#line 305 "parser.y"
+#line 304 "parser.y"
                 {yylhs.value = yystack_[0].value;}
-#line 1855 "yacc_bison.h"
+#line 1854 "yacc_bison.h"
     break;
 
   case 43:
-#line 306 "parser.y"
+#line 305 "parser.y"
                    {yylhs.value = yystack_[0].value;}
-#line 1861 "yacc_bison.h"
+#line 1860 "yacc_bison.h"
     break;
 
   case 44:
-#line 307 "parser.y"
+#line 306 "parser.y"
                 {yylhs.value = yystack_[0].value;}
-#line 1867 "yacc_bison.h"
+#line 1866 "yacc_bison.h"
     break;
 
   case 45:
-#line 310 "parser.y"
+#line 309 "parser.y"
                        {
   yylhs.value = new BasicTypeSpec((const Keyword *)(yystack_[0].value));
 }
-#line 1875 "yacc_bison.h"
+#line 1874 "yacc_bison.h"
     break;
 
   case 46:
-#line 315 "parser.y"
+#line 314 "parser.y"
                  {
   yylhs.value = new BasicTypeSpec((const Keyword *)(yystack_[0].value));
 }
-#line 1883 "yacc_bison.h"
+#line 1882 "yacc_bison.h"
     break;
 
   case 47:
-#line 320 "parser.y"
+#line 319 "parser.y"
                  {
   yylhs.value = new BasicTypeSpec((const Keyword *)(yystack_[0].value));
 }
-#line 1891 "yacc_bison.h"
+#line 1890 "yacc_bison.h"
     break;
 
   case 48:
-#line 325 "parser.y"
+#line 324 "parser.y"
                        {
   yylhs.value = new BasicTypeSpec((const Keyword *)(yystack_[0].value));
 }
-#line 1899 "yacc_bison.h"
+#line 1898 "yacc_bison.h"
     break;
 
   case 49:
-#line 331 "parser.y"
+#line 330 "parser.y"
                                   {
   yylhs.value = yystack_[4].value;
   ((ArrayTypeSpec*)yylhs.value)->periods.push_back(std::make_pair((int64_t)((ConstantInteger*)(((ExpConstantInteger*)yystack_[2].value)->value)->attr), (int64_t)((ConstantInteger*)(((ExpConstantInteger*)yystack_[0].value)->value)->attr)));
 }
-#line 1908 "yacc_bison.h"
+#line 1907 "yacc_bison.h"
     break;
 
   case 50:
-#line 335 "parser.y"
+#line 334 "parser.y"
                                    {
   yylhs.value = new ArrayTypeSpec(nullptr);
   ((ArrayTypeSpec*)yylhs.value)->periods.push_back(std::make_pair((int64_t)((ConstantInteger*)(((ExpConstantInteger*)yystack_[2].value)->value)->attr), (int64_t)((ConstantInteger*)(((ExpConstantInteger*)yystack_[0].value)->value)->attr)));
 }
-#line 1917 "yacc_bison.h"
+#line 1916 "yacc_bison.h"
     break;
 
   case 51:
-#line 339 "parser.y"
+#line 338 "parser.y"
                            {
     char* errinfo = "Expect NUM";
     PascalSParseError* err = new PascalSParseError(__FUNCTION__, errinfo, PascalSErrno::ParseError);
@@ -1932,19 +1931,19 @@ namespace yy {
     add_error(err);
     yyerrok;
 }
-#line 1931 "yacc_bison.h"
+#line 1930 "yacc_bison.h"
     break;
 
   case 52:
-#line 349 "parser.y"
+#line 348 "parser.y"
                    {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 1939 "yacc_bison.h"
+#line 1938 "yacc_bison.h"
     break;
 
   case 53:
-#line 354 "parser.y"
+#line 353 "parser.y"
                                               {
   if( yystack_[2].value == nullptr ){
     yylhs.value = new SubprogramDecls();
@@ -1953,163 +1952,163 @@ namespace yy {
   }
   ((SubprogramDecls*)yylhs.value)->subprogram.push_back(((Subprogram*)yystack_[1].value));
 }
-#line 1952 "yacc_bison.h"
+#line 1951 "yacc_bison.h"
     break;
 
   case 54:
-#line 362 "parser.y"
+#line 361 "parser.y"
   { yylhs.value = nullptr;  }
-#line 1958 "yacc_bison.h"
+#line 1957 "yacc_bison.h"
     break;
 
   case 55:
-#line 367 "parser.y"
+#line 366 "parser.y"
                                           {
   yylhs.value = new Subprogram((SubprogramHead*)yystack_[2].value, (SubprogramBody*)yystack_[0].value);
 }
-#line 1966 "yacc_bison.h"
+#line 1965 "yacc_bison.h"
     break;
 
   case 56:
-#line 374 "parser.y"
+#line 373 "parser.y"
                                 {
   yylhs.value = new SubprogramHead((const Keyword*)yystack_[2].value, (const Identifier*)yystack_[1].value, (ParamList*)yystack_[0].value, nullptr);
 }
-#line 1974 "yacc_bison.h"
+#line 1973 "yacc_bison.h"
     break;
 
   case 57:
-#line 377 "parser.y"
+#line 376 "parser.y"
                                                  {
   yylhs.value = new SubprogramHead((const Keyword*)yystack_[4].value, (const Identifier*)yystack_[3].value, (ParamList*)yystack_[2].value, (BasicTypeSpec*)yystack_[0].value);
 }
-#line 1982 "yacc_bison.h"
+#line 1981 "yacc_bison.h"
     break;
 
   case 58:
-#line 382 "parser.y"
+#line 381 "parser.y"
                             {
   // $$ = new ExpKeyword((const Keyword *)($1));
   yylhs.value = yystack_[0].value;
 }
-#line 1991 "yacc_bison.h"
+#line 1990 "yacc_bison.h"
     break;
 
   case 59:
-#line 388 "parser.y"
+#line 387 "parser.y"
                          {
   //$$ = new ExpKeyword((const Keyword *)($1));
   yylhs.value = yystack_[0].value;
 }
-#line 2000 "yacc_bison.h"
+#line 1999 "yacc_bison.h"
     break;
 
   case 60:
-#line 394 "parser.y"
+#line 393 "parser.y"
                   { yylhs.value =  nullptr; /* new ParamList(); */  }
-#line 2006 "yacc_bison.h"
+#line 2005 "yacc_bison.h"
     break;
 
   case 61:
-#line 395 "parser.y"
+#line 394 "parser.y"
                                {
   yylhs.value = yystack_[1].value;
 }
-#line 2014 "yacc_bison.h"
+#line 2013 "yacc_bison.h"
     break;
 
   case 62:
-#line 404 "parser.y"
+#line 403 "parser.y"
                                      {
   yylhs.value = yystack_[2].value;
   ((ParamList*)yylhs.value)->params.push_back((ParamSpec*)yystack_[0].value);
   ast::copy_pos_with_check((ParamList*)yylhs.value, (ParamSpec*)yystack_[0].value);
 }
-#line 2024 "yacc_bison.h"
+#line 2023 "yacc_bison.h"
     break;
 
   case 63:
-#line 409 "parser.y"
+#line 408 "parser.y"
                                 {
   yylhs.value = new ParamList();
   ((ParamList*)yylhs.value)->params.push_back((ParamSpec*)yystack_[0].value);
   ast::copy_pos_with_check((ParamList*)yylhs.value, (ParamSpec*)yystack_[0].value);
   }
-#line 2034 "yacc_bison.h"
+#line 2033 "yacc_bison.h"
     break;
 
   case 64:
-#line 419 "parser.y"
+#line 418 "parser.y"
                                     {
   yylhs.value = new ParamSpec((const Keyword*)yystack_[3].value, (IdentList*)yystack_[2].value, (TypeSpec*)yystack_[0].value);
 }
-#line 2042 "yacc_bison.h"
+#line 2041 "yacc_bison.h"
     break;
 
   case 65:
-#line 422 "parser.y"
+#line 421 "parser.y"
                                 {
   yylhs.value = new ParamSpec(nullptr, (IdentList*)yystack_[2].value, (TypeSpec*)yystack_[0].value);
 }
-#line 2050 "yacc_bison.h"
+#line 2049 "yacc_bison.h"
     break;
 
   case 66:
-#line 428 "parser.y"
+#line 427 "parser.y"
                {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
 }
-#line 2058 "yacc_bison.h"
+#line 2057 "yacc_bison.h"
     break;
 
   case 67:
-#line 434 "parser.y"
+#line 433 "parser.y"
                    {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 2066 "yacc_bison.h"
+#line 2065 "yacc_bison.h"
     break;
 
   case 68:
-#line 439 "parser.y"
+#line 438 "parser.y"
                                                         {
   yylhs.value = new SubprogramBody((ConstDecls*)yystack_[2].value, (VarDecls*)yystack_[1].value, (CompoundStatement*)yystack_[0].value);
 }
-#line 2074 "yacc_bison.h"
+#line 2073 "yacc_bison.h"
     break;
 
   case 69:
-#line 444 "parser.y"
+#line 443 "parser.y"
                                 { yylhs.value = nullptr; }
-#line 2080 "yacc_bison.h"
+#line 2079 "yacc_bison.h"
     break;
 
   case 70:
-#line 445 "parser.y"
+#line 444 "parser.y"
                                    {
   yylhs.value = new CompoundStatement((StatementList*)yystack_[1].value);
 }
-#line 2088 "yacc_bison.h"
+#line 2087 "yacc_bison.h"
     break;
 
   case 71:
-#line 453 "parser.y"
+#line 452 "parser.y"
                    {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
 }
-#line 2096 "yacc_bison.h"
+#line 2095 "yacc_bison.h"
     break;
 
   case 72:
-#line 458 "parser.y"
+#line 457 "parser.y"
                {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
              }
-#line 2104 "yacc_bison.h"
+#line 2103 "yacc_bison.h"
     break;
 
   case 73:
-#line 464 "parser.y"
+#line 463 "parser.y"
                                        {
   yylhs.value = yystack_[2].value;
   if( yystack_[0].value != nullptr ){
@@ -2117,11 +2116,11 @@ namespace yy {
     ast::copy_pos_with_check((StatementList*)yylhs.value, (Statement*)yystack_[0].value);
   }
 }
-#line 2116 "yacc_bison.h"
+#line 2115 "yacc_bison.h"
     break;
 
   case 74:
-#line 471 "parser.y"
+#line 470 "parser.y"
             {
   yylhs.value = new StatementList();
   if( yystack_[0].value != nullptr ){
@@ -2129,138 +2128,138 @@ namespace yy {
     ast::copy_pos_with_check((StatementList*)yylhs.value, (Statement*)yystack_[0].value);
   }
 }
-#line 2128 "yacc_bison.h"
+#line 2127 "yacc_bison.h"
     break;
 
   case 75:
-#line 481 "parser.y"
+#line 480 "parser.y"
                            {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 2136 "yacc_bison.h"
+#line 2135 "yacc_bison.h"
     break;
 
   case 76:
-#line 486 "parser.y"
+#line 485 "parser.y"
                                                       {yylhs.value = new ExecStatement(new ExpAssign((Variable*)yystack_[2].value, (Exp*)yystack_[0].value));}
-#line 2142 "yacc_bison.h"
+#line 2141 "yacc_bison.h"
     break;
 
   case 77:
-#line 487 "parser.y"
+#line 486 "parser.y"
                                                       {yylhs.value = new ExecStatement((Exp*)yystack_[0].value);}
-#line 2148 "yacc_bison.h"
+#line 2147 "yacc_bison.h"
     break;
 
   case 78:
-#line 488 "parser.y"
+#line 487 "parser.y"
                                                       {yylhs.value = yystack_[0].value;}
-#line 2154 "yacc_bison.h"
+#line 2153 "yacc_bison.h"
     break;
 
   case 79:
-#line 490 "parser.y"
+#line 489 "parser.y"
                                       {
                                         yylhs.value = new IfElseStatement((Exp*)yystack_[4].value, (Statement*)yystack_[2].value, (Statement*)yystack_[0].value);
                                         ast::copy_pos_between_tokens((IfElseStatement*)yylhs.value, (ExpKeyword*)yystack_[5].value, (Statement*)yystack_[0].value);
                                       }
-#line 2163 "yacc_bison.h"
+#line 2162 "yacc_bison.h"
     break;
 
   case 80:
-#line 495 "parser.y"
+#line 494 "parser.y"
 {
   yylhs.value = new IfElseStatement((Exp*)yystack_[2].value, (Statement*)yystack_[0].value, nullptr);
   ast::copy_pos_between_tokens((IfElseStatement*)yylhs.value, (ExpKeyword*)yystack_[3].value, (Statement*)yystack_[0].value);
 }
-#line 2172 "yacc_bison.h"
+#line 2171 "yacc_bison.h"
     break;
 
   case 81:
-#line 500 "parser.y"
+#line 499 "parser.y"
                                               {
                                                 yylhs.value = new ForStatement((const Identifier *)yystack_[6].value, (Exp*)yystack_[4].value, (Exp*)yystack_[2].value, (Statement*)yystack_[0].value);
                                                 ast::copy_pos_between_tokens((ForStatement*)yylhs.value, (ExpKeyword*)yystack_[7].value, (Statement*)yystack_[0].value);
                                               }
-#line 2181 "yacc_bison.h"
+#line 2180 "yacc_bison.h"
     break;
 
   case 82:
-#line 505 "parser.y"
+#line 504 "parser.y"
 {
   yylhs.value = new Read((VariableList*)yystack_[1].value);
   ast::copy_pos_with_check((Read*)yylhs.value, (VariableList*)yystack_[1].value);
 }
-#line 2190 "yacc_bison.h"
+#line 2189 "yacc_bison.h"
     break;
 
   case 83:
-#line 510 "parser.y"
+#line 509 "parser.y"
 {
   yylhs.value = new Write((ExpressionList*)yystack_[1].value);
   ast::copy_pos_with_check((Write*)yylhs.value, (ExpressionList*)yystack_[1].value);
 }
-#line 2199 "yacc_bison.h"
+#line 2198 "yacc_bison.h"
     break;
 
   case 84:
-#line 516 "parser.y"
+#line 515 "parser.y"
                {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
 }
-#line 2207 "yacc_bison.h"
+#line 2206 "yacc_bison.h"
     break;
 
   case 85:
-#line 521 "parser.y"
+#line 520 "parser.y"
              {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
 }
-#line 2215 "yacc_bison.h"
+#line 2214 "yacc_bison.h"
     break;
 
   case 86:
-#line 526 "parser.y"
+#line 525 "parser.y"
              {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
    }
-#line 2223 "yacc_bison.h"
+#line 2222 "yacc_bison.h"
     break;
 
   case 87:
-#line 531 "parser.y"
+#line 530 "parser.y"
                      {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 2231 "yacc_bison.h"
+#line 2230 "yacc_bison.h"
     break;
 
   case 88:
-#line 535 "parser.y"
+#line 534 "parser.y"
                 {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
 }
-#line 2239 "yacc_bison.h"
+#line 2238 "yacc_bison.h"
     break;
 
   case 89:
-#line 540 "parser.y"
+#line 539 "parser.y"
                    {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
 }
-#line 2247 "yacc_bison.h"
+#line 2246 "yacc_bison.h"
     break;
 
   case 90:
-#line 545 "parser.y"
+#line 544 "parser.y"
                      {
    yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
         }
-#line 2255 "yacc_bison.h"
+#line 2254 "yacc_bison.h"
     break;
 
   case 91:
-#line 551 "parser.y"
+#line 550 "parser.y"
                               {
   yylhs.value = yystack_[2].value ;
   if( ((Node*)yystack_[0].value)->type == Type::Ident ){
@@ -2276,11 +2275,11 @@ namespace yy {
     ast::copy_pos_with_check((VariableList*)yylhs.value, (Variable*)yystack_[0].value);
   }
 }
-#line 2275 "yacc_bison.h"
+#line 2274 "yacc_bison.h"
     break;
 
   case 92:
-#line 566 "parser.y"
+#line 565 "parser.y"
                 {
   yylhs.value = new VariableList();
   if( ((Node*)yystack_[0].value)->type == Type::Ident ){
@@ -2296,11 +2295,11 @@ namespace yy {
     ast::copy_pos_with_check((VariableList*)yylhs.value, (Variable*)yystack_[0].value);
   }
 }
-#line 2295 "yacc_bison.h"
+#line 2294 "yacc_bison.h"
     break;
 
   case 93:
-#line 585 "parser.y"
+#line 584 "parser.y"
                {
   if( yystack_[0].value == nullptr ){
     yylhs.value = new Ident((Identifier*)yystack_[1].value);
@@ -2309,342 +2308,342 @@ namespace yy {
     ast::copy_pos_between_tokens((Variable*)yylhs.value, (Identifier*)yystack_[1].value, (ExpressionList*)yystack_[0].value);
   }
 }
-#line 2308 "yacc_bison.h"
+#line 2307 "yacc_bison.h"
     break;
 
   case 94:
-#line 595 "parser.y"
+#line 594 "parser.y"
                       { yylhs.value = nullptr; /* new ExpressionList(); */ }
-#line 2314 "yacc_bison.h"
+#line 2313 "yacc_bison.h"
     break;
 
   case 95:
-#line 596 "parser.y"
+#line 595 "parser.y"
                                     {
   yylhs.value = yystack_[1].value;
 }
-#line 2322 "yacc_bison.h"
+#line 2321 "yacc_bison.h"
     break;
 
   case 96:
-#line 601 "parser.y"
+#line 600 "parser.y"
                          {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 2330 "yacc_bison.h"
+#line 2329 "yacc_bison.h"
     break;
 
   case 97:
-#line 605 "parser.y"
+#line 604 "parser.y"
                          {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 2338 "yacc_bison.h"
+#line 2337 "yacc_bison.h"
     break;
 
   case 98:
-#line 610 "parser.y"
+#line 609 "parser.y"
             {
     yylhs.value = new Ident((const Identifier*)yystack_[0].value);
   //$$ = new ExpCall((const Identifier*)$1, nullptr);
 }
-#line 2347 "yacc_bison.h"
+#line 2346 "yacc_bison.h"
     break;
 
   case 99:
-#line 614 "parser.y"
+#line 613 "parser.y"
                                       {
   yylhs.value = new ExpCall((const Identifier*)yystack_[3].value, (ExpressionList*)yystack_[1].value);
 }
-#line 2355 "yacc_bison.h"
+#line 2354 "yacc_bison.h"
     break;
 
   case 100:
-#line 617 "parser.y"
+#line 616 "parser.y"
                       {
   yylhs.value = new ExpCall((const Identifier*)yystack_[2].value, nullptr);
 }
-#line 2363 "yacc_bison.h"
+#line 2362 "yacc_bison.h"
     break;
 
   case 101:
-#line 625 "parser.y"
+#line 624 "parser.y"
                      {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 2371 "yacc_bison.h"
+#line 2370 "yacc_bison.h"
     break;
 
   case 102:
-#line 629 "parser.y"
+#line 628 "parser.y"
                      {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 2379 "yacc_bison.h"
+#line 2378 "yacc_bison.h"
     break;
 
   case 103:
-#line 633 "parser.y"
+#line 632 "parser.y"
          {
   // $$ = new Ident((const Identifier *)($1));
   yylhs.value = yystack_[0].value;
 }
-#line 2388 "yacc_bison.h"
+#line 2387 "yacc_bison.h"
     break;
 
   case 104:
-#line 639 "parser.y"
+#line 638 "parser.y"
                                  {
   yylhs.value = yystack_[2].value;
   ((ExpressionList*)yylhs.value)->explist.push_back((Exp*)yystack_[0].value);
   ast::copy_pos_with_check((ExpressionList*)yylhs.value, (Exp*)yystack_[0].value);
 }
-#line 2398 "yacc_bison.h"
+#line 2397 "yacc_bison.h"
     break;
 
   case 105:
-#line 644 "parser.y"
+#line 643 "parser.y"
                     {
   yylhs.value = new ExpressionList();
   ((ExpressionList*)yylhs.value)->explist.push_back((Exp*)yystack_[0].value);
   ast::copy_pos_with_check((ExpressionList*)yylhs.value, (Exp*)yystack_[0].value);
 }
-#line 2408 "yacc_bison.h"
+#line 2407 "yacc_bison.h"
     break;
 
   case 106:
-#line 652 "parser.y"
+#line 651 "parser.y"
                      {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 2416 "yacc_bison.h"
+#line 2415 "yacc_bison.h"
     break;
 
   case 107:
-#line 657 "parser.y"
+#line 656 "parser.y"
                                                        {
   yylhs.value = new BiExp((Exp*)yystack_[2].value, (const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
 }
-#line 2424 "yacc_bison.h"
+#line 2423 "yacc_bison.h"
     break;
 
   case 108:
-#line 660 "parser.y"
+#line 659 "parser.y"
                     { yylhs.value = yystack_[0].value; }
-#line 2430 "yacc_bison.h"
+#line 2429 "yacc_bison.h"
     break;
 
   case 109:
-#line 664 "parser.y"
+#line 663 "parser.y"
                              { yylhs.value = new BiExp((Exp*)yystack_[2].value, (const Marker*)yystack_[1].value, (Exp*)yystack_[0].value); }
-#line 2436 "yacc_bison.h"
+#line 2435 "yacc_bison.h"
     break;
 
   case 110:
-#line 665 "parser.y"
+#line 664 "parser.y"
        { yylhs.value = yystack_[0].value; }
-#line 2442 "yacc_bison.h"
+#line 2441 "yacc_bison.h"
     break;
 
   case 111:
-#line 668 "parser.y"
+#line 667 "parser.y"
                         {
   yylhs.value = new BiExp((Exp*)yystack_[2].value, (const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
 }
-#line 2450 "yacc_bison.h"
+#line 2449 "yacc_bison.h"
     break;
 
   case 112:
-#line 671 "parser.y"
+#line 670 "parser.y"
          { yylhs.value=yystack_[0].value; }
-#line 2456 "yacc_bison.h"
+#line 2455 "yacc_bison.h"
     break;
 
   case 114:
-#line 674 "parser.y"
+#line 673 "parser.y"
            {
   yylhs.value = yystack_[0].value;
 }
-#line 2464 "yacc_bison.h"
+#line 2463 "yacc_bison.h"
     break;
 
   case 115:
-#line 677 "parser.y"
+#line 676 "parser.y"
                                    {
   yylhs.value = new ExpCall((const Identifier*)yystack_[3].value, (ExpressionList*)yystack_[1].value);
 }
-#line 2472 "yacc_bison.h"
+#line 2471 "yacc_bison.h"
     break;
 
   case 116:
-#line 680 "parser.y"
+#line 679 "parser.y"
                            {
   yylhs.value = yystack_[1].value;
 }
-#line 2480 "yacc_bison.h"
+#line 2479 "yacc_bison.h"
     break;
 
   case 117:
-#line 683 "parser.y"
+#line 682 "parser.y"
             {
   yylhs.value = new UnExp((const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
 }
-#line 2488 "yacc_bison.h"
+#line 2487 "yacc_bison.h"
     break;
 
   case 118:
-#line 686 "parser.y"
+#line 685 "parser.y"
                {
   yylhs.value = new UnExp((const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
 }
-#line 2496 "yacc_bison.h"
+#line 2495 "yacc_bison.h"
     break;
 
   case 119:
-#line 689 "parser.y"
+#line 688 "parser.y"
               {
   yylhs.value = yystack_[0].value;
   }
-#line 2504 "yacc_bison.h"
+#line 2503 "yacc_bison.h"
     break;
 
   case 120:
-#line 694 "parser.y"
+#line 693 "parser.y"
                      {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
 }
-#line 2513 "yacc_bison.h"
+#line 2512 "yacc_bison.h"
     break;
 
   case 121:
-#line 699 "parser.y"
+#line 698 "parser.y"
                    {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
 }
-#line 2522 "yacc_bison.h"
+#line 2521 "yacc_bison.h"
     break;
 
   case 122:
-#line 704 "parser.y"
+#line 703 "parser.y"
                   {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
 }
-#line 2531 "yacc_bison.h"
+#line 2530 "yacc_bison.h"
     break;
 
   case 123:
-#line 708 "parser.y"
+#line 707 "parser.y"
              {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2540 "yacc_bison.h"
+#line 2539 "yacc_bison.h"
     break;
 
   case 124:
-#line 712 "parser.y"
+#line 711 "parser.y"
                 {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2549 "yacc_bison.h"
+#line 2548 "yacc_bison.h"
     break;
 
   case 125:
-#line 718 "parser.y"
+#line 717 "parser.y"
                   {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
 }
-#line 2558 "yacc_bison.h"
+#line 2557 "yacc_bison.h"
     break;
 
   case 126:
-#line 722 "parser.y"
+#line 721 "parser.y"
              {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2567 "yacc_bison.h"
+#line 2566 "yacc_bison.h"
     break;
 
   case 127:
-#line 726 "parser.y"
+#line 725 "parser.y"
              {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2576 "yacc_bison.h"
+#line 2575 "yacc_bison.h"
     break;
 
   case 128:
-#line 730 "parser.y"
+#line 729 "parser.y"
                   {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2585 "yacc_bison.h"
+#line 2584 "yacc_bison.h"
     break;
 
   case 129:
-#line 735 "parser.y"
+#line 734 "parser.y"
                  {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
 }
-#line 2594 "yacc_bison.h"
+#line 2593 "yacc_bison.h"
     break;
 
   case 130:
-#line 739 "parser.y"
+#line 738 "parser.y"
              {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2603 "yacc_bison.h"
+#line 2602 "yacc_bison.h"
     break;
 
   case 131:
-#line 743 "parser.y"
+#line 742 "parser.y"
             {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2612 "yacc_bison.h"
+#line 2611 "yacc_bison.h"
     break;
 
   case 132:
-#line 747 "parser.y"
+#line 746 "parser.y"
             {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2621 "yacc_bison.h"
+#line 2620 "yacc_bison.h"
     break;
 
   case 133:
-#line 751 "parser.y"
+#line 750 "parser.y"
             {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2630 "yacc_bison.h"
+#line 2629 "yacc_bison.h"
     break;
 
   case 134:
-#line 755 "parser.y"
+#line 754 "parser.y"
             {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2639 "yacc_bison.h"
+#line 2638 "yacc_bison.h"
     break;
 
 
-#line 2643 "yacc_bison.h"
+#line 2642 "yacc_bison.h"
 
             default:
               break;
@@ -3336,20 +3335,20 @@ namespace yy {
   const short
   parser::yyrline_[] =
   {
-       0,    88,    88,    93,   101,   107,   110,   113,   119,   135,
-     140,   146,   151,   160,   163,   168,   174,   179,   186,   192,
-     193,   194,   195,   196,   199,   201,   204,   209,   214,   219,
-     224,   225,   228,   245,   251,   258,   274,   277,   282,   291,
-     297,   304,   305,   306,   307,   310,   315,   320,   325,   331,
-     335,   339,   349,   354,   362,   367,   374,   377,   382,   388,
-     394,   395,   404,   409,   419,   422,   428,   434,   439,   444,
-     445,   453,   458,   464,   471,   481,   486,   487,   488,   489,
-     494,   499,   504,   509,   516,   521,   526,   531,   535,   540,
-     545,   551,   566,   585,   595,   596,   601,   605,   610,   614,
-     617,   625,   629,   633,   639,   644,   652,   657,   660,   664,
-     665,   668,   671,   673,   674,   677,   680,   683,   686,   689,
-     694,   699,   704,   708,   712,   718,   722,   726,   730,   735,
-     739,   743,   747,   751,   755
+       0,    88,    88,    93,   100,   106,   109,   112,   118,   134,
+     139,   145,   150,   159,   162,   167,   173,   178,   185,   191,
+     192,   193,   194,   195,   198,   200,   203,   208,   213,   218,
+     223,   224,   227,   244,   250,   257,   273,   276,   281,   290,
+     296,   303,   304,   305,   306,   309,   314,   319,   324,   330,
+     334,   338,   348,   353,   361,   366,   373,   376,   381,   387,
+     393,   394,   403,   408,   418,   421,   427,   433,   438,   443,
+     444,   452,   457,   463,   470,   480,   485,   486,   487,   488,
+     493,   498,   503,   508,   515,   520,   525,   530,   534,   539,
+     544,   550,   565,   584,   594,   595,   600,   604,   609,   613,
+     616,   624,   628,   632,   638,   643,   651,   656,   659,   663,
+     664,   667,   670,   672,   673,   676,   679,   682,   685,   688,
+     693,   698,   703,   707,   711,   717,   721,   725,   729,   734,
+     738,   742,   746,   750,   754
   };
 
   void
@@ -3462,7 +3461,7 @@ namespace yy {
   }
 
 } // yy
-#line 3461 "yacc_bison.h"
+#line 3460 "yacc_bison.h"
 
-#line 778 "parser.y"
+#line 777 "parser.y"
 
