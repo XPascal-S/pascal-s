@@ -48,6 +48,11 @@ ast::ConstDecls *RecursiveParser<Lexer>::_parse_const_decls(ast::ConstDecls *dec
             if (current_token->type == TokenType::Identifier) {
                 break;
             }
+
+            if (predicate::is_const(current_token)) {
+                continue;
+            }
+
             maybe_recover_keyword(KeywordType::Var)
             maybe_recover_keyword(KeywordType::Begin)
             maybe_recover_keyword(KeywordType::Function)

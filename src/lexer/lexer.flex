@@ -22,7 +22,7 @@
  if (comment_embed == 0) { BEGIN INITIAL; return addComment(); } else yymore(); }
 <COMMENT>[^\\{}]* { yymore(); }
 \n { return recordNewLine(); }
-\/\/.*\n {} /* do nothing */
+\/\/.*\n { return addInlineComment(); }
 (?i:to|do|of|for|else|if|then|char|boolean|real|integer|array|end|begin|function|procedure|var|const|program|read|write) { return addKeyword(); }
 (?i:div|mod|and|or|not) { return addMarker(); }
 \<>|\<=|>=|:=|\.\.|[()\[\]<=>,.;:+\-*/] { return addMarker(); }

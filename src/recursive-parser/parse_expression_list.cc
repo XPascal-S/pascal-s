@@ -48,6 +48,11 @@ ast::ExpressionList *RecursiveParser<Lexer>::parse_expression_list_with_bracket(
     next_token();
 
     ast::copy_pos_between_tokens(exp_list, lp, rp);
+
+    if (exp_list->explist.size() == 0) {
+        errors.push_back(new PascalSParseExpectSGotError(__FUNCTION__, "any expression", rp));
+    }
+
     return exp_list;
 }
 

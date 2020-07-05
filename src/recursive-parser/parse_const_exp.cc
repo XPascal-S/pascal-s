@@ -14,13 +14,19 @@ ast::Exp *RecursiveParser<Lexer>::parse_const_exp(const std::set<const Token *> 
         return nullptr;
     }
 
-    if (predicate::token_equal(current_token, till)) {
-        return maybe_lhs;
-    }
+    return maybe_lhs;
 
-    assert(false);
-    // todo: parse recursive const exp
-    return nullptr;
+//    for (;;) {
+//        if (predicate::token_equal(current_token, till)) {
+//            return maybe_lhs;
+//        }
+//        skip_any_but_eof_token_s("const exp token end")
+//        return fall_expect_s("const exp token end"), maybe_lhs;
+//    }
+//
+//    assert(false);
+//    // todo: parse recursive const exp
+//    return nullptr;
 }
 
 template<typename Lexer>

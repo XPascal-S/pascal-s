@@ -803,7 +803,7 @@ case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
 #line 25 "lexer.flex"
-{} /* do nothing */
+{ return addInlineComment(); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP

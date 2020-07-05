@@ -76,6 +76,10 @@ private:
 
     int addComment();
 
+    int addInlineComment();
+
+    int addCommentAux();
+
     int addASCIIChar();
 
     int addChar();
