@@ -14,11 +14,24 @@ ast::CompoundStatement *RecursiveParser<Lexer>::parse_compound_statement(std::se
 
 template<typename Lexer>
 ast::CompoundStatement *RecursiveParser<Lexer>::_parse_compound_statement(std::set<const Token *> *till) {
+    auto block = __parse_compound_statement(till);
+    if (block->state && !block->state->statement.empty()) {
+        block->length = block->state->statement.back()->length +
+                block->state->statement.back()->offset - block->offset;
+    }
+    if (block->state) ast::copy_pos_with_check(block, block->state);
+    return block;
+}
+
+
+template<typename Lexer>
+ast::CompoundStatement *RecursiveParser<Lexer>::__parse_compound_statement(std::set<const Token *> *till) {
     auto begin_tok = reinterpret_cast<const Keyword *>(current_token);
     next_token();
 
     std::vector<ast::Statement *> stmts;
     auto sl = new ast::StatementList;
+    ast::copy_pos_with_check(sl, begin_tok);
     auto block = new ast::CompoundStatement(sl/*begin_tok, end_tok*/);
 
     // end
@@ -91,11 +104,5 @@ ast::CompoundStatement *RecursiveParser<Lexer>::_parse_compound_statement(std::s
     auto end_tok = reinterpret_cast<const Keyword *>(current_token);
     next_token();
     sl->statement.swap(stmts);
-    if (sl->statement.empty()) {
-        ast::copy_pos_with_check(sl, begin_tok);
-    } else {
-        ast::copy_pos_between_tokens(sl, begin_tok, sl->statement.back());
-    }
-    ast::copy_pos_with_check(block, sl);
     return block;
 }
