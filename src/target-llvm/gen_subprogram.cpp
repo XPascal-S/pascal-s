@@ -110,13 +110,13 @@ LLVMBuilder::Function *LLVMBuilder::code_gen_subprogram(const ast::Subprogram *p
 
     // create local const map this.const_ctx
     std::map<std::string, Value *> program_const_this;
-    // insert subprogram.var_decls to this.ctx
+    // insert subprogram.const_decls to this.const_ctx
     insert_const_decls(program_const_this, pSubprogram->subbody->constdecls);
     // create local variable map this.ctx
     std::map<std::string, pascal_s::ArrayInfo *> program_array_infos;
     std::map<std::string, llvm::Value *> program_this;
-    // insert subprogram.const_decls to this.const_ctx
-    insert_var_decls(fn, program_array_infos, program_this, pSubprogram->subbody->vardecls);
+    // insert subprogram.var_decls to this.ctx
+    insert_var_decls(fn, program_array_infos, program_this, pSubprogram->subbody->vardecls, true);
 
     // check this.const_ctx and this.ctx to avoid conflict
     if (pSubprogram->subbody->constdecls != nullptr) {

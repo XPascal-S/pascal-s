@@ -110,7 +110,8 @@ struct LLVMBuilder {
     // const_decl: 运行时常量（可以在编译时确认）
     // param_decl: 函数输入局部变量
     void insert_var_decls(Function *cur_func, std::map<std::string, pascal_s::ArrayInfo *> &array_infos,
-                          std::map<std::string, llvm::Value *> &map, const ast::VarDecls *pDecls);
+                          std::map<std::string, llvm::Value *> &map, const ast::VarDecls *pDecls,
+                          bool on_stack = false);
 
     void insert_const_decls(std::map<std::string, llvm::Value *> &map, const ast::ConstDecls *pDecls);
 

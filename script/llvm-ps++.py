@@ -67,9 +67,7 @@ def parser_add_arguments(p):
     p.add_argument('--c-linker', default='g++', type=str, help='Linker')
     p.add_argument('--library', type=str, default=[], help='Linked libraries')
     p.add_argument('--version', type=str2bool, nargs='?', const=True, default=False, help='Print Version')
-    p.add_argument('--verbose', type=str2bool, nargs='?', const=True, default=False, help='Print Compiler Args')
-    p.add_argument('--env', type=str2bool, nargs='?', const=True, default=False,
-                   help='Print the environment of pascal')
+    p.add_argument('--env', type=str2bool, nargs='?', const=True, default=False, help='Print Compiler Args')
     p.add_argument('--use-self-main', type=str2bool, nargs='?', const=True, default=False,
                    help='Use user-defined main lib instead of default')
     p.add_argument('--work-dir', type=str, help='Working directory')
@@ -81,50 +79,50 @@ def parser_add_arguments(p):
     return p
 
 
-def work_verbose():
-    verbose_format = []
+def work_env():
+    env_format = []
 
-    verbose_format.append([
+    env_format.append([
         'ENVIRONMENTS:',
         'compiler environment variales'])
 
-    verbose_format.append([
+    env_format.append([
         f'LLVM_PASCAL_CONFIG_PATH     = {os.getenv("LLVM_PASCAL_CONFIG_PATH")}',
         'path to compiler option file (in json format)'])
 
-    verbose_format.append(['', ''])
+    env_format.append(['', ''])
 
-    verbose_format.append([
+    env_format.append([
         'VARIABLES:',
         'compiler variables'])
 
-    verbose_format.append([
+    env_format.append([
         f'config_path                 = {config_path}',
         'path to compiler option file (from env or default value)'])
 
-    verbose_format.append([
+    env_format.append([
         f'default_assembler           = {default_assembler}',
         'using this to assemble pascal-s file'])
 
-    verbose_format.append([
+    env_format.append([
         f'default_optimized_assembler = {default_optimized_assembler}',
         'using this to assemble pascal-s file (optimized)'])
 
-    verbose_format.append([
+    env_format.append([
         f'default_link_library        = {default_link_library}',
         'usint this to support pascal-s runtime'])
 
     mx_len, mx_len2, eq_len = 0, 0, len('LLVM_PASCAL_CONFIG_PATH     = ')
-    for v in verbose_format:
+    for v in env_format:
         mx_len = max(mx_len, len(v[0]))
         mx_len2 = max(mx_len, len(v[1]))
     if mx_len + mx_len2 > get_terminal_width():
-        print('\n'.join(map(lambda v_item: v_item[0] + '\n' + (' ' * eq_len) + v_item[1] + '\n', verbose_format)))
+        print('\n'.join(map(lambda v_item: v_item[0] + '\n' + (' ' * eq_len) + v_item[1] + '\n', env_format)))
     else:
-        for i in range(len(verbose_format)):
-            verbose_format[i][0] = verbose_format[i][0] + (' ' * (mx_len - len(verbose_format[i][0])))
+        for i in range(len(env_format)):
+            env_format[i][0] = env_format[i][0] + (' ' * (mx_len - len(env_format[i][0])))
         print('\n'.join(
-            map(lambda v_item: v_item[0] + (' {' + v_item[1] + '}' if v_item[1] else ''), verbose_format)))
+            map(lambda v_item: v_item[0] + (' {' + v_item[1] + '}' if v_item[1] else ''), env_format)))
 
 
 def main():
@@ -136,8 +134,8 @@ def main():
         print(version)
         exit(0)
 
-    if args.verbose:
-        work_verbose()
+    if args.env:
+        work_env()
         exit(0)
 
     if args.src is None:
@@ -177,7 +175,6 @@ def main():
 
     if args.out_token is not None:
         if args.out_token == 'html':
-            print(os.path.join(current_path, 'lex_server.py'))
             lex_code, lex_result, lex_err = process_open_with_code(
                 ' '.join(['py', '-3', os.path.join(current_path, 'lex_server.py'),
                           os.path.abspath(args.src), target_file + '.html']))
