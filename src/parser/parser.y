@@ -103,7 +103,7 @@ dot: MARKER_DOT{
  }
 ;
 
-errort:ERRORTOKEN;
+errort: ERRORTOKEN;
 
 program_head:
 program id lparen idlist rparen {
@@ -122,7 +122,10 @@ program id lparen idlist rparen {
   $$ = new ProgramHead((const ExpKeyword*)$1, new Ident((const Identifier*)$2));
 }
 | program id lparen rparen{
-  $$ = new ProgramHead((const ExpKeyword*)$1, new Ident((const Identifier*)$2));
+  IdentList* idlist = new IdentList();
+  ast::copy_pos_with_check(idlist, (ExpMarker*)$3);
+  ast::copy_pos_with_check(idlist, (ExpMarker*)$4);
+  $$ = new ProgramHead((const ExpKeyword*)$1, new Ident((const Identifier*)$2), idlist);
 }
 //| program id error idlist {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
 //| program id lparen idlist error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
@@ -622,6 +625,7 @@ end:KEYWORD_END{
 statement_list:
 statement_list semicolon statement     {
   $$ = $1;
+  // printf("statement list offset: %d, line: %d, column: %d\n\n", ((StatementList*)$$)->offset, ((StatementList*)$$)->line, ((StatementList*)$$)->column);
   if( $3 != nullptr ){
     ((StatementList*)$$)->statement.push_back((Statement*)$3);
     ast::copy_pos_with_check((StatementList*)$$, (Statement*)$3);
@@ -672,7 +676,11 @@ variable assign expression                            {$$ = new ExecStatement(ne
   $$ = new IfElseStatement((Exp*)$2, (Statement*)$4, nullptr);
   ast::copy_pos_between_tokens((IfElseStatement*)$$, (ExpKeyword*)$1, (Statement*)$4);
 }
-| for id assign expression to expression do statement {$$ = new ForStatement((const Identifier *)$2, (Exp*)$4, (Exp*)$6, (Statement*)$8);}
+| for id assign expression to expression do statement
+                                              {
+                                                $$ = new ForStatement((const Identifier *)$2, (Exp*)$4, (Exp*)$6, (Statement*)$8);
+                                                ast::copy_pos_between_tokens((ForStatement*)$$, (ExpKeyword*)$1, (Statement*)$8);
+                                              }
 | KEYWORD_READ lparen variable_list rparen
 {
   $$ = new Read((VariableList*)$3);
@@ -722,32 +730,33 @@ then: KEYWORD_THEN {
 variable_list:
 variable_list comma variable  {
   $$ = $1 ;
-  ((VariableList*)$$)->params.push_back((Variable*)$3);
-  ast::copy_pos_with_check((VariableList*)$$, (Variable*)$3);
-  // $$ = new VariableList();
-  /* VariableList* node = reinterpret_cast<VariableList*> (ast_reduce_nodes(3, Type::VariableList)); */
-
-  /* node->params = reinterpret_cast<VariableList*>(node->children.front())->params; */
-  /* node->children.pop_front(); */
-
-  /* node->children.pop_front();// pop comma */
-
-  /* Variable* var = (Variable*)(node->children.front()); */
-  /* node->params.push_back(var); */
-  /* node->children.pop_front(); */
-
-  /* printf("variable_list\n"); */
+  if( ((Node*)$3)->type == Type::Ident ){
+    Variable* var = new Variable();
+    var->id = ((Ident*)$3)->ident;
+    ((Ident*)$3)->ident = nullptr;
+    deleteAST((Ident*)$3);
+    ast::copy_pos_with_check(var, var->id);
+    ((VariableList*)$$)->params.push_back(var);
+    ast::copy_pos_with_check((VariableList*)$$, var);
+  }else{
+    ((VariableList*)$$)->params.push_back((Variable*)$3);
+    ast::copy_pos_with_check((VariableList*)$$, (Variable*)$3);
+  }
 }
 | variable      {
   $$ = new VariableList();
-  // printf("\n\n% variable %s\n\n", convertToString((Variable*)$1).c_str());
-  ((VariableList*)$$)->params.push_back((Variable*)$1);
-  ast::copy_pos_with_check((VariableList*)$$, (Variable*)$1);
-  /* VariableList* node = reinterpret_cast<VariableList*> (ast_reduce_nodes(1, Type::VariableList)); */
-
-  /* Variable* var = (Variable*)(node->children.front()); */
-  /* node->params.push_back(var); */
-  /* node->children.pop_front(); */
+  if( ((Node*)$1)->type == Type::Ident ){
+    Variable* var = new Variable();
+    var->id = ((Ident*)$1)->ident;
+    ((Ident*)$1)->ident = nullptr;
+    deleteAST((Ident*)$1);
+    ast::copy_pos_with_check(var, var->id);
+    ((VariableList*)$$)->params.push_back(var);
+    ast::copy_pos_with_check((VariableList*)$$, var);
+  }else{
+    ((VariableList*)$$)->params.push_back((Variable*)$1);
+    ast::copy_pos_with_check((VariableList*)$$, (Variable*)$1);
+  }
   }
 //| variable_list error variable {printf("\n\n\n\nMissing comma\n"); yyerrok;}
 ;
@@ -788,7 +797,8 @@ rbracket: MARKER_RBRACKET{
 
 procedure_call:
 id          {
-  $$ = new ExpCall((const Identifier*)$1, nullptr);
+  $$ = new Ident((const Identifier*)$1);
+  // $$ = new ExpCall((const Identifier*)$1, nullptr);
 }
 | id lparen expression_list rparen    {
   $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$3);
