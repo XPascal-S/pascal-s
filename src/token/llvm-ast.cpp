@@ -129,6 +129,12 @@ void ast::deleteAST(Node *node) {
         case Type::ArrayTypeSpec:
             delete reinterpret_cast<ArrayTypeSpec *>(node);
             break;
+        case Type::Period:
+            delete reinterpret_cast<Period *>(node);
+            break;
+        case Type::StatementList:
+            delete reinterpret_cast<StatementList *>(node);
+            break;
     }
 }
 
