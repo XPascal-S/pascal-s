@@ -640,53 +640,68 @@ variable {
   }
 
 not: MARKER_LOGICNOT {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
 }
 
 unimus: MARKER_SUB {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
 }
 
 addop: MARKER_ADD {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
 }
 | MARKER_SUB {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
   }
 | MARKER_LOGICOR{
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
   }
 
 
 mulop: MARKER_MUL {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
 }
 | MARKER_DIV {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
   }
 | MARKER_MOD {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
   }
 | MARKER_LOGICAND {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
   }
 
 relop: MARKER_EQ {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
 }
 | MARKER_NEQ {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
   }
 | MARKER_LT {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
   }
 | MARKER_GT {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
   }
 | MARKER_LE {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
   }
 | MARKER_GE {
-  $$ = new ExpMarker((const Marker *)($1));
+  // $$ = new ExpMarker((const Marker *)($1));
+  $$ = $1 ;
   }
 %%

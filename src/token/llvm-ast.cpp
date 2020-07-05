@@ -592,7 +592,14 @@ void ast::printAST(const ast::Node *node, int dep) {
             printf("{\n");
             put_tab(dep + 1);
             printf("type = BiExp\n");
-
+            put_tab(dep + 1);
+            printf("lhs = \n");
+            printAST(cur_node->lhs, dep + 1);
+            put_tab(dep + 1);
+            printf("marker = %s\n", convertToString(cur_node->marker).c_str());
+            put_tab(dep + 1);
+            printf("rhs = \n");
+            printAST(cur_node->rhs, dep + 1);
             put_tab(dep);
             printf("}\n");
 #undef  cur_node
