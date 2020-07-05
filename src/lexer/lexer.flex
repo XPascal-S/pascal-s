@@ -15,6 +15,9 @@
 
 %%
 \{ { comment_embed++; BEGIN COMMENT; yymore(); }
+<COMMENT><<EOF>> { BEGIN INITIAL; comment_embed = 0; return addComment(), 0; }
+<COMMENT_ESCAPE><<EOF>> { BEGIN INITIAL;  comment_embed = 0; return addComment(), 0; }
+
 <COMMENT>\{ { comment_embed++; yymore(); }
 <COMMENT>\\ { BEGIN COMMENT_ESCAPE; yymore(); }
 <COMMENT_ESCAPE>(.|\n) { BEGIN COMMENT; yymore(); }
@@ -22,7 +25,7 @@
  if (comment_embed == 0) { BEGIN INITIAL; return addComment(); } else yymore(); }
 <COMMENT>[^\\{}]* { yymore(); }
 \n { return recordNewLine(); }
-\/\/.*\n { return addInlineComment(); }
+\/\/.*\n? { return addInlineComment(); } // new line or EOF
 (?i:to|do|of|for|else|if|then|char|boolean|real|integer|array|end|begin|function|procedure|var|const|program|read|write) { return addKeyword(); }
 (?i:div|mod|and|or|not) { return addMarker(); }
 \<>|\<=|>=|:=|\.\.|[()\[\]<=>,.;:+\-*/] { return addMarker(); }

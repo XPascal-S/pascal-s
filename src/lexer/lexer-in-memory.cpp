@@ -26,12 +26,18 @@ void FullInMemoryLexer::reset_cursor() {
 
 const Token *FullInMemoryLexer::next_token() {
     if (current_token_cursor >= tokens.size()) {
+        if (all_lexed) {
+            return nullptr;
+        }
+
         lex_again:
         auto code = yylex();
         if (code == static_cast<lexer_action_code_underlying_type>(LexerActionCode::AuxFunctionCalled)) {
             goto lex_again;
         }
         if (code == static_cast<lexer_action_code_underlying_type>(LexerActionCode::LexEnd)) {
+            if (current_token_cursor < tokens.size()) return tokens[current_token_cursor++];
+            all_lexed = true;
             return nullptr;
         }
     }
@@ -48,7 +54,10 @@ const Token *FullInMemoryLexer::peek_token() {
 }
 
 const FullInMemoryLexer::token_container &FullInMemoryLexer::get_all_tokens() {
+    if (all_lexed) return tokens;
+
     while (yylex() != static_cast<lexer_action_code_underlying_type>(LexerActionCode::LexEnd));
+    all_lexed = true;
     return tokens;
 }
 
