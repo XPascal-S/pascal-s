@@ -95,8 +95,6 @@ dot: MARKER_DOT{
  }
 ;
 
-errort: ERRORTOKEN;
-
 program_head:
 program id lparen idlist rparen {
   $$ = new ProgramHead((const ExpKeyword*)$1, new Ident((const Identifier*)$2), (IdentList*)$4);
@@ -105,11 +103,22 @@ program id lparen idlist rparen {
   $$ = new ProgramHead((const ExpKeyword*)$1, new Ident((const Identifier*)$2));
 }
 | program id lparen rparen{
-  IdentList* idlist = new IdentList();
+    IdentList* idlist = new IdentList();
   ast::copy_pos_with_check(idlist, (ExpMarker*)$3);
   ast::copy_pos_with_check(idlist, (ExpMarker*)$4);
   $$ = new ProgramHead((const ExpKeyword*)$1, new Ident((const Identifier*)$2), idlist);
 }
+| error program id lparen rparen{
+
+    pascal_s::Pos* pos = ((Node*)$2)->visit_pos();
+
+    #define cur_node (reinterpret_cast<const ast::ExpKeyword*>($2))
+    printf("\n program head failed at line:%d column:%d: expect:%s but got error Token\n", pos->line-1,pos->column,convertToString(cur_node->value).c_str());
+    #undef  cur_node
+
+    yyerrok;
+}
+
 //| program id error idlist {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
 //| program id lparen idlist error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
 ;
@@ -119,7 +128,7 @@ program:KEYWORD_PROGRAM{
 }
 ;
 
-program_body: const_declarations var_declarations subprogram_declarations compound_statement {
+program_body : const_declarations var_declarations subprogram_declarations compound_statement {
   $$ = new ProgramBody((ConstDecls*)$1, (VarDecls*)$2, (SubprogramDecls*)$3, (CompoundStatement*)$4);
 }
 ;
@@ -134,7 +143,7 @@ idlist comma id  {
   $$ = new IdentList();
   ((IdentList*)$$)->idents.push_back((Identifier*)$1);
   ast::copy_pos_with_check((IdentList*)$$, (Identifier*)$1);
-  }
+}
 //| idlist error id {printf("\n\n\n\nMissing comma\n"); yyerrok;}
 ;
 
@@ -163,7 +172,6 @@ const_declaration semicolon id eq const_value {
   $$ = new ConstDecls();
   ((ConstDecls*)$$)->decls.push_back(constDecl);
 }
-//| const_declaration error id eq const_value {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
 eq:MARKER_EQ {
@@ -181,7 +189,7 @@ const_value:
 
 bool:BOOL{$$ = new ExpConstantBoolean(((const ConstantBoolean*)($1)));}
 
-num: INT {
+num:INT {
   $$ = new ExpConstantInteger(((const ConstantInteger*)($1)));
 }
 | REAL {
@@ -208,6 +216,10 @@ var_declarations:              { $$ = nullptr;  /* new ExpVoid(); */ }
 |var var_declaration semicolon {
   $$ = $2;
 }
+| error {
+    printf("\n var declarations parse failed\n");
+    yyerrok;
+}
 //| var var_declaration error {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
@@ -220,12 +232,19 @@ var_declaration semicolon idlist colon type   {
 }
 | idlist colon type {
   $$ = new VarDecls();
+
   VarDecl* vdecl = new VarDecl((IdentList*)$1, (TypeSpec*)$3);
   ast::copy_pos_with_check((VarDecls*)$$, (IdentList*)$1);
   ((VarDecls*)$$)->decls.push_back(vdecl);
   ast::copy_pos_with_check((VarDecls*)$$, vdecl);
 }
-//| var_declaration error idlist colon type {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
+| idlist colon error semicolon {
+    pascal_s::Pos* pos = ((Node*)$2)->visit_pos();
+
+    printf("\n var declaration failed at line:%d column:%d: expect:array type but got error Token\n", pos->line,pos->column+pos->length+1);
+
+    yyerrok;
+}
 ;
 
 type:
@@ -287,11 +306,11 @@ period comma num range num        {
 }
 | num range unimus num error{
     pascal_s::Pos* pos = ((Node*)$2)->visit_pos();
-    //printf("%d\n",yychar);
+
     #define cur_node (reinterpret_cast<const ast::ExpMarker*>($3))
     printf("\nperiod parse failed at line:%d column:%d: expect: num but got %s\n", pos->line,pos->column+pos->length+1,convertToString(cur_node->value).c_str());
     #undef  cur_node
-    //printf("the error occur at line:%d   column:%d\n", pos->line,pos->column+pos->length+1);
+
     yyerrok;
 }
 ;
@@ -334,8 +353,8 @@ procedure: KEYWORD_PROCEDURE{
 }
 ;
 
-function: KEYWORD_FUNCTION{
-  // $$ = new ExpKeyword((const Keyword *)($1));
+function:KEYWORD_FUNCTION{
+  //$$ = new ExpKeyword((const Keyword *)($1));
   $$ = $1;
 }
 ;
@@ -423,7 +442,7 @@ statement_list semicolon statement     {
     ((StatementList*)$$)->statement.push_back((Statement*)$1);
     ast::copy_pos_with_check((StatementList*)$$, (Statement*)$1);
   }
-  }
+}
 //| statement_list error statement {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
 
@@ -481,7 +500,7 @@ assign: MARKER_ASSIGN{
   $$ = new ExpMarker((const Marker *)($1));
 }
 
-if: KEYWORD_IF {
+if : KEYWORD_IF {
   $$ = new ExpKeyword((const Keyword *)($1));
 }
 ;
@@ -491,7 +510,7 @@ then: KEYWORD_THEN {
 }
 ;
 
- else: KEYWORD_ELSE {
+ else : KEYWORD_ELSE {
    $$ = new ExpKeyword((const Keyword *)($1));
         }
 ;
@@ -526,7 +545,7 @@ variable_list comma variable  {
     ((VariableList*)$$)->params.push_back((Variable*)$1);
     ast::copy_pos_with_check((VariableList*)$$, (Variable*)$1);
   }
-  }
+}
 //| variable_list error variable {printf("\n\n\n\nMissing comma\n"); yyerrok;}
 ;
 
@@ -534,7 +553,7 @@ variable:
 id id_varpart  {
   if( $2 == nullptr ){
     $$ = new Ident((Identifier*)$1);
-  }else{
+    }else{
     $$ = new Variable((Identifier*)$1, (ExpressionList*)$2);
     ast::copy_pos_between_tokens((Variable*)$$, (Identifier*)$1, (ExpressionList*)$2);
   }
@@ -557,8 +576,8 @@ rbracket: MARKER_RBRACKET{
 
 procedure_call:
 id          {
-  $$ = new Ident((const Identifier*)$1);
-  // $$ = new ExpCall((const Identifier*)$1, nullptr);
+    $$ = new Ident((const Identifier*)$1);
+  //$$ = new ExpCall((const Identifier*)$1, nullptr);
 }
 | id lparen expression_list rparen    {
   $$ = new ExpCall((const Identifier*)$1, (ExpressionList*)$3);
@@ -594,16 +613,16 @@ expression_list comma expression {
   $$ = new ExpressionList();
   ((ExpressionList*)$$)->explist.push_back((Exp*)$1);
   ast::copy_pos_with_check((ExpressionList*)$$, (Exp*)$1);
-  }
+}
 //| expression_list error expression {printf("\n\n\n\nMissing comma\n"); yyerrok;}
 ;
 
-comma: MARKER_COMMA {
+comma : MARKER_COMMA {
   $$ = new ExpMarker((const Marker *)($1));
 }
 ;
 
-expression: simple_expression relop simple_expression {
+expression : simple_expression relop simple_expression {
   $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3);
 }
 | simple_expression { $$ = $1; }
@@ -614,13 +633,13 @@ simple_expression addop term { $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*
 | term { $$ = $1; }
 ;
 
-term: term mulop factor{
+term : term mulop factor{
   $$ = new BiExp((Exp*)$1, (const Marker*)$2, (Exp*)$3);
 }
 | factor { $$=$1; };
 
 factor:
-variable {
+| variable {
   $$ = $1;
 }
 | id lparen expression_list rparen {
@@ -638,6 +657,7 @@ variable {
 | const_value {
   $$ = $1;
   }
+;
 
 not: MARKER_LOGICNOT {
   // $$ = new ExpMarker((const Marker *)($1));
