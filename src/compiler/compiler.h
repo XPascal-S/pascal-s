@@ -142,6 +142,8 @@ private:
             exit(1);
         }
 
+        fflush(stdout);
+        fflush(stderr);
         exit(target_compile(argc, argv, &task));
     }
 

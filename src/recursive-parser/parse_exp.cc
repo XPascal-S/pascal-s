@@ -174,8 +174,10 @@ ast::Exp *RecursiveParser<Lexer>::parse_fac(const std::set<const Token *> *till)
                 next_token();
 
                 auto exp = parse_exp(&predicate::predicateContainers.rParenContainer);
-                expected_enum_type_r(predicate::is_rparen, predicate::marker_rparen, exp);
-                next_token();
+                if (exp != nullptr) {
+                    expected_enum_type_r(predicate::is_rparen, predicate::marker_rparen, exp);
+                    next_token();
+                }
                 return exp;
         }
 
@@ -229,7 +231,7 @@ RecursiveParser<Lexer>::parse_binary_exp(ast::Exp *lhs, const Marker *marker,
         if (predicate::token_equal(current_token, till)) {
             return new ast::BiExp(lhs, marker, rhs);
         }
-        if (current_token->type == TokenType::Marker) {
+        if (predicate::is_binary_sign(current_token)) {
             break;
         }
         skip_error_token_t(TokenType::Marker);

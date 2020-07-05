@@ -34,13 +34,31 @@ const Keyword &reinterpret_as_keyword(const Token *tt) {
 
 
 char *cs(const char *content, int length) {
+    if (content == nullptr) {
+        char *ns = new char[1];
+        ns[0] = 0;
+        return ns;
+    }
+
     char *ns = new char[length + 1];
-    strcpy(ns, content);
+    strcpy_s(ns, length + 1, content);
     return ns;
 }
 
 char *cs(const char *content) {
     return cs(content, strlen(content));
+}
+
+ErrorToken *reinterpret_as_error_token(const Token *src) {
+    auto dst = new ErrorToken("");
+
+    dst->length = src->length;
+    dst->offset = src->offset;
+    dst->line = src->line;
+    dst->column = src->column;
+    dst->content = cs(reinterpret_cast<const ErrorToken *>(src)->content);
+    dst->hint = cs(reinterpret_cast<const ErrorToken *>(src)->hint);
+    return dst;
 }
 
 Identifier *reinterpret_as_identifier(const Token *src) {
@@ -51,6 +69,17 @@ Identifier *reinterpret_as_identifier(const Token *src) {
     dst->line = src->line;
     dst->column = src->column;
     dst->content = cs(reinterpret_cast<const Identifier *>(src)->content);
+    return dst;
+}
+
+Comment *reinterpret_as_comment(const Token *src) {
+    auto dst = new Comment("");
+
+    dst->length = src->length;
+    dst->offset = src->offset;
+    dst->line = src->line;
+    dst->column = src->column;
+    dst->content = cs(reinterpret_cast<const Comment *>(src)->content);
     return dst;
 }
 
@@ -89,6 +118,7 @@ public:
     }
 
     const token_container &lex_once(const std::string &s) {
+        this->setOption(Lexer::LexerOptionLexComment);
         std::istringstream is(s);
         this->yy_init = 0;
         this->yy_start = 0;
@@ -112,6 +142,8 @@ PYBIND11_MODULE(py_pascal_s, m) {
     m.doc() = "pybind11 pascal-s plugin"; // optional module docstring
 
     m.def("reinterpret_as_marker", &reinterpret_as_marker, "reinterpret as marker");
+    m.def("reinterpret_as_error_token", &reinterpret_as_error_token, "reinterpret as error_token");
+    m.def("reinterpret_as_comment", &reinterpret_as_comment, "reinterpret as comment");
     m.def("reinterpret_as_keyword", &reinterpret_as_keyword, "reinterpret as keyword");
     m.def("reinterpret_as_identifier", &reinterpret_as_identifier, "reinterpret as identifier");
     m.def("reinterpret_as_constant_integer", &reinterpret_as_constant_integer, "reinterpret as constant_integer");
@@ -132,6 +164,7 @@ PYBIND11_MODULE(py_pascal_s, m) {
             .value("Marker", TokenType::Marker)
             .value("Nullptr", TokenType::Nullptr)
             .value("ErrorToken", TokenType::ErrorToken)
+            .value("Comment", TokenType::Comment)
             .value("Length", TokenType::Length)
             .value("ConstRangeL", TokenType::ConstRangeL)
             .value("ConstRangeR", TokenType::ConstRangeR)
@@ -256,6 +289,15 @@ PYBIND11_MODULE(py_pascal_s, m) {
     auto keyword_class = pybind11::class_<Keyword>(m, "PascalSTokenKeyword");
     apply_token_class_property(keyword_class)
             .def_readwrite("key_type", &Keyword::key_type);
+
+    auto comment_class = pybind11::class_<Comment>(m, "PascalSTokenComment");
+    apply_token_class_property(comment_class)
+            .def_readwrite("content", &Comment::content);
+
+    auto error_token_class = pybind11::class_<ErrorToken>(m, "PascalSTokenErrorToken");
+    apply_token_class_property(error_token_class)
+            .def_readwrite("content", &ErrorToken::content)
+            .def_readonly("hint", &ErrorToken::hint);
 
     auto marker_class = pybind11::class_<Marker>(m, "PascalSTokenMarker");
     apply_token_class_property(marker_class)

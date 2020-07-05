@@ -600,6 +600,11 @@ namespace target_c {
                     }
                 }
             }
+            auto funcFinder = this->functionBuff.find(funcName);
+            if(funcFinder != this->functionBuff.end()){
+                addErrMsg(node, "Function redeclare", __FUNCTION__);
+                return TranslateFailed;
+            }
             this->functionBuff.insert(std::pair<std::string, struct FuncInfo>(funcName, functionInfo));
             this->nowST_pointer->nextTable.insert(
                     std::pair<std::string, struct SymbolTable *>(funcName, st_pointer));
