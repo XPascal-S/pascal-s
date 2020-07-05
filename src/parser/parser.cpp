@@ -31,7 +31,7 @@ template Parser *parser_factory(FullInMemoryLexer &lexer);
 
 template<typename Lexer>
 YaccParser<Lexer>::~YaccParser() {
-    for (auto e: errors) {
+    for (auto e: yyparser.errors) {
         delete e;
     }
 }

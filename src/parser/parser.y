@@ -113,7 +113,7 @@ program id lparen idlist rparen {
     pascal_s::Pos* pos = ((Node*)$2)->visit_pos();
 
     #define cur_node (reinterpret_cast<const ast::ExpKeyword*>($2))
-    printf("\n program head failed at line:%d column:%d: expect:%s but got error Token\n", pos->line-1,pos->column,convertToString(cur_node->value).c_str());
+    printf("\n program head failed at line:%d column:%d: expect: %s but got error Token\n", pos->line-1, pos->column, convertToString(cur_node->value).c_str());
     #undef  cur_node
 
     yyerrok;
@@ -239,9 +239,10 @@ var_declaration semicolon idlist colon type   {
   ast::copy_pos_with_check((VarDecls*)$$, vdecl);
 }
 | idlist colon error semicolon {
-    pascal_s::Pos* pos = ((Node*)$2)->visit_pos();
 
-    printf("\n var declaration failed at line:%d column:%d: expect:array type but got error Token\n", pos->line,pos->column+pos->length+1);
+  // printf(" \n\n test error -------------------------- %s\n", convertToString((Token*)(current_token)).c_str());
+    // errors.push_back(new PascalSParseError("test"));
+    // printf("\n var declaration failed at line:%d column:%d: expect:array type but got error Token\n", pos->line,pos->column+pos->length+1);
 
     yyerrok;
 }
@@ -304,12 +305,13 @@ period comma num range num        {
   $$ = new ArrayTypeSpec(nullptr);
   ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)((ConstantInteger*)(((ExpConstantInteger*)$1)->value)->attr), (int64_t)((ConstantInteger*)(((ExpConstantInteger*)$3)->value)->attr)));
 }
-| num range unimus num error{
-    pascal_s::Pos* pos = ((Node*)$2)->visit_pos();
+| error {
+    printf(" test error %s\n", convertToString((Token*)(current_token)).c_str());
+    // new PascalSParseError("pascal S parser Errorr test");
 
-    #define cur_node (reinterpret_cast<const ast::ExpMarker*>($3))
-    printf("\nperiod parse failed at line:%d column:%d: expect: num but got %s\n", pos->line,pos->column+pos->length+1,convertToString(cur_node->value).c_str());
-    #undef  cur_node
+    /* #define cur_node (reinterpret_cast<const ast::ExpMarker*>($3)) */
+    /* printf("\nperiod parse failed at line:%d column:%d: expect: num but got %s\n", pos->line,pos->column+pos->length+1,convertToString(cur_node->value).c_str()); */
+    /* #undef  cur_node */
 
     yyerrok;
 }

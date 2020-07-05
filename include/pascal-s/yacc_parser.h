@@ -23,22 +23,23 @@ void yy::parser::error(const std::string &msg) {
 template<typename Lexer>
 class YaccParser_yy : public yy::parser {
     LexerProxy<Lexer> lexer;
-    //    const Token* current_token;
+    // const Token* current_token;
 public:
     explicit YaccParser_yy(LexerProxy<Lexer> lexer) : lexer(lexer) {}
 
     ast::Node *parsed_result;
     // Node *ast_root;
-
-    std::vector<ast::Node *> astTreeStack;
+    std::vector<PascalSError *> errors;
 
 private:
-    int yylex(void **current_token) override {
+    int yylex(void **yycurrent_token) override {
         auto token = lexer.next_token();
-        (*current_token) = (void *) (token);
-        if ((*current_token) == nullptr) {
+        (*yycurrent_token) = (void *) (token);
+        if ((*yycurrent_token) == nullptr) {
             return 0;
         }
+        current_token = (const Token *) (token);
+        // printf("set current token %s\n", convertToString((Token*)current_token).c_str());
         switch (token->type) {
             case TokenType::Keyword: {
                 const Keyword *keyword_token = reinterpret_cast<const Keyword *>(token);
@@ -63,13 +64,16 @@ private:
         // parsed_result = (ast::Program *) ast;
         parsed_result = reinterpret_cast<ast::Node*>(ast);
     }
+
+    void add_error(PascalSError* err){
+        errors.push_back(err);
+    }
 };
 
 template<typename Lexer>
 class YaccParser : public Parser {
     YaccParser_yy<Lexer> yyparser;
 public:
-    std::vector<PascalSError *> errors;
 
     explicit YaccParser(LexerProxy<Lexer> lexer) : yyparser(lexer) {}
 
@@ -84,11 +88,11 @@ public:
     }
 
     bool has_error() {
-        return !errors.empty();
+        return !yyparser.errors.empty();
     }
 
     const std::vector<PascalSError *> &get_all_errors() {
-        return errors;
+      return yyparser.errors;
     }
 };
 
