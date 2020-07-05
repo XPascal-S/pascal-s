@@ -6,6 +6,10 @@
 using namespace ast;
 %}
 
+%define parse.error detailed
+%define parse.lac full
+%define parse.trace true
+
 %token  KEYWORD            1
 %token  STR                2
 %token  CHAR               3
@@ -78,7 +82,7 @@ using namespace ast;
  // %nonassoc IFX
  // %nonassoc ELSE
 %start programstruct
- // %start statement
+ // %start programstart
 %%
 
 programstruct:  program_head semicolon program_body dot {
@@ -86,6 +90,9 @@ programstruct:  program_head semicolon program_body dot {
   access_ast($$);
   //printf("finish!\n");
  }
+| error {
+  YYABORT;
+  }
 //|  program_head semicolon program_body error{ printf("\n\n\n\n Missing dot\n"); yyerrok; }
 //|  program_head error program_body { printf("\n\n\n\nMissing semicolon\n"); yyerrok; }
 ;
@@ -103,32 +110,33 @@ program id lparen idlist rparen {
   $$ = new ProgramHead((const ExpKeyword*)$1, new Ident((const Identifier*)$2));
 }
 | program id lparen rparen{
-    IdentList* idlist = new IdentList();
+  IdentList* idlist = new IdentList();
   ast::copy_pos_with_check(idlist, (ExpMarker*)$3);
   ast::copy_pos_with_check(idlist, (ExpMarker*)$4);
   $$ = new ProgramHead((const ExpKeyword*)$1, new Ident((const Identifier*)$2), idlist);
 }
 | error program id lparen rparen{
-
-    pascal_s::Pos* pos = ((Node*)$2)->visit_pos();
-
-    #define cur_node (reinterpret_cast<const ast::ExpKeyword*>($2))
-    printf("\n program head failed at line:%d column:%d: expect: %s but got error Token\n", pos->line-1, pos->column, convertToString(cur_node->value).c_str());
-    #undef  cur_node
-
-    yyerrok;
+  char* errinfo = "Program Head failed at";
+  PascalSParseError* err = new PascalSParseError(__FUNCTION__, errinfo, PascalSErrno::ParseError);
+  if( $0 != nullptr ){
+    err->line = ((Node*)$0)->line;
+    err->column = ((Node*)$0)->column + ((Node*)$0)->length;
+    err->offset = ((Node*)$0)->offset + ((Node*)$0)->length;
+  }
+  add_error(err);
+  yyerrok;
 }
 
 //| program id error idlist {printf("\n\n\n\nMissing lparen\n"); yyerrok;}
 //| program id lparen idlist error {printf("\n\n\n\nMissing rparen\n"); yyerrok;}
 ;
 
-program:KEYWORD_PROGRAM{
+program: KEYWORD_PROGRAM{
   $$ = new ExpKeyword((const Keyword *)($1));
 }
 ;
 
-program_body : const_declarations var_declarations subprogram_declarations compound_statement {
+program_body: const_declarations var_declarations subprogram_declarations compound_statement {
   $$ = new ProgramBody((ConstDecls*)$1, (VarDecls*)$2, (SubprogramDecls*)$3, (CompoundStatement*)$4);
 }
 ;
@@ -217,8 +225,17 @@ var_declarations:              { $$ = nullptr;  /* new ExpVoid(); */ }
   $$ = $2;
 }
 | error {
-    printf("\n var declarations parse failed\n");
-    yyerrok;
+  $$ = $0;
+  ast::printAST((Node*)$0);
+  char* errinfo = "Var Declarations failed at";
+  PascalSParseError* err = new PascalSParseError(__FUNCTION__, errinfo, PascalSErrno::ParseError);
+  if( $0 != nullptr ){
+    err->line = ((Node*)$0)->line;
+    err->column = ((Node*)$0)->column + ((Node*)$0)->length;
+    err->offset = ((Node*)$0)->offset + ((Node*)$0)->length;
+  }
+  add_error(err);
+  yyerrok;
 }
 //| var var_declaration error {printf("\n\n\n\nMissing semicolon\n"); yyerrok;}
 ;
@@ -232,19 +249,23 @@ var_declaration semicolon idlist colon type   {
 }
 | idlist colon type {
   $$ = new VarDecls();
-
   VarDecl* vdecl = new VarDecl((IdentList*)$1, (TypeSpec*)$3);
   ast::copy_pos_with_check((VarDecls*)$$, (IdentList*)$1);
   ((VarDecls*)$$)->decls.push_back(vdecl);
   ast::copy_pos_with_check((VarDecls*)$$, vdecl);
 }
 | idlist colon error semicolon {
-
-  // printf(" \n\n test error -------------------------- %s\n", convertToString((Token*)(current_token)).c_str());
-    // errors.push_back(new PascalSParseError("test"));
-    // printf("\n var declaration failed at line:%d column:%d: expect:array type but got error Token\n", pos->line,pos->column+pos->length+1);
-
-    yyerrok;
+  $$ = new VarDecls();
+  ast::copy_pos_between_tokens((VarDecls*)$$, (IdentList*)$1, (Token*)$4);
+  char* errinfo = "Var Declaration failed at";
+  PascalSParseError* err = new PascalSParseError(__FUNCTION__, errinfo, PascalSErrno::ParseError);
+  if( $0 != nullptr ){
+    err->line = ((Node*)$0)->line;
+    err->column = ((Node*)$0)->column + ((Node*)$0)->length;
+    err->offset = ((Node*)$0)->offset + ((Node*)$0)->length;
+  }
+  add_error(err);
+  // yyerrok;
 }
 ;
 
@@ -257,15 +278,24 @@ basic_type           {
   ((ArrayTypeSpec*)$$)->keyword = ((BasicTypeSpec*)$6)->keyword;
   ast::copy_pos_with_check((ArrayTypeSpec*)$$, ((BasicTypeSpec*)$6)->keyword);
 }
-;
-
-array:KEYWORD_ARRAY{
-  $$ = new ExpKeyword((const Keyword *)($1));
+| array lbracket error of basic_type         {
+  $$ = new ArrayTypeSpec(nullptr);
+  ((ArrayTypeSpec*)$$)->keyword = ((BasicTypeSpec*)$5)->keyword;
+  // ast::copy_pos_with_check((ArrayTypeSpec*)$$, ((BasicTypeSpec*)$5)->keyword);
+  ast::copy_pos_between_tokens((ArrayTypeSpec*)$$, (const Keyword*)$1, (BasicTypeSpec*)$5);
+  yyerrok;
 }
 ;
 
-of:KEYWORD_OF{
-  $$ = new ExpKeyword((const Keyword *)($1));
+array: KEYWORD_ARRAY{
+  // $$ = new ExpKeyword((const Keyword *)($1));
+  $$ = $1;
+}
+;
+
+of: KEYWORD_OF{
+  // $$ = new ExpKeyword((const Keyword *)($1));
+  $$ = $1;
 }
 ;
 
@@ -305,14 +335,13 @@ period comma num range num        {
   $$ = new ArrayTypeSpec(nullptr);
   ((ArrayTypeSpec*)$$)->periods.push_back(std::make_pair((int64_t)((ConstantInteger*)(((ExpConstantInteger*)$1)->value)->attr), (int64_t)((ConstantInteger*)(((ExpConstantInteger*)$3)->value)->attr)));
 }
-| error {
-    printf(" test error %s\n", convertToString((Token*)(current_token)).c_str());
-    // new PascalSParseError("pascal S parser Errorr test");
-
-    /* #define cur_node (reinterpret_cast<const ast::ExpMarker*>($3)) */
-    /* printf("\nperiod parse failed at line:%d column:%d: expect: num but got %s\n", pos->line,pos->column+pos->length+1,convertToString(cur_node->value).c_str()); */
-    /* #undef  cur_node */
-
+| num range error rbracket {
+    char* errinfo = "Expect NUM";
+    PascalSParseError* err = new PascalSParseError(__FUNCTION__, errinfo, PascalSErrno::ParseError);
+    err->line = ((Node*)$2)->line;
+    err->column = ((Node*)$2)->column + ((Node*)$2)->length;
+    err->offset = ((Node*)$2)->offset + ((Node*)$2)->length;
+    add_error(err);
     yyerrok;
 }
 ;
@@ -726,4 +755,23 @@ relop: MARKER_EQ {
   // $$ = new ExpMarker((const Marker *)($1));
   $$ = $1 ;
   }
+
+/* error_handler: error { */
+/*   printf("\n\n\ncatch errortoken %s!!\n\n", convertToString(current_token).c_str()); */
+/*   $$ = (Token*)current_token; */
+/* } */
+/* | ERRORTOKEN { */
+/*   printf("\n\n\ncatch errortoken %s!!\n\n", convertToString(current_token).c_str()); */
+/*   $$ = (Token*)current_token; */
+/* } */
+/* | error_handler error { */
+/*   $$ = $1; */
+/*   // printf("\n\n\ncatch error %s!!\n\n", convertToString(current_token).c_str()); */
+/*   // $$ = (Token*)current_token; */
+/* } */
+/* | error_handler ERRORTOKEN { */
+/*   $$ = $1; */
+/*     // printf("\n\n\ncatch error %s!!\n\n", convertToString(current_token).c_str()); */
+/*     // $$ = (Token*)current_token; */
+/*     } */
 %%

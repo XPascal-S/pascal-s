@@ -169,7 +169,7 @@ using namespace ast;
 
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 
 namespace yy {
@@ -204,8 +204,10 @@ namespace yy {
     };
 
     ///yylex interface
-  const Token* current_token;  virtual int yylex(void**) = 0;
+  const Token* current_token;
+  virtual int yylex(void**) = 0;
     virtual void access_ast(void*) = 0;
+ virtual void add_error(PascalSError*) = 0;
  /// Token kinds.
     struct token
     {
@@ -487,14 +489,11 @@ namespace yy {
         Base::clear ();
       }
 
-#if YYDEBUG || 0
       /// The user-facing name of this symbol.
       const char *name () const YY_NOEXCEPT
       {
         return parser::symbol_name (this->kind ());
       }
-#endif // #if YYDEBUG || 0
-
 
       /// Backward compatibility (Bison 3.6).
       symbol_kind_type type_get () const YY_NOEXCEPT;
@@ -600,14 +599,27 @@ namespace yy {
     /// Report a syntax error.
     void error (const syntax_error& err);
 
-#if YYDEBUG || 0
     /// The user-facing name of the symbol whose (internal) number is
     /// YYSYMBOL.  No bounds checking.
     static const char *symbol_name (symbol_kind_type yysymbol);
-#endif // #if YYDEBUG || 0
 
 
 
+    class context
+    {
+    public:
+      context (const parser& yyparser, const symbol_type& yyla);
+      const symbol_type& lookahead () const { return yyla_; }
+      symbol_kind_type token () const { return yyla_.kind (); }
+      /// Put in YYARG at most YYARGN of the expected tokens, and return the
+      /// number of tokens stored in YYARG.  If YYARG is null, return the
+      /// number of expected tokens (guaranteed to be less than YYNTOKENS).
+      int expected_tokens (symbol_kind_type yyarg[], int yyargn) const;
+
+    private:
+      const parser& yyparser_;
+      const symbol_type& yyla_;
+    };
 
   private:
 #if YY_CPLUSPLUS < 201103L
@@ -617,10 +629,27 @@ namespace yy {
     parser& operator= (const parser&);
 #endif
 
+    /// Check the lookahead yytoken.
+    /// \returns  true iff the token will be eventually shifted.
+    bool yy_lac_check_ (symbol_kind_type yytoken) const;
+    /// Establish the initial context if no initial context currently exists.
+    /// \returns  true iff the token will be eventually shifted.
+    bool yy_lac_establish_ (symbol_kind_type yytoken);
+    /// Discard any previous initial lookahead context because of event.
+    /// \param event  the event which caused the lookahead to be discarded.
+    ///               Only used for debbuging output.
+    void yy_lac_discard_ (const char* event);
 
     /// Stored state numbers (used for stacks).
     typedef unsigned char state_type;
 
+    /// The arguments of the error message.
+    int yy_syntax_error_arguments_ (const context& yyctx,
+                                    symbol_kind_type yyarg[], int yyargn) const;
+
+    /// Generate an error message.
+    /// \param yyctx     the context in which the error occurred.
+    virtual std::string yysyntax_error_ (const context& yyctx) const;
     /// Compute post-reduction state.
     /// \param yystate   the current state
     /// \param yysym     the nonterminal to push on the stack
@@ -634,7 +663,7 @@ namespace yy {
     /// \param yyvalue   the value to check
     static bool yy_table_value_is_error_ (int yyvalue);
 
-    static const signed char yypact_ninf_;
+    static const short yypact_ninf_;
     static const signed char yytable_ninf_;
 
     /// Convert a scanner token kind \a t to a symbol kind.
@@ -642,10 +671,6 @@ namespace yy {
     /// are valid, yet not members of the token_type enum.
     static symbol_kind_type yytranslate_ (int t);
 
-#if YYDEBUG || 0
-    /// For a symbol, its name in clear.
-    static const char* const yytname_[];
-#endif // #if YYDEBUG || 0
 
 
     // Tables.
@@ -889,6 +914,15 @@ namespace yy {
 
     /// The stack.
     stack_type yystack_;
+    /// The stack for LAC.
+    /// Logically, the yy_lac_stack's lifetime is confined to the function
+    /// yy_lac_check_. We just store it as a member of this class to hold
+    /// on to the memory and to avoid frequent reallocations.
+    /// Since yy_lac_check_ is const, this member must be mutable.
+    mutable std::vector<state_type> yylac_stack_;
+    /// Whether an initial LAC context was established.
+    bool yy_lac_established_;
+
 
     /// Push a new state on the stack.
     /// \param m    a debug message to display
@@ -911,7 +945,7 @@ namespace yy {
     /// Constants.
     enum
     {
-      yylast_ = 256,     ///< Last index in yytable_.
+      yylast_ = 253,     ///< Last index in yytable_.
       yynnts_ = 72,  ///< Number of nonterminal symbols.
       yyfinal_ = 7 ///< Termination state number.
     };
@@ -922,7 +956,7 @@ namespace yy {
 
 
 } // yy
-#line 923 "yacc_bison.h"
+#line 955 "yacc_bison.h"
 
 
 
@@ -1002,16 +1036,17 @@ namespace yy {
 #define YYRECOVERING()  (!!yyerrstatus_)
 
 namespace yy {
-#line 1003 "yacc_bison.h"
+#line 1035 "yacc_bison.h"
 
   /// Build a parser object.
   parser::parser ()
 #if YYDEBUG
     : yydebug_ (false),
-      yycdebug_ (&std::cerr)
+      yycdebug_ (&std::cerr),
 #else
-
+    :
 #endif
+      yy_lac_established_ (false)
   {}
 
   parser::~parser ()
@@ -1316,6 +1351,10 @@ namespace yy {
     /// The return value of parse ().
     int yyresult;
 
+    /// Discard the LAC context in case there still is one left from a
+    /// previous invocation.
+    yy_lac_discard_ ("init");
+
 #if YY_EXCEPTIONS
     try
 #endif // YY_EXCEPTIONS
@@ -1389,6 +1428,8 @@ namespace yy {
     yyn += yyla.kind ();
     if (yyn < 0 || yylast_ < yyn || yycheck_[yyn] != yyla.kind ())
       {
+        if (!yy_lac_establish_ (yyla.kind ()))
+           goto yyerrlab;
         goto yydefault;
       }
 
@@ -1398,6 +1439,9 @@ namespace yy {
       {
         if (yy_table_value_is_error_ (yyn))
           goto yyerrlab;
+        if (!yy_lac_establish_ (yyla.kind ()))
+           goto yyerrlab;
+
         yyn = -yyn;
         goto yyreduce;
       }
@@ -1408,6 +1452,7 @@ namespace yy {
 
     // Shift the lookahead token.
     yypush_ ("Shifting", state_type (yyn), YY_MOVE (yyla));
+    yy_lac_discard_ ("shift");
     goto yynewstate;
 
 
@@ -1450,420 +1495,456 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 84 "parser.y"
+#line 88 "parser.y"
                                                         {
   yylhs.value = new ast::Program((ProgramHead*)yystack_[3].value, (ProgramBody*)yystack_[1].value);
   access_ast(yylhs.value);
   //printf("finish!\n");
  }
-#line 1457 "yacc_bison.h"
+#line 1500 "yacc_bison.h"
     break;
 
   case 3:
 #line 93 "parser.y"
-               {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
- }
-#line 1465 "yacc_bison.h"
+        {
+  // printf("keep error");
+  YYABORT;
+  }
+#line 1509 "yacc_bison.h"
     break;
 
   case 4:
-#line 99 "parser.y"
-                                {
-  yylhs.value = new ProgramHead((const ExpKeyword*)yystack_[4].value, new Ident((const Identifier*)yystack_[3].value), (IdentList*)yystack_[1].value);
-}
-#line 1473 "yacc_bison.h"
+#line 101 "parser.y"
+               {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+ }
+#line 1517 "yacc_bison.h"
     break;
 
   case 5:
-#line 102 "parser.y"
-            {
-  yylhs.value = new ProgramHead((const ExpKeyword*)yystack_[1].value, new Ident((const Identifier*)yystack_[0].value));
+#line 107 "parser.y"
+                                {
+  yylhs.value = new ProgramHead((const ExpKeyword*)yystack_[4].value, new Ident((const Identifier*)yystack_[3].value), (IdentList*)yystack_[1].value);
 }
-#line 1481 "yacc_bison.h"
+#line 1525 "yacc_bison.h"
     break;
 
   case 6:
-#line 105 "parser.y"
+#line 110 "parser.y"
+            {
+  yylhs.value = new ProgramHead((const ExpKeyword*)yystack_[1].value, new Ident((const Identifier*)yystack_[0].value));
+}
+#line 1533 "yacc_bison.h"
+    break;
+
+  case 7:
+#line 113 "parser.y"
                           {
-    IdentList* idlist = new IdentList();
+  IdentList* idlist = new IdentList();
   ast::copy_pos_with_check(idlist, (ExpMarker*)yystack_[1].value);
   ast::copy_pos_with_check(idlist, (ExpMarker*)yystack_[0].value);
   yylhs.value = new ProgramHead((const ExpKeyword*)yystack_[3].value, new Ident((const Identifier*)yystack_[2].value), idlist);
 }
-#line 1492 "yacc_bison.h"
-    break;
-
-  case 7:
-#line 111 "parser.y"
-                                {
-
-    pascal_s::Pos* pos = ((Node*)yystack_[3].value)->visit_pos();
-
-    #define cur_node (reinterpret_cast<const ast::ExpKeyword*>(yystack_[3].value))
-    printf("\n program head failed at line:%d column:%d: expect: %s but got error Token\n", pos->line-1, pos->column, convertToString(cur_node->value).c_str());
-    #undef  cur_node
-
-    yyerrok;
-}
-#line 1507 "yacc_bison.h"
+#line 1544 "yacc_bison.h"
     break;
 
   case 8:
-#line 126 "parser.y"
-                       {
-  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
+#line 119 "parser.y"
+                                {
+  char* errinfo = "Program Head failed at";
+  PascalSParseError* err = new PascalSParseError(__FUNCTION__, errinfo, PascalSErrno::ParseError);
+  if( yystack_[5].value != nullptr ){
+    err->line = ((Node*)yystack_[5].value)->line;
+    err->column = ((Node*)yystack_[5].value)->column + ((Node*)yystack_[5].value)->length;
+    err->offset = ((Node*)yystack_[5].value)->offset + ((Node*)yystack_[5].value)->length;
+  }
+  add_error(err);
+  yyerrok;
 }
-#line 1515 "yacc_bison.h"
+#line 1560 "yacc_bison.h"
     break;
 
   case 9:
-#line 131 "parser.y"
-                                                                                              {
-  yylhs.value = new ProgramBody((ConstDecls*)yystack_[3].value, (VarDecls*)yystack_[2].value, (SubprogramDecls*)yystack_[1].value, (CompoundStatement*)yystack_[0].value);
+#line 135 "parser.y"
+                        {
+  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
 }
-#line 1523 "yacc_bison.h"
+#line 1568 "yacc_bison.h"
     break;
 
   case 10:
-#line 137 "parser.y"
+#line 140 "parser.y"
+                                                                                             {
+  yylhs.value = new ProgramBody((ConstDecls*)yystack_[3].value, (VarDecls*)yystack_[2].value, (SubprogramDecls*)yystack_[1].value, (CompoundStatement*)yystack_[0].value);
+}
+#line 1576 "yacc_bison.h"
+    break;
+
+  case 11:
+#line 146 "parser.y"
                  {
   yylhs.value = yystack_[2].value;
   ((IdentList*)yylhs.value)->idents.push_back((Identifier*)yystack_[0].value);
   ast::copy_pos_with_check((IdentList*)yylhs.value, (Identifier*)yystack_[0].value);
 }
-#line 1533 "yacc_bison.h"
+#line 1586 "yacc_bison.h"
     break;
 
-  case 11:
-#line 142 "parser.y"
+  case 12:
+#line 151 "parser.y"
           {
   yylhs.value = new IdentList();
   ((IdentList*)yylhs.value)->idents.push_back((Identifier*)yystack_[0].value);
   ast::copy_pos_with_check((IdentList*)yylhs.value, (Identifier*)yystack_[0].value);
 }
-#line 1543 "yacc_bison.h"
-    break;
-
-  case 12:
-#line 151 "parser.y"
-                                  {
-  yylhs.value = yystack_[1].value;
-}
-#line 1551 "yacc_bison.h"
+#line 1596 "yacc_bison.h"
     break;
 
   case 13:
-#line 154 "parser.y"
-                                        { yylhs.value = nullptr; }
-#line 1557 "yacc_bison.h"
+#line 160 "parser.y"
+                                  {
+  yylhs.value = yystack_[1].value;
+}
+#line 1604 "yacc_bison.h"
     break;
 
   case 14:
-#line 159 "parser.y"
-                   {
-  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
-}
-#line 1565 "yacc_bison.h"
+#line 163 "parser.y"
+                                        { yylhs.value = nullptr; }
+#line 1610 "yacc_bison.h"
     break;
 
   case 15:
-#line 165 "parser.y"
+#line 168 "parser.y"
+                   {
+  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
+}
+#line 1618 "yacc_bison.h"
+    break;
+
+  case 16:
+#line 174 "parser.y"
                                               {
   yylhs.value = yystack_[4].value;
   ConstDecl* constDecl = new ConstDecl((const Identifier*)yystack_[2].value, (Exp*)yystack_[0].value);
   ((ConstDecls*)yylhs.value)->decls.push_back(constDecl);
 }
-#line 1575 "yacc_bison.h"
+#line 1628 "yacc_bison.h"
     break;
 
-  case 16:
-#line 170 "parser.y"
+  case 17:
+#line 179 "parser.y"
                     {
   ConstDecl* constDecl = new ConstDecl((const Identifier*)yystack_[2].value, (Exp*)yystack_[0].value);
   yylhs.value = new ConstDecls();
   ((ConstDecls*)yylhs.value)->decls.push_back(constDecl);
 }
-#line 1585 "yacc_bison.h"
-    break;
-
-  case 17:
-#line 177 "parser.y"
-             {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
-}
-#line 1593 "yacc_bison.h"
+#line 1638 "yacc_bison.h"
     break;
 
   case 18:
-#line 183 "parser.y"
-          {yylhs.value = new UnExp((const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);}
-#line 1599 "yacc_bison.h"
+#line 186 "parser.y"
+             {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+}
+#line 1646 "yacc_bison.h"
     break;
 
   case 19:
-#line 184 "parser.y"
+#line 192 "parser.y"
           {yylhs.value = new UnExp((const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);}
-#line 1605 "yacc_bison.h"
+#line 1652 "yacc_bison.h"
     break;
 
   case 20:
-#line 185 "parser.y"
-          {yylhs.value = yystack_[0].value;}
-#line 1611 "yacc_bison.h"
+#line 193 "parser.y"
+          {yylhs.value = new UnExp((const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);}
+#line 1658 "yacc_bison.h"
     break;
 
   case 21:
-#line 186 "parser.y"
+#line 194 "parser.y"
           {yylhs.value = yystack_[0].value;}
-#line 1617 "yacc_bison.h"
+#line 1664 "yacc_bison.h"
     break;
 
   case 22:
-#line 187 "parser.y"
+#line 195 "parser.y"
           {yylhs.value = yystack_[0].value;}
-#line 1623 "yacc_bison.h"
+#line 1670 "yacc_bison.h"
     break;
 
   case 23:
-#line 190 "parser.y"
-         {yylhs.value = new ExpConstantBoolean(((const ConstantBoolean*)(yystack_[0].value)));}
-#line 1629 "yacc_bison.h"
+#line 196 "parser.y"
+          {yylhs.value = yystack_[0].value;}
+#line 1676 "yacc_bison.h"
     break;
 
   case 24:
-#line 192 "parser.y"
-        {
-  yylhs.value = new ExpConstantInteger(((const ConstantInteger*)(yystack_[0].value)));
-}
-#line 1637 "yacc_bison.h"
+#line 199 "parser.y"
+         {yylhs.value = new ExpConstantBoolean(((const ConstantBoolean*)(yystack_[0].value)));}
+#line 1682 "yacc_bison.h"
     break;
 
   case 25:
-#line 195 "parser.y"
-       {
-  yylhs.value = new ExpConstantReal(((const ConstantReal*)(yystack_[0].value)));
-  }
-#line 1645 "yacc_bison.h"
+#line 201 "parser.y"
+        {
+  yylhs.value = new ExpConstantInteger(((const ConstantInteger*)(yystack_[0].value)));
+}
+#line 1690 "yacc_bison.h"
     break;
 
   case 26:
-#line 200 "parser.y"
-          {
-  yylhs.value = new ExpConstantChar(((const ConstantChar*)(yystack_[0].value)));
-}
-#line 1653 "yacc_bison.h"
+#line 204 "parser.y"
+       {
+  yylhs.value = new ExpConstantReal(((const ConstantReal*)(yystack_[0].value)));
+  }
+#line 1698 "yacc_bison.h"
     break;
 
   case 27:
-#line 205 "parser.y"
-               {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+#line 209 "parser.y"
+          {
+  yylhs.value = new ExpConstantChar(((const ConstantChar*)(yystack_[0].value)));
 }
-#line 1661 "yacc_bison.h"
+#line 1706 "yacc_bison.h"
     break;
 
   case 28:
-#line 210 "parser.y"
+#line 214 "parser.y"
                {
   yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 1669 "yacc_bison.h"
+#line 1714 "yacc_bison.h"
     break;
 
   case 29:
-#line 215 "parser.y"
-                               { yylhs.value = nullptr;  /* new ExpVoid(); */ }
-#line 1675 "yacc_bison.h"
+#line 219 "parser.y"
+               {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+}
+#line 1722 "yacc_bison.h"
     break;
 
   case 30:
-#line 216 "parser.y"
-                               {
-  yylhs.value = yystack_[1].value;
-}
-#line 1683 "yacc_bison.h"
+#line 224 "parser.y"
+                               { yylhs.value = nullptr;  /* new ExpVoid(); */ }
+#line 1728 "yacc_bison.h"
     break;
 
   case 31:
-#line 219 "parser.y"
-        {
-    printf("\n var declarations parse failed\n");
-    yyerrok;
+#line 225 "parser.y"
+                               {
+  yylhs.value = yystack_[1].value;
 }
-#line 1692 "yacc_bison.h"
+#line 1736 "yacc_bison.h"
     break;
 
   case 32:
-#line 227 "parser.y"
+#line 228 "parser.y"
+        {
+  yylhs.value = yystack_[1].value;
+  ast::printAST((Node*)yystack_[1].value);
+  char* errinfo = "Var Declarations failed at";
+  PascalSParseError* err = new PascalSParseError(__FUNCTION__, errinfo, PascalSErrno::ParseError);
+  if( yystack_[1].value != nullptr ){
+    err->line = ((Node*)yystack_[1].value)->line;
+    err->column = ((Node*)yystack_[1].value)->column + ((Node*)yystack_[1].value)->length;
+    err->offset = ((Node*)yystack_[1].value)->offset + ((Node*)yystack_[1].value)->length;
+  }
+  add_error(err);
+  yyerrok;
+}
+#line 1754 "yacc_bison.h"
+    break;
+
+  case 33:
+#line 245 "parser.y"
                                               {
   yylhs.value = yystack_[4].value;
   VarDecl* vdecl = new VarDecl((IdentList*)yystack_[2].value, (TypeSpec*)yystack_[0].value);
   ((VarDecls*)yylhs.value)->decls.push_back(vdecl);
   ast::copy_pos_with_check((VarDecls*)yylhs.value, vdecl);
 }
-#line 1703 "yacc_bison.h"
+#line 1765 "yacc_bison.h"
     break;
 
-  case 33:
-#line 233 "parser.y"
+  case 34:
+#line 251 "parser.y"
                     {
   yylhs.value = new VarDecls();
-
   VarDecl* vdecl = new VarDecl((IdentList*)yystack_[2].value, (TypeSpec*)yystack_[0].value);
   ast::copy_pos_with_check((VarDecls*)yylhs.value, (IdentList*)yystack_[2].value);
   ((VarDecls*)yylhs.value)->decls.push_back(vdecl);
   ast::copy_pos_with_check((VarDecls*)yylhs.value, vdecl);
 }
-#line 1716 "yacc_bison.h"
-    break;
-
-  case 34:
-#line 241 "parser.y"
-                               {
-
-  // printf(" \n\n test error -------------------------- %s\n", convertToString((Token*)(current_token)).c_str());
-    // errors.push_back(new PascalSParseError("test"));
-    // printf("\n var declaration failed at line:%d column:%d: expect:array type but got error Token\n", pos->line,pos->column+pos->length+1);
-
-    yyerrok;
-}
-#line 1729 "yacc_bison.h"
+#line 1777 "yacc_bison.h"
     break;
 
   case 35:
-#line 252 "parser.y"
-                     {
-  yylhs.value = yystack_[0].value;
+#line 258 "parser.y"
+                               {
+  yylhs.value = new VarDecls();
+  ast::copy_pos_between_tokens((VarDecls*)yylhs.value, (IdentList*)yystack_[3].value, (Token*)yystack_[0].value);
+  char* errinfo = "Var Declaration failed at";
+  PascalSParseError* err = new PascalSParseError(__FUNCTION__, errinfo, PascalSErrno::ParseError);
+  if( yystack_[4].value != nullptr ){
+    err->line = ((Node*)yystack_[4].value)->line;
+    err->column = ((Node*)yystack_[4].value)->column + ((Node*)yystack_[4].value)->length;
+    err->offset = ((Node*)yystack_[4].value)->offset + ((Node*)yystack_[4].value)->length;
+  }
+  add_error(err);
+  // yyerrok;
 }
-#line 1737 "yacc_bison.h"
+#line 1795 "yacc_bison.h"
     break;
 
   case 36:
-#line 255 "parser.y"
+#line 274 "parser.y"
+                     {
+  yylhs.value = yystack_[0].value;
+}
+#line 1803 "yacc_bison.h"
+    break;
+
+  case 37:
+#line 277 "parser.y"
                                                        {
   yylhs.value = yystack_[3].value;
   ((ArrayTypeSpec*)yylhs.value)->keyword = ((BasicTypeSpec*)yystack_[0].value)->keyword;
   ast::copy_pos_with_check((ArrayTypeSpec*)yylhs.value, ((BasicTypeSpec*)yystack_[0].value)->keyword);
 }
-#line 1747 "yacc_bison.h"
-    break;
-
-  case 37:
-#line 262 "parser.y"
-                   {
-  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
-}
-#line 1755 "yacc_bison.h"
+#line 1813 "yacc_bison.h"
     break;
 
   case 38:
-#line 267 "parser.y"
-             {
-  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
+#line 282 "parser.y"
+                                             {
+  yylhs.value = new ArrayTypeSpec(nullptr);
+  ((ArrayTypeSpec*)yylhs.value)->keyword = ((BasicTypeSpec*)yystack_[0].value)->keyword;
+  // ast::copy_pos_with_check((ArrayTypeSpec*)$$, ((BasicTypeSpec*)$5)->keyword);
+  ast::copy_pos_between_tokens((ArrayTypeSpec*)yylhs.value, (const Keyword*)yystack_[4].value, (BasicTypeSpec*)yystack_[0].value);
+  yyerrok;
 }
-#line 1763 "yacc_bison.h"
+#line 1825 "yacc_bison.h"
     break;
 
   case 39:
-#line 273 "parser.y"
-                  {yylhs.value = yystack_[0].value;}
-#line 1769 "yacc_bison.h"
+#line 291 "parser.y"
+                    {
+  // $$ = new ExpKeyword((const Keyword *)($1));
+  yylhs.value = yystack_[0].value;
+}
+#line 1834 "yacc_bison.h"
     break;
 
   case 40:
-#line 274 "parser.y"
-                {yylhs.value = yystack_[0].value;}
-#line 1775 "yacc_bison.h"
+#line 297 "parser.y"
+              {
+  // $$ = new ExpKeyword((const Keyword *)($1));
+  yylhs.value = yystack_[0].value;
+}
+#line 1843 "yacc_bison.h"
     break;
 
   case 41:
-#line 275 "parser.y"
-                   {yylhs.value = yystack_[0].value;}
-#line 1781 "yacc_bison.h"
+#line 304 "parser.y"
+                  {yylhs.value = yystack_[0].value;}
+#line 1849 "yacc_bison.h"
     break;
 
   case 42:
-#line 276 "parser.y"
+#line 305 "parser.y"
                 {yylhs.value = yystack_[0].value;}
-#line 1787 "yacc_bison.h"
+#line 1855 "yacc_bison.h"
     break;
 
   case 43:
-#line 279 "parser.y"
-                       {
-  yylhs.value = new BasicTypeSpec((const Keyword *)(yystack_[0].value));
-}
-#line 1795 "yacc_bison.h"
+#line 306 "parser.y"
+                   {yylhs.value = yystack_[0].value;}
+#line 1861 "yacc_bison.h"
     break;
 
   case 44:
-#line 284 "parser.y"
-                 {
-  yylhs.value = new BasicTypeSpec((const Keyword *)(yystack_[0].value));
-}
-#line 1803 "yacc_bison.h"
+#line 307 "parser.y"
+                {yylhs.value = yystack_[0].value;}
+#line 1867 "yacc_bison.h"
     break;
 
   case 45:
-#line 289 "parser.y"
-                 {
-  yylhs.value = new BasicTypeSpec((const Keyword *)(yystack_[0].value));
-}
-#line 1811 "yacc_bison.h"
-    break;
-
-  case 46:
-#line 294 "parser.y"
+#line 310 "parser.y"
                        {
   yylhs.value = new BasicTypeSpec((const Keyword *)(yystack_[0].value));
 }
-#line 1819 "yacc_bison.h"
+#line 1875 "yacc_bison.h"
+    break;
+
+  case 46:
+#line 315 "parser.y"
+                 {
+  yylhs.value = new BasicTypeSpec((const Keyword *)(yystack_[0].value));
+}
+#line 1883 "yacc_bison.h"
     break;
 
   case 47:
-#line 300 "parser.y"
+#line 320 "parser.y"
+                 {
+  yylhs.value = new BasicTypeSpec((const Keyword *)(yystack_[0].value));
+}
+#line 1891 "yacc_bison.h"
+    break;
+
+  case 48:
+#line 325 "parser.y"
+                       {
+  yylhs.value = new BasicTypeSpec((const Keyword *)(yystack_[0].value));
+}
+#line 1899 "yacc_bison.h"
+    break;
+
+  case 49:
+#line 331 "parser.y"
                                   {
   yylhs.value = yystack_[4].value;
   ((ArrayTypeSpec*)yylhs.value)->periods.push_back(std::make_pair((int64_t)((ConstantInteger*)(((ExpConstantInteger*)yystack_[2].value)->value)->attr), (int64_t)((ConstantInteger*)(((ExpConstantInteger*)yystack_[0].value)->value)->attr)));
 }
-#line 1828 "yacc_bison.h"
+#line 1908 "yacc_bison.h"
     break;
 
-  case 48:
-#line 304 "parser.y"
+  case 50:
+#line 335 "parser.y"
                                    {
   yylhs.value = new ArrayTypeSpec(nullptr);
   ((ArrayTypeSpec*)yylhs.value)->periods.push_back(std::make_pair((int64_t)((ConstantInteger*)(((ExpConstantInteger*)yystack_[2].value)->value)->attr), (int64_t)((ConstantInteger*)(((ExpConstantInteger*)yystack_[0].value)->value)->attr)));
 }
-#line 1837 "yacc_bison.h"
-    break;
-
-  case 49:
-#line 308 "parser.y"
-        {
-    printf(" test error %s\n", convertToString((Token*)(current_token)).c_str());
-    // new PascalSParseError("pascal S parser Errorr test");
-
-    /* #define cur_node (reinterpret_cast<const ast::ExpMarker*>($3)) */
-    /* printf("\nperiod parse failed at line:%d column:%d: expect: num but got %s\n", pos->line,pos->column+pos->length+1,convertToString(cur_node->value).c_str()); */
-    /* #undef  cur_node */
-
-    yyerrok;
-}
-#line 1852 "yacc_bison.h"
-    break;
-
-  case 50:
-#line 319 "parser.y"
-                   {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
-}
-#line 1860 "yacc_bison.h"
+#line 1917 "yacc_bison.h"
     break;
 
   case 51:
-#line 324 "parser.y"
+#line 339 "parser.y"
+                           {
+    char* errinfo = "Expect NUM";
+    PascalSParseError* err = new PascalSParseError(__FUNCTION__, errinfo, PascalSErrno::ParseError);
+    err->line = ((Node*)yystack_[2].value)->line;
+    err->column = ((Node*)yystack_[2].value)->column + ((Node*)yystack_[2].value)->length;
+    err->offset = ((Node*)yystack_[2].value)->offset + ((Node*)yystack_[2].value)->length;
+    add_error(err);
+    yyerrok;
+}
+#line 1931 "yacc_bison.h"
+    break;
+
+  case 52:
+#line 349 "parser.y"
+                   {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+}
+#line 1939 "yacc_bison.h"
+    break;
+
+  case 53:
+#line 354 "parser.y"
                                               {
   if( yystack_[2].value == nullptr ){
     yylhs.value = new SubprogramDecls();
@@ -1872,163 +1953,163 @@ namespace yy {
   }
   ((SubprogramDecls*)yylhs.value)->subprogram.push_back(((Subprogram*)yystack_[1].value));
 }
-#line 1873 "yacc_bison.h"
-    break;
-
-  case 52:
-#line 332 "parser.y"
-  { yylhs.value = nullptr;  }
-#line 1879 "yacc_bison.h"
-    break;
-
-  case 53:
-#line 337 "parser.y"
-                                          {
-  yylhs.value = new Subprogram((SubprogramHead*)yystack_[2].value, (SubprogramBody*)yystack_[0].value);
-}
-#line 1887 "yacc_bison.h"
+#line 1952 "yacc_bison.h"
     break;
 
   case 54:
-#line 344 "parser.y"
-                                {
-  yylhs.value = new SubprogramHead((const Keyword*)yystack_[2].value, (const Identifier*)yystack_[1].value, (ParamList*)yystack_[0].value, nullptr);
-}
-#line 1895 "yacc_bison.h"
+#line 362 "parser.y"
+  { yylhs.value = nullptr;  }
+#line 1958 "yacc_bison.h"
     break;
 
   case 55:
-#line 347 "parser.y"
-                                                 {
-  yylhs.value = new SubprogramHead((const Keyword*)yystack_[4].value, (const Identifier*)yystack_[3].value, (ParamList*)yystack_[2].value, (BasicTypeSpec*)yystack_[0].value);
+#line 367 "parser.y"
+                                          {
+  yylhs.value = new Subprogram((SubprogramHead*)yystack_[2].value, (SubprogramBody*)yystack_[0].value);
 }
-#line 1903 "yacc_bison.h"
+#line 1966 "yacc_bison.h"
     break;
 
   case 56:
-#line 352 "parser.y"
+#line 374 "parser.y"
+                                {
+  yylhs.value = new SubprogramHead((const Keyword*)yystack_[2].value, (const Identifier*)yystack_[1].value, (ParamList*)yystack_[0].value, nullptr);
+}
+#line 1974 "yacc_bison.h"
+    break;
+
+  case 57:
+#line 377 "parser.y"
+                                                 {
+  yylhs.value = new SubprogramHead((const Keyword*)yystack_[4].value, (const Identifier*)yystack_[3].value, (ParamList*)yystack_[2].value, (BasicTypeSpec*)yystack_[0].value);
+}
+#line 1982 "yacc_bison.h"
+    break;
+
+  case 58:
+#line 382 "parser.y"
                             {
   // $$ = new ExpKeyword((const Keyword *)($1));
   yylhs.value = yystack_[0].value;
 }
-#line 1912 "yacc_bison.h"
+#line 1991 "yacc_bison.h"
     break;
 
-  case 57:
-#line 358 "parser.y"
+  case 59:
+#line 388 "parser.y"
                          {
   //$$ = new ExpKeyword((const Keyword *)($1));
   yylhs.value = yystack_[0].value;
 }
-#line 1921 "yacc_bison.h"
-    break;
-
-  case 58:
-#line 364 "parser.y"
-                  { yylhs.value =  nullptr; /* new ParamList(); */  }
-#line 1927 "yacc_bison.h"
-    break;
-
-  case 59:
-#line 365 "parser.y"
-                               {
-  yylhs.value = yystack_[1].value;
-}
-#line 1935 "yacc_bison.h"
+#line 2000 "yacc_bison.h"
     break;
 
   case 60:
-#line 374 "parser.y"
+#line 394 "parser.y"
+                  { yylhs.value =  nullptr; /* new ParamList(); */  }
+#line 2006 "yacc_bison.h"
+    break;
+
+  case 61:
+#line 395 "parser.y"
+                               {
+  yylhs.value = yystack_[1].value;
+}
+#line 2014 "yacc_bison.h"
+    break;
+
+  case 62:
+#line 404 "parser.y"
                                      {
   yylhs.value = yystack_[2].value;
   ((ParamList*)yylhs.value)->params.push_back((ParamSpec*)yystack_[0].value);
   ast::copy_pos_with_check((ParamList*)yylhs.value, (ParamSpec*)yystack_[0].value);
 }
-#line 1945 "yacc_bison.h"
+#line 2024 "yacc_bison.h"
     break;
 
-  case 61:
-#line 379 "parser.y"
+  case 63:
+#line 409 "parser.y"
                                 {
   yylhs.value = new ParamList();
   ((ParamList*)yylhs.value)->params.push_back((ParamSpec*)yystack_[0].value);
   ast::copy_pos_with_check((ParamList*)yylhs.value, (ParamSpec*)yystack_[0].value);
   }
-#line 1955 "yacc_bison.h"
-    break;
-
-  case 62:
-#line 389 "parser.y"
-                                    {
-  yylhs.value = new ParamSpec((const Keyword*)yystack_[3].value, (IdentList*)yystack_[2].value, (TypeSpec*)yystack_[0].value);
-}
-#line 1963 "yacc_bison.h"
-    break;
-
-  case 63:
-#line 392 "parser.y"
-                                {
-  yylhs.value = new ParamSpec(nullptr, (IdentList*)yystack_[2].value, (TypeSpec*)yystack_[0].value);
-}
-#line 1971 "yacc_bison.h"
+#line 2034 "yacc_bison.h"
     break;
 
   case 64:
-#line 398 "parser.y"
-               {
-  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
+#line 419 "parser.y"
+                                    {
+  yylhs.value = new ParamSpec((const Keyword*)yystack_[3].value, (IdentList*)yystack_[2].value, (TypeSpec*)yystack_[0].value);
 }
-#line 1979 "yacc_bison.h"
+#line 2042 "yacc_bison.h"
     break;
 
   case 65:
-#line 404 "parser.y"
-                   {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+#line 422 "parser.y"
+                                {
+  yylhs.value = new ParamSpec(nullptr, (IdentList*)yystack_[2].value, (TypeSpec*)yystack_[0].value);
 }
-#line 1987 "yacc_bison.h"
+#line 2050 "yacc_bison.h"
     break;
 
   case 66:
-#line 409 "parser.y"
-                                                        {
-  yylhs.value = new SubprogramBody((ConstDecls*)yystack_[2].value, (VarDecls*)yystack_[1].value, (CompoundStatement*)yystack_[0].value);
-}
-#line 1995 "yacc_bison.h"
-    break;
-
-  case 67:
-#line 414 "parser.y"
-                                { yylhs.value = nullptr; }
-#line 2001 "yacc_bison.h"
-    break;
-
-  case 68:
-#line 415 "parser.y"
-                                   {
-  yylhs.value = new CompoundStatement((StatementList*)yystack_[1].value);
-}
-#line 2009 "yacc_bison.h"
-    break;
-
-  case 69:
-#line 423 "parser.y"
-                   {
-  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
-}
-#line 2017 "yacc_bison.h"
-    break;
-
-  case 70:
 #line 428 "parser.y"
                {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
-             }
-#line 2025 "yacc_bison.h"
+}
+#line 2058 "yacc_bison.h"
+    break;
+
+  case 67:
+#line 434 "parser.y"
+                   {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+}
+#line 2066 "yacc_bison.h"
+    break;
+
+  case 68:
+#line 439 "parser.y"
+                                                        {
+  yylhs.value = new SubprogramBody((ConstDecls*)yystack_[2].value, (VarDecls*)yystack_[1].value, (CompoundStatement*)yystack_[0].value);
+}
+#line 2074 "yacc_bison.h"
+    break;
+
+  case 69:
+#line 444 "parser.y"
+                                { yylhs.value = nullptr; }
+#line 2080 "yacc_bison.h"
+    break;
+
+  case 70:
+#line 445 "parser.y"
+                                   {
+  yylhs.value = new CompoundStatement((StatementList*)yystack_[1].value);
+}
+#line 2088 "yacc_bison.h"
     break;
 
   case 71:
-#line 434 "parser.y"
+#line 453 "parser.y"
+                   {
+  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
+}
+#line 2096 "yacc_bison.h"
+    break;
+
+  case 72:
+#line 458 "parser.y"
+               {
+  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
+             }
+#line 2104 "yacc_bison.h"
+    break;
+
+  case 73:
+#line 464 "parser.y"
                                        {
   yylhs.value = yystack_[2].value;
   if( yystack_[0].value != nullptr ){
@@ -2036,11 +2117,11 @@ namespace yy {
     ast::copy_pos_with_check((StatementList*)yylhs.value, (Statement*)yystack_[0].value);
   }
 }
-#line 2037 "yacc_bison.h"
+#line 2116 "yacc_bison.h"
     break;
 
-  case 72:
-#line 441 "parser.y"
+  case 74:
+#line 471 "parser.y"
             {
   yylhs.value = new StatementList();
   if( yystack_[0].value != nullptr ){
@@ -2048,138 +2129,138 @@ namespace yy {
     ast::copy_pos_with_check((StatementList*)yylhs.value, (Statement*)yystack_[0].value);
   }
 }
-#line 2049 "yacc_bison.h"
-    break;
-
-  case 73:
-#line 451 "parser.y"
-                           {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
-}
-#line 2057 "yacc_bison.h"
-    break;
-
-  case 74:
-#line 456 "parser.y"
-                                                      {yylhs.value = new ExecStatement(new ExpAssign((Variable*)yystack_[2].value, (Exp*)yystack_[0].value));}
-#line 2063 "yacc_bison.h"
-    break;
-
-  case 75:
-#line 457 "parser.y"
-                                                      {yylhs.value = new ExecStatement((Exp*)yystack_[0].value);}
-#line 2069 "yacc_bison.h"
-    break;
-
-  case 76:
-#line 458 "parser.y"
-                                                      {yylhs.value = yystack_[0].value;}
-#line 2075 "yacc_bison.h"
-    break;
-
-  case 77:
-#line 460 "parser.y"
-                                      {
-                                        yylhs.value = new IfElseStatement((Exp*)yystack_[4].value, (Statement*)yystack_[2].value, (Statement*)yystack_[0].value);
-                                        ast::copy_pos_between_tokens((IfElseStatement*)yylhs.value, (ExpKeyword*)yystack_[5].value, (Statement*)yystack_[0].value);
-                                      }
-#line 2084 "yacc_bison.h"
-    break;
-
-  case 78:
-#line 465 "parser.y"
-{
-  yylhs.value = new IfElseStatement((Exp*)yystack_[2].value, (Statement*)yystack_[0].value, nullptr);
-  ast::copy_pos_between_tokens((IfElseStatement*)yylhs.value, (ExpKeyword*)yystack_[3].value, (Statement*)yystack_[0].value);
-}
-#line 2093 "yacc_bison.h"
-    break;
-
-  case 79:
-#line 470 "parser.y"
-                                              {
-                                                yylhs.value = new ForStatement((const Identifier *)yystack_[6].value, (Exp*)yystack_[4].value, (Exp*)yystack_[2].value, (Statement*)yystack_[0].value);
-                                                ast::copy_pos_between_tokens((ForStatement*)yylhs.value, (ExpKeyword*)yystack_[7].value, (Statement*)yystack_[0].value);
-                                              }
-#line 2102 "yacc_bison.h"
-    break;
-
-  case 80:
-#line 475 "parser.y"
-{
-  yylhs.value = new Read((VariableList*)yystack_[1].value);
-  ast::copy_pos_with_check((Read*)yylhs.value, (VariableList*)yystack_[1].value);
-}
-#line 2111 "yacc_bison.h"
-    break;
-
-  case 81:
-#line 480 "parser.y"
-{
-  yylhs.value = new Write((ExpressionList*)yystack_[1].value);
-  ast::copy_pos_with_check((Write*)yylhs.value, (ExpressionList*)yystack_[1].value);
-}
-#line 2120 "yacc_bison.h"
-    break;
-
-  case 82:
-#line 486 "parser.y"
-               {
-  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
-}
 #line 2128 "yacc_bison.h"
     break;
 
-  case 83:
-#line 491 "parser.y"
-             {
-  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
+  case 75:
+#line 481 "parser.y"
+                           {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
 #line 2136 "yacc_bison.h"
     break;
 
+  case 76:
+#line 486 "parser.y"
+                                                      {yylhs.value = new ExecStatement(new ExpAssign((Variable*)yystack_[2].value, (Exp*)yystack_[0].value));}
+#line 2142 "yacc_bison.h"
+    break;
+
+  case 77:
+#line 487 "parser.y"
+                                                      {yylhs.value = new ExecStatement((Exp*)yystack_[0].value);}
+#line 2148 "yacc_bison.h"
+    break;
+
+  case 78:
+#line 488 "parser.y"
+                                                      {yylhs.value = yystack_[0].value;}
+#line 2154 "yacc_bison.h"
+    break;
+
+  case 79:
+#line 490 "parser.y"
+                                      {
+                                        yylhs.value = new IfElseStatement((Exp*)yystack_[4].value, (Statement*)yystack_[2].value, (Statement*)yystack_[0].value);
+                                        ast::copy_pos_between_tokens((IfElseStatement*)yylhs.value, (ExpKeyword*)yystack_[5].value, (Statement*)yystack_[0].value);
+                                      }
+#line 2163 "yacc_bison.h"
+    break;
+
+  case 80:
+#line 495 "parser.y"
+{
+  yylhs.value = new IfElseStatement((Exp*)yystack_[2].value, (Statement*)yystack_[0].value, nullptr);
+  ast::copy_pos_between_tokens((IfElseStatement*)yylhs.value, (ExpKeyword*)yystack_[3].value, (Statement*)yystack_[0].value);
+}
+#line 2172 "yacc_bison.h"
+    break;
+
+  case 81:
+#line 500 "parser.y"
+                                              {
+                                                yylhs.value = new ForStatement((const Identifier *)yystack_[6].value, (Exp*)yystack_[4].value, (Exp*)yystack_[2].value, (Statement*)yystack_[0].value);
+                                                ast::copy_pos_between_tokens((ForStatement*)yylhs.value, (ExpKeyword*)yystack_[7].value, (Statement*)yystack_[0].value);
+                                              }
+#line 2181 "yacc_bison.h"
+    break;
+
+  case 82:
+#line 505 "parser.y"
+{
+  yylhs.value = new Read((VariableList*)yystack_[1].value);
+  ast::copy_pos_with_check((Read*)yylhs.value, (VariableList*)yystack_[1].value);
+}
+#line 2190 "yacc_bison.h"
+    break;
+
+  case 83:
+#line 510 "parser.y"
+{
+  yylhs.value = new Write((ExpressionList*)yystack_[1].value);
+  ast::copy_pos_with_check((Write*)yylhs.value, (ExpressionList*)yystack_[1].value);
+}
+#line 2199 "yacc_bison.h"
+    break;
+
   case 84:
-#line 496 "parser.y"
-             {
+#line 516 "parser.y"
+               {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
-   }
-#line 2144 "yacc_bison.h"
+}
+#line 2207 "yacc_bison.h"
     break;
 
   case 85:
-#line 501 "parser.y"
-                     {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+#line 521 "parser.y"
+             {
+  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
 }
-#line 2152 "yacc_bison.h"
+#line 2215 "yacc_bison.h"
     break;
 
   case 86:
-#line 505 "parser.y"
-                {
+#line 526 "parser.y"
+             {
   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
-}
-#line 2160 "yacc_bison.h"
+   }
+#line 2223 "yacc_bison.h"
     break;
 
   case 87:
-#line 510 "parser.y"
-                   {
-  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
+#line 531 "parser.y"
+                     {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
 }
-#line 2168 "yacc_bison.h"
+#line 2231 "yacc_bison.h"
     break;
 
   case 88:
-#line 515 "parser.y"
-                     {
-   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
-        }
-#line 2176 "yacc_bison.h"
+#line 535 "parser.y"
+                {
+  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
+}
+#line 2239 "yacc_bison.h"
     break;
 
   case 89:
-#line 521 "parser.y"
+#line 540 "parser.y"
+                   {
+  yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
+}
+#line 2247 "yacc_bison.h"
+    break;
+
+  case 90:
+#line 545 "parser.y"
+                     {
+   yylhs.value = new ExpKeyword((const Keyword *)(yystack_[0].value));
+        }
+#line 2255 "yacc_bison.h"
+    break;
+
+  case 91:
+#line 551 "parser.y"
                               {
   yylhs.value = yystack_[2].value ;
   if( ((Node*)yystack_[0].value)->type == Type::Ident ){
@@ -2195,11 +2276,11 @@ namespace yy {
     ast::copy_pos_with_check((VariableList*)yylhs.value, (Variable*)yystack_[0].value);
   }
 }
-#line 2196 "yacc_bison.h"
+#line 2275 "yacc_bison.h"
     break;
 
-  case 90:
-#line 536 "parser.y"
+  case 92:
+#line 566 "parser.y"
                 {
   yylhs.value = new VariableList();
   if( ((Node*)yystack_[0].value)->type == Type::Ident ){
@@ -2215,11 +2296,11 @@ namespace yy {
     ast::copy_pos_with_check((VariableList*)yylhs.value, (Variable*)yystack_[0].value);
   }
 }
-#line 2216 "yacc_bison.h"
+#line 2295 "yacc_bison.h"
     break;
 
-  case 91:
-#line 555 "parser.y"
+  case 93:
+#line 585 "parser.y"
                {
   if( yystack_[0].value == nullptr ){
     yylhs.value = new Ident((Identifier*)yystack_[1].value);
@@ -2228,342 +2309,342 @@ namespace yy {
     ast::copy_pos_between_tokens((Variable*)yylhs.value, (Identifier*)yystack_[1].value, (ExpressionList*)yystack_[0].value);
   }
 }
-#line 2229 "yacc_bison.h"
-    break;
-
-  case 92:
-#line 565 "parser.y"
-                      { yylhs.value = nullptr; /* new ExpressionList(); */ }
-#line 2235 "yacc_bison.h"
-    break;
-
-  case 93:
-#line 566 "parser.y"
-                                    {
-  yylhs.value = yystack_[1].value;
-}
-#line 2243 "yacc_bison.h"
+#line 2308 "yacc_bison.h"
     break;
 
   case 94:
-#line 571 "parser.y"
-                         {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
-}
-#line 2251 "yacc_bison.h"
+#line 595 "parser.y"
+                      { yylhs.value = nullptr; /* new ExpressionList(); */ }
+#line 2314 "yacc_bison.h"
     break;
 
   case 95:
-#line 575 "parser.y"
-                         {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+#line 596 "parser.y"
+                                    {
+  yylhs.value = yystack_[1].value;
 }
-#line 2259 "yacc_bison.h"
+#line 2322 "yacc_bison.h"
     break;
 
   case 96:
-#line 580 "parser.y"
+#line 601 "parser.y"
+                         {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+}
+#line 2330 "yacc_bison.h"
+    break;
+
+  case 97:
+#line 605 "parser.y"
+                         {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+}
+#line 2338 "yacc_bison.h"
+    break;
+
+  case 98:
+#line 610 "parser.y"
             {
     yylhs.value = new Ident((const Identifier*)yystack_[0].value);
   //$$ = new ExpCall((const Identifier*)$1, nullptr);
 }
-#line 2268 "yacc_bison.h"
-    break;
-
-  case 97:
-#line 584 "parser.y"
-                                      {
-  yylhs.value = new ExpCall((const Identifier*)yystack_[3].value, (ExpressionList*)yystack_[1].value);
-}
-#line 2276 "yacc_bison.h"
-    break;
-
-  case 98:
-#line 587 "parser.y"
-                      {
-  yylhs.value = new ExpCall((const Identifier*)yystack_[2].value, nullptr);
-}
-#line 2284 "yacc_bison.h"
+#line 2347 "yacc_bison.h"
     break;
 
   case 99:
-#line 595 "parser.y"
-                     {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+#line 614 "parser.y"
+                                      {
+  yylhs.value = new ExpCall((const Identifier*)yystack_[3].value, (ExpressionList*)yystack_[1].value);
 }
-#line 2292 "yacc_bison.h"
+#line 2355 "yacc_bison.h"
     break;
 
   case 100:
-#line 599 "parser.y"
-                     {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+#line 617 "parser.y"
+                      {
+  yylhs.value = new ExpCall((const Identifier*)yystack_[2].value, nullptr);
 }
-#line 2300 "yacc_bison.h"
+#line 2363 "yacc_bison.h"
     break;
 
   case 101:
-#line 603 "parser.y"
+#line 625 "parser.y"
+                     {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+}
+#line 2371 "yacc_bison.h"
+    break;
+
+  case 102:
+#line 629 "parser.y"
+                     {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+}
+#line 2379 "yacc_bison.h"
+    break;
+
+  case 103:
+#line 633 "parser.y"
          {
   // $$ = new Ident((const Identifier *)($1));
   yylhs.value = yystack_[0].value;
 }
-#line 2309 "yacc_bison.h"
+#line 2388 "yacc_bison.h"
     break;
 
-  case 102:
-#line 609 "parser.y"
+  case 104:
+#line 639 "parser.y"
                                  {
   yylhs.value = yystack_[2].value;
   ((ExpressionList*)yylhs.value)->explist.push_back((Exp*)yystack_[0].value);
   ast::copy_pos_with_check((ExpressionList*)yylhs.value, (Exp*)yystack_[0].value);
 }
-#line 2319 "yacc_bison.h"
+#line 2398 "yacc_bison.h"
     break;
 
-  case 103:
-#line 614 "parser.y"
+  case 105:
+#line 644 "parser.y"
                     {
   yylhs.value = new ExpressionList();
   ((ExpressionList*)yylhs.value)->explist.push_back((Exp*)yystack_[0].value);
   ast::copy_pos_with_check((ExpressionList*)yylhs.value, (Exp*)yystack_[0].value);
 }
-#line 2329 "yacc_bison.h"
-    break;
-
-  case 104:
-#line 622 "parser.y"
-                     {
-  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
-}
-#line 2337 "yacc_bison.h"
-    break;
-
-  case 105:
-#line 627 "parser.y"
-                                                       {
-  yylhs.value = new BiExp((Exp*)yystack_[2].value, (const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
-}
-#line 2345 "yacc_bison.h"
+#line 2408 "yacc_bison.h"
     break;
 
   case 106:
-#line 630 "parser.y"
-                    { yylhs.value = yystack_[0].value; }
-#line 2351 "yacc_bison.h"
+#line 652 "parser.y"
+                     {
+  yylhs.value = new ExpMarker((const Marker *)(yystack_[0].value));
+}
+#line 2416 "yacc_bison.h"
     break;
 
   case 107:
-#line 634 "parser.y"
-                             { yylhs.value = new BiExp((Exp*)yystack_[2].value, (const Marker*)yystack_[1].value, (Exp*)yystack_[0].value); }
-#line 2357 "yacc_bison.h"
+#line 657 "parser.y"
+                                                       {
+  yylhs.value = new BiExp((Exp*)yystack_[2].value, (const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
+}
+#line 2424 "yacc_bison.h"
     break;
 
   case 108:
-#line 635 "parser.y"
-       { yylhs.value = yystack_[0].value; }
-#line 2363 "yacc_bison.h"
+#line 660 "parser.y"
+                    { yylhs.value = yystack_[0].value; }
+#line 2430 "yacc_bison.h"
     break;
 
   case 109:
-#line 638 "parser.y"
-                        {
-  yylhs.value = new BiExp((Exp*)yystack_[2].value, (const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
-}
-#line 2371 "yacc_bison.h"
+#line 664 "parser.y"
+                             { yylhs.value = new BiExp((Exp*)yystack_[2].value, (const Marker*)yystack_[1].value, (Exp*)yystack_[0].value); }
+#line 2436 "yacc_bison.h"
     break;
 
   case 110:
-#line 641 "parser.y"
-         { yylhs.value=yystack_[0].value; }
-#line 2377 "yacc_bison.h"
+#line 665 "parser.y"
+       { yylhs.value = yystack_[0].value; }
+#line 2442 "yacc_bison.h"
+    break;
+
+  case 111:
+#line 668 "parser.y"
+                        {
+  yylhs.value = new BiExp((Exp*)yystack_[2].value, (const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
+}
+#line 2450 "yacc_bison.h"
     break;
 
   case 112:
-#line 644 "parser.y"
-           {
-  yylhs.value = yystack_[0].value;
-}
-#line 2385 "yacc_bison.h"
-    break;
-
-  case 113:
-#line 647 "parser.y"
-                                   {
-  yylhs.value = new ExpCall((const Identifier*)yystack_[3].value, (ExpressionList*)yystack_[1].value);
-}
-#line 2393 "yacc_bison.h"
+#line 671 "parser.y"
+         { yylhs.value=yystack_[0].value; }
+#line 2456 "yacc_bison.h"
     break;
 
   case 114:
-#line 650 "parser.y"
-                           {
-  yylhs.value = yystack_[1].value;
+#line 674 "parser.y"
+           {
+  yylhs.value = yystack_[0].value;
 }
-#line 2401 "yacc_bison.h"
+#line 2464 "yacc_bison.h"
     break;
 
   case 115:
-#line 653 "parser.y"
-            {
-  yylhs.value = new UnExp((const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
+#line 677 "parser.y"
+                                   {
+  yylhs.value = new ExpCall((const Identifier*)yystack_[3].value, (ExpressionList*)yystack_[1].value);
 }
-#line 2409 "yacc_bison.h"
+#line 2472 "yacc_bison.h"
     break;
 
   case 116:
-#line 656 "parser.y"
-               {
-  yylhs.value = new UnExp((const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
+#line 680 "parser.y"
+                           {
+  yylhs.value = yystack_[1].value;
 }
-#line 2417 "yacc_bison.h"
+#line 2480 "yacc_bison.h"
     break;
 
   case 117:
-#line 659 "parser.y"
-              {
-  yylhs.value = yystack_[0].value;
-  }
-#line 2425 "yacc_bison.h"
+#line 683 "parser.y"
+            {
+  yylhs.value = new UnExp((const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
+}
+#line 2488 "yacc_bison.h"
     break;
 
   case 118:
-#line 664 "parser.y"
+#line 686 "parser.y"
+               {
+  yylhs.value = new UnExp((const Marker*)yystack_[1].value, (Exp*)yystack_[0].value);
+}
+#line 2496 "yacc_bison.h"
+    break;
+
+  case 119:
+#line 689 "parser.y"
+              {
+  yylhs.value = yystack_[0].value;
+  }
+#line 2504 "yacc_bison.h"
+    break;
+
+  case 120:
+#line 694 "parser.y"
                      {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
 }
-#line 2434 "yacc_bison.h"
+#line 2513 "yacc_bison.h"
     break;
 
-  case 119:
-#line 669 "parser.y"
+  case 121:
+#line 699 "parser.y"
                    {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
 }
-#line 2443 "yacc_bison.h"
+#line 2522 "yacc_bison.h"
     break;
 
-  case 120:
-#line 674 "parser.y"
+  case 122:
+#line 704 "parser.y"
                   {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
 }
-#line 2452 "yacc_bison.h"
+#line 2531 "yacc_bison.h"
     break;
 
-  case 121:
-#line 678 "parser.y"
+  case 123:
+#line 708 "parser.y"
              {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2461 "yacc_bison.h"
+#line 2540 "yacc_bison.h"
     break;
 
-  case 122:
-#line 682 "parser.y"
+  case 124:
+#line 712 "parser.y"
                 {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2470 "yacc_bison.h"
+#line 2549 "yacc_bison.h"
     break;
 
-  case 123:
-#line 688 "parser.y"
+  case 125:
+#line 718 "parser.y"
                   {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
 }
-#line 2479 "yacc_bison.h"
-    break;
-
-  case 124:
-#line 692 "parser.y"
-             {
-  // $$ = new ExpMarker((const Marker *)($1));
-  yylhs.value = yystack_[0].value ;
-  }
-#line 2488 "yacc_bison.h"
-    break;
-
-  case 125:
-#line 696 "parser.y"
-             {
-  // $$ = new ExpMarker((const Marker *)($1));
-  yylhs.value = yystack_[0].value ;
-  }
-#line 2497 "yacc_bison.h"
+#line 2558 "yacc_bison.h"
     break;
 
   case 126:
-#line 700 "parser.y"
+#line 722 "parser.y"
+             {
+  // $$ = new ExpMarker((const Marker *)($1));
+  yylhs.value = yystack_[0].value ;
+  }
+#line 2567 "yacc_bison.h"
+    break;
+
+  case 127:
+#line 726 "parser.y"
+             {
+  // $$ = new ExpMarker((const Marker *)($1));
+  yylhs.value = yystack_[0].value ;
+  }
+#line 2576 "yacc_bison.h"
+    break;
+
+  case 128:
+#line 730 "parser.y"
                   {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2506 "yacc_bison.h"
+#line 2585 "yacc_bison.h"
     break;
 
-  case 127:
-#line 705 "parser.y"
+  case 129:
+#line 735 "parser.y"
                  {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
 }
-#line 2515 "yacc_bison.h"
+#line 2594 "yacc_bison.h"
     break;
 
-  case 128:
-#line 709 "parser.y"
+  case 130:
+#line 739 "parser.y"
              {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2524 "yacc_bison.h"
-    break;
-
-  case 129:
-#line 713 "parser.y"
-            {
-  // $$ = new ExpMarker((const Marker *)($1));
-  yylhs.value = yystack_[0].value ;
-  }
-#line 2533 "yacc_bison.h"
-    break;
-
-  case 130:
-#line 717 "parser.y"
-            {
-  // $$ = new ExpMarker((const Marker *)($1));
-  yylhs.value = yystack_[0].value ;
-  }
-#line 2542 "yacc_bison.h"
+#line 2603 "yacc_bison.h"
     break;
 
   case 131:
-#line 721 "parser.y"
+#line 743 "parser.y"
             {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2551 "yacc_bison.h"
+#line 2612 "yacc_bison.h"
     break;
 
   case 132:
-#line 725 "parser.y"
+#line 747 "parser.y"
             {
   // $$ = new ExpMarker((const Marker *)($1));
   yylhs.value = yystack_[0].value ;
   }
-#line 2560 "yacc_bison.h"
+#line 2621 "yacc_bison.h"
+    break;
+
+  case 133:
+#line 751 "parser.y"
+            {
+  // $$ = new ExpMarker((const Marker *)($1));
+  yylhs.value = yystack_[0].value ;
+  }
+#line 2630 "yacc_bison.h"
+    break;
+
+  case 134:
+#line 755 "parser.y"
+            {
+  // $$ = new ExpMarker((const Marker *)($1));
+  yylhs.value = yystack_[0].value ;
+  }
+#line 2639 "yacc_bison.h"
     break;
 
 
-#line 2564 "yacc_bison.h"
+#line 2643 "yacc_bison.h"
 
             default:
               break;
@@ -2595,7 +2676,8 @@ namespace yy {
     if (!yyerrstatus_)
       {
         ++yynerrs_;
-        std::string msg = YY_("syntax error");
+        context yyctx (*this, yyla);
+        std::string msg = yysyntax_error_ (yyctx);
         error (YY_MOVE (msg));
       }
 
@@ -2670,6 +2752,7 @@ namespace yy {
 
 
       // Shift the error token.
+      yy_lac_discard_ ("error recovery");
       error_token.state = state_type (yyn);
       yypush_ ("Shifting", YY_MOVE (error_token));
     }
@@ -2736,242 +2819,14 @@ namespace yy {
     error (yyexc.what ());
   }
 
-#if YYDEBUG || 0
   const char *
   parser::symbol_name (symbol_kind_type yysymbol)
   {
-    return yytname_[yysymbol];
-  }
-#endif // #if YYDEBUG || 0
-
-
-
-
-
-  const signed char parser::yypact_ninf_ = -119;
-
-  const signed char parser::yytable_ninf_ = -93;
-
-  const short
-  parser::yypact_[] =
-  {
-      36,    27,  -119,    59,     6,    67,    67,  -119,  -119,    66,
-    -119,    31,    31,  -119,    41,    38,    67,  -119,    16,    68,
-    -119,  -119,  -119,  -119,  -119,    67,     6,    46,  -119,    25,
-    -119,  -119,  -119,    95,    30,     6,    67,  -119,   101,  -119,
-    -119,    67,  -119,  -119,  -119,     6,     6,    67,    67,  -119,
-     146,  -119,   176,    67,    46,  -119,  -119,  -119,  -119,  -119,
-    -119,  -119,  -119,  -119,  -119,  -119,    90,    90,  -119,  -119,
-      66,    31,    31,  -119,  -119,    31,    31,  -119,     3,  -119,
-      67,   182,    64,  -119,     7,     6,  -119,  -119,  -119,  -119,
-    -119,  -119,    70,  -119,  -119,  -119,  -119,    30,   101,  -119,
-    -119,    14,  -119,  -119,    55,    74,    67,   182,  -119,  -119,
-     146,    64,  -119,   111,  -119,  -119,   182,    79,   113,   205,
-     167,  -119,   182,   182,  -119,   182,  -119,  -119,   182,   161,
-    -119,    73,   222,  -119,   123,    30,   -25,  -119,    67,   190,
-      25,  -119,    70,    25,  -119,  -119,   182,    68,   182,  -119,
-     146,  -119,  -119,  -119,  -119,  -119,  -119,  -119,  -119,  -119,
-     182,   182,  -119,  -119,  -119,  -119,   182,  -119,  -119,  -119,
-      -8,  -119,    25,  -119,   102,    -8,  -119,  -119,   190,    55,
-    -119,    30,  -119,  -119,    67,  -119,   182,   114,  -119,    25,
-     118,   167,    71,  -119,  -119,  -119,  -119,  -119,    90,   115,
-      90,  -119,  -119,   190,  -119,  -119,  -119,   182,  -119,  -119,
-     146,  -119,  -119,   190,   102,  -119,   125,  -119,  -119,    90,
-    -119,   146,  -119,  -119
-  };
-
-  const unsigned char
-  parser::yydefact_[] =
-  {
-       0,     0,     8,     0,     0,     0,     0,     1,    73,    13,
-     101,     5,     0,    14,     0,     0,     0,    99,     0,     0,
-       3,     2,    31,    64,    52,     0,     0,     0,   100,     0,
-       6,    11,     7,    67,     0,     0,    12,    17,     0,   104,
-       4,     0,    56,    57,    69,     0,     0,     0,     0,     9,
-      67,    65,     0,    30,     0,    26,    25,    24,    23,    44,
-      27,    28,    16,    22,    20,    21,     0,     0,    10,    51,
-      13,    58,    58,    86,    82,     0,     0,    76,     0,    72,
-       0,   111,     0,    75,    96,     0,    37,    43,    45,    46,
-      42,    33,     0,    35,    39,    40,    41,     0,     0,    18,
-      19,     0,    53,    54,     0,     0,     0,   111,    70,    68,
-      67,     0,   118,   119,   117,   112,   111,    92,     0,   106,
-     108,   110,   111,   111,    85,   111,    94,    91,   111,   111,
-      34,     0,     0,    15,    67,     0,     0,    61,     0,     0,
-       0,    90,    92,     0,   103,    71,   111,     0,   111,    87,
-      67,   128,   131,   132,   129,   127,   130,   120,   121,   122,
-     111,   111,   123,   124,   125,   126,   111,   115,   116,    74,
-       0,    98,     0,    49,     0,     0,    32,    66,     0,     0,
-      59,     0,    55,    80,     0,    81,   111,     0,   114,     0,
-      78,   107,   105,   109,    95,    93,    97,    50,     0,     0,
-       0,    63,    60,     0,    89,   102,    83,   111,   113,    88,
-      67,    48,    38,     0,     0,    62,     0,    77,    36,     0,
-      84,    67,    47,    79
-  };
-
-  const short
-  parser::yypgoto_[] =
-  {
-    -119,  -119,  -119,  -119,   156,  -119,    -6,    88,  -119,  -119,
-     109,   -14,  -119,   -59,   -49,  -119,  -119,    81,  -119,    39,
-    -119,  -119,  -118,  -119,  -119,  -119,  -119,   -36,  -119,  -119,
-    -119,  -119,  -119,   108,  -119,     4,   -87,   -83,  -119,   -23,
-    -119,  -119,  -119,   -17,  -106,  -119,  -119,  -119,    91,  -119,
-    -119,  -119,  -119,   -48,  -119,   100,    29,  -119,    77,   -13,
-      -5,  -102,    53,   -76,    45,    48,   -88,  -119,  -119,  -119,
-    -119,  -119
-  };
-
-  const short
-  parser::yydefgoto_[] =
-  {
-      -1,     3,    21,     4,     5,    14,   135,    15,    16,    26,
-      38,   114,    63,    64,    65,    66,    67,    24,    35,    91,
-      92,   213,    93,    94,    95,    96,   175,   198,    33,    45,
-      46,    47,    48,   103,   136,   137,    25,    52,   102,    77,
-      50,   109,    78,     9,    79,    80,   207,   221,   125,    81,
-     150,   210,   140,   115,   127,   128,   195,    83,   116,    30,
-     117,   143,    41,   144,   119,   120,   121,   122,   123,   160,
-     166,   161
-  };
-
-  const short
-  parser::yytable_[] =
-  {
-      11,    12,    82,    90,   145,   118,    32,    99,   100,    36,
-      49,    27,    29,    31,   132,    22,    40,   138,    53,    34,
-      31,   182,   139,   108,    62,    10,   170,   172,    69,    70,
-      23,    54,    28,   -29,   167,   168,    68,     1,     8,    22,
-     147,     2,    71,    72,   190,    84,   189,    97,    31,   169,
-       2,   194,   178,    39,    23,   -29,   -29,   -29,   141,     7,
-     201,   110,    82,    17,    10,   126,     8,   -92,   130,     8,
-     187,    23,   174,    28,   173,   111,    10,   -29,   193,    56,
-      57,    13,    28,    90,   133,   215,    39,    17,    18,    19,
-      90,    39,   138,    37,    51,   218,    56,    57,   203,    31,
-     -29,   142,    82,    20,   217,    84,    55,    56,    57,    58,
-     205,   177,    42,    43,    44,   223,   171,   -28,   -28,   179,
-     157,   158,   159,   180,   124,    28,    59,   183,   126,    90,
-     185,   216,   181,    31,   188,    17,   204,   126,    51,   211,
-     149,   214,    44,   197,   206,    84,   209,   212,   104,   104,
-      60,    61,   106,   107,    90,    10,   220,     6,   101,   196,
-     222,   129,    82,    98,    90,    44,    55,    56,    57,    58,
-      10,   176,    73,    82,    31,    74,   208,    85,   219,   142,
-     105,    55,   134,   202,    75,    76,    59,    55,    56,    57,
-      58,    10,   131,   184,   148,    55,   186,    86,    87,    88,
-      89,    59,   146,   112,   199,    84,   192,    59,   191,     0,
-      60,   113,    87,    88,    89,    59,    84,    17,    28,   162,
-     163,   164,   165,   186,   112,   186,     0,    55,   200,     0,
-       0,    60,   113,     0,     0,     0,     0,     0,    17,     0,
-       0,     0,   186,    86,    87,    88,    89,    59,   151,   152,
-     153,   154,   155,   156,   157,   158,   159
-  };
-
-  const short
-  parser::yycheck_[] =
-  {
-       5,     6,    50,    52,   110,    81,    19,    66,    67,    26,
-      33,    16,    18,    18,    97,     1,    29,   104,    35,    25,
-      25,   139,   105,    20,    38,     9,   128,   129,    45,    46,
-      16,    36,    57,    19,   122,   123,    41,     1,    63,     1,
-     116,    14,    47,    48,   150,    50,   148,    53,    53,   125,
-      14,    59,   135,    61,    16,    17,    18,    19,   106,     0,
-     178,    78,   110,    56,     9,    58,    63,    60,    85,    63,
-     146,    16,   131,    57,     1,    80,     9,    63,   166,     6,
-       7,    15,    57,   132,    98,   203,    61,    56,    11,    12,
-     139,    61,   179,    47,    64,   213,     6,     7,   181,   104,
-      62,   106,   150,    62,   210,   110,     5,     6,     7,     8,
-     186,   134,    17,    18,    19,   221,   129,     6,     7,   136,
-      49,    50,    51,   136,    60,    57,    25,   140,    58,   178,
-     143,   207,   138,   138,   147,    56,   184,    58,    64,   198,
-      27,   200,    19,    41,    30,   150,    28,    32,    71,    72,
-      49,    50,    75,    76,   203,     9,    31,     1,    70,   172,
-     219,    84,   210,    54,   213,    19,     5,     6,     7,     8,
-       9,   132,    26,   221,   179,    29,   189,     1,   214,   184,
-      72,     5,   101,   179,    38,    39,    25,     5,     6,     7,
-       8,     9,    92,   140,   117,     5,   143,    21,    22,    23,
-      24,    25,   111,    42,   175,   210,   161,    25,   160,    -1,
-      49,    50,    22,    23,    24,    25,   221,    56,    57,    52,
-      53,    54,    55,   170,    42,   172,    -1,     5,   175,    -1,
-      -1,    49,    50,    -1,    -1,    -1,    -1,    -1,    56,    -1,
-      -1,    -1,   189,    21,    22,    23,    24,    25,    43,    44,
-      45,    46,    47,    48,    49,    50,    51
-  };
-
-  const unsigned char
-  parser::yystos_[] =
-  {
-       0,     1,    14,    66,    68,    69,    69,     0,    63,   108,
-       9,   125,   125,    15,    70,    72,    73,    56,   123,   123,
-      62,    67,     1,    16,    82,   101,    74,   125,    57,    71,
-     124,   125,   124,    93,    71,    83,   108,    47,    75,    61,
-     124,   127,    17,    18,    19,    94,    95,    96,    97,   104,
-     105,    64,   102,   108,   125,     5,     6,     7,     8,    25,
-      49,    50,    76,    77,    78,    79,    80,    81,   125,   108,
-     108,   125,   125,    26,    29,    38,    39,   104,   107,   109,
-     110,   114,   118,   122,   125,     1,    21,    22,    23,    24,
-      79,    84,    85,    87,    88,    89,    90,    71,    75,    78,
-      78,    72,   103,    98,   123,    98,   123,   123,    20,   106,
-     108,   125,    42,    50,    76,   118,   123,   125,   128,   129,
-     130,   131,   132,   133,    60,   113,    58,   119,   120,   123,
-     108,   120,   102,    76,    82,    71,    99,   100,   101,   102,
-     117,   118,   125,   126,   128,   109,   113,   128,   123,    27,
-     115,    43,    44,    45,    46,    47,    48,    49,    50,    51,
-     134,   136,    52,    53,    54,    55,   135,   131,   131,   128,
-     126,   124,   126,     1,    78,    91,    84,   104,   102,   108,
-     124,    71,    87,   124,   127,   124,   127,   128,   124,   126,
-     109,   130,   129,   131,    59,   121,   124,    41,    92,   121,
-     127,    87,   100,   102,   118,   128,    30,   111,   124,    28,
-     116,    78,    32,    86,    78,    87,   128,   109,    87,    92,
-      31,   112,    78,   109
-  };
-
-  const unsigned char
-  parser::yyr1_[] =
-  {
-       0,    65,    66,    67,    68,    68,    68,    68,    69,    70,
-      71,    71,    72,    72,    73,    74,    74,    75,    76,    76,
-      76,    76,    76,    77,    78,    78,    79,    80,    81,    82,
-      82,    82,    83,    83,    83,    84,    84,    85,    86,    87,
-      87,    87,    87,    88,    79,    89,    90,    91,    91,    91,
-      92,    93,    93,    94,    95,    95,    96,    97,    98,    98,
-      99,    99,   100,   100,   101,   102,   103,   104,   104,   105,
-     106,   107,   107,   108,   109,   109,   109,   109,   109,   109,
-     109,   109,   110,   111,   112,   113,   114,   115,   116,   117,
-     117,   118,   119,   119,   120,   121,   122,   122,   122,   123,
-     124,   125,   126,   126,   127,   128,   128,   129,   129,   130,
-     130,   131,   131,   131,   131,   131,   131,   131,   132,   133,
-     134,   134,   134,   135,   135,   135,   135,   136,   136,   136,
-     136,   136,   136
-  };
-
-  const signed char
-  parser::yyr2_[] =
-  {
-       0,     2,     4,     1,     5,     2,     4,     5,     1,     4,
-       3,     1,     3,     0,     1,     5,     3,     1,     2,     2,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     0,
-       3,     1,     5,     3,     4,     1,     6,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     5,     3,     1,
-       1,     3,     0,     3,     3,     5,     1,     1,     0,     3,
-       3,     1,     4,     3,     1,     1,     3,     0,     3,     1,
-       1,     3,     1,     1,     3,     1,     1,     6,     4,     8,
-       4,     4,     1,     1,     1,     1,     1,     1,     1,     3,
-       1,     2,     0,     3,     1,     1,     1,     4,     3,     1,
-       1,     1,     3,     1,     1,     3,     1,     3,     1,     3,
-       1,     0,     1,     4,     3,     2,     2,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1
-  };
-
-
-#if YYDEBUG
-  // YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
-  // First, the terminals, then, starting at \a YYNTOKENS, nonterminals.
-  const char*
-  const parser::yytname_[] =
-  {
-  "\"end of file\"", "error", "\"invalid token\"", "KEYWORD", "STR",
-  "CHAR", "REAL", "INT", "BOOL", "IDENT", "NULLPTR", "ERRORTOKEN",
-  "COMMENT", "LENGTH", "KEYWORD_PROGRAM", "KEYWORD_CONST", "KEYWORD_VAR",
+    static const char *const yy_sname[] =
+    {
+    "end of file", "error", "invalid token", "KEYWORD", "STR", "CHAR",
+  "REAL", "INT", "BOOL", "IDENT", "NULLPTR", "ERRORTOKEN", "COMMENT",
+  "LENGTH", "KEYWORD_PROGRAM", "KEYWORD_CONST", "KEYWORD_VAR",
   "KEYWORD_PROCEDURE", "KEYWORD_FUNCTION", "KEYWORD_BEGIN", "KEYWORD_END",
   "KEYWORD_ARRAY", "KEYWORD_INTEGER", "KEYWORD_REAL", "KEYWORD_BOOLEAN",
   "KEYWORD_CHAR", "KEYWORD_IF", "KEYWORD_THEN", "KEYWORD_ELSE",
@@ -2996,28 +2851,505 @@ namespace yy {
   "lbracket", "rbracket", "procedure_call", "lparen", "rparen", "id",
   "expression_list", "comma", "expression", "simple_expression", "term",
   "factor", "not", "unimus", "addop", "mulop", "relop", YY_NULLPTR
-  };
+    };
+    return yy_sname[yysymbol];
+  }
+
+
+
+  // parser::context.
+  parser::context::context (const parser& yyparser, const symbol_type& yyla)
+    : yyparser_ (yyparser)
+    , yyla_ (yyla)
+  {}
+
+  int
+  parser::context::expected_tokens (symbol_kind_type yyarg[], int yyargn) const
+  {
+    // Actual number of expected tokens
+    int yycount = 0;
+
+#if YYDEBUG
+    // Execute LAC once. We don't care if it is successful, we
+    // only do it for the sake of debugging output.
+    if (!yyparser_.yy_lac_established_)
+      yyparser_.yy_lac_check_ (yyla_.kind ());
 #endif
+
+    for (int yyx = 0; yyx < YYNTOKENS; ++yyx)
+      {
+        symbol_kind_type yysym = YY_CAST (symbol_kind_type, yyx);
+        if (yysym != symbol_kind::S_YYerror
+            && yysym != symbol_kind::S_YYUNDEF
+            && yyparser_.yy_lac_check_ (yysym))
+          {
+            if (!yyarg)
+              ++yycount;
+            else if (yycount == yyargn)
+              return 0;
+            else
+              yyarg[yycount++] = yysym;
+          }
+      }
+    if (yyarg && yycount == 0 && 0 < yyargn)
+      yyarg[0] = symbol_kind::S_YYEMPTY;
+    return yycount;
+  }
+
+
+  bool
+  parser::yy_lac_check_ (symbol_kind_type yytoken) const
+  {
+    // Logically, the yylac_stack's lifetime is confined to this function.
+    // Clear it, to get rid of potential left-overs from previous call.
+    yylac_stack_.clear ();
+    // Reduce until we encounter a shift and thereby accept the token.
+#if YYDEBUG
+    YYCDEBUG << "LAC: checking lookahead " << symbol_name (yytoken) << ':';
+#endif
+    std::ptrdiff_t lac_top = 0;
+    while (true)
+      {
+        state_type top_state = (yylac_stack_.empty ()
+                                ? yystack_[lac_top].state
+                                : yylac_stack_.back ());
+        int yyrule = yypact_[+top_state];
+        if (yy_pact_value_is_default_ (yyrule)
+            || (yyrule += yytoken) < 0 || yylast_ < yyrule
+            || yycheck_[yyrule] != yytoken)
+          {
+            // Use the default action.
+            yyrule = yydefact_[+top_state];
+            if (yyrule == 0)
+              {
+                YYCDEBUG << " Err\n";
+                return false;
+              }
+          }
+        else
+          {
+            // Use the action from yytable.
+            yyrule = yytable_[yyrule];
+            if (yy_table_value_is_error_ (yyrule))
+              {
+                YYCDEBUG << " Err\n";
+                return false;
+              }
+            if (0 < yyrule)
+              {
+                YYCDEBUG << " S" << yyrule << '\n';
+                return true;
+              }
+            yyrule = -yyrule;
+          }
+        // By now we know we have to simulate a reduce.
+        YYCDEBUG << " R" << yyrule - 1;
+        // Pop the corresponding number of values from the stack.
+        {
+          std::ptrdiff_t yylen = yyr2_[yyrule];
+          // First pop from the LAC stack as many tokens as possible.
+          std::ptrdiff_t lac_size = std::ptrdiff_t (yylac_stack_.size ());
+          if (yylen < lac_size)
+            {
+              yylac_stack_.resize (std::size_t (lac_size - yylen));
+              yylen = 0;
+            }
+          else if (lac_size)
+            {
+              yylac_stack_.clear ();
+              yylen -= lac_size;
+            }
+          // Only afterwards look at the main stack.
+          // We simulate popping elements by incrementing lac_top.
+          lac_top += yylen;
+        }
+        // Keep top_state in sync with the updated stack.
+        top_state = (yylac_stack_.empty ()
+                     ? yystack_[lac_top].state
+                     : yylac_stack_.back ());
+        // Push the resulting state of the reduction.
+        state_type state = yy_lr_goto_state_ (top_state, yyr1_[yyrule]);
+        YYCDEBUG << " G" << int (state);
+        yylac_stack_.push_back (state);
+      }
+  }
+
+  // Establish the initial context if no initial context currently exists.
+  bool
+  parser::yy_lac_establish_ (symbol_kind_type yytoken)
+  {
+    /* Establish the initial context for the current lookahead if no initial
+       context is currently established.
+
+       We define a context as a snapshot of the parser stacks.  We define
+       the initial context for a lookahead as the context in which the
+       parser initially examines that lookahead in order to select a
+       syntactic action.  Thus, if the lookahead eventually proves
+       syntactically unacceptable (possibly in a later context reached via a
+       series of reductions), the initial context can be used to determine
+       the exact set of tokens that would be syntactically acceptable in the
+       lookahead's place.  Moreover, it is the context after which any
+       further semantic actions would be erroneous because they would be
+       determined by a syntactically unacceptable token.
+
+       yy_lac_establish_ should be invoked when a reduction is about to be
+       performed in an inconsistent state (which, for the purposes of LAC,
+       includes consistent states that don't know they're consistent because
+       their default reductions have been disabled).
+
+       For parse.lac=full, the implementation of yy_lac_establish_ is as
+       follows.  If no initial context is currently established for the
+       current lookahead, then check if that lookahead can eventually be
+       shifted if syntactic actions continue from the current context.  */
+    if (!yy_lac_established_)
+      {
+#if YYDEBUG
+        YYCDEBUG << "LAC: initial context established for "
+                 << symbol_name (yytoken) << '\n';
+#endif
+        yy_lac_established_ = true;
+        return yy_lac_check_ (yytoken);
+      }
+    return true;
+  }
+
+  // Discard any previous initial lookahead context.
+  void
+  parser::yy_lac_discard_ (const char* evt)
+  {
+   /* Discard any previous initial lookahead context because of Event,
+      which may be a lookahead change or an invalidation of the currently
+      established initial context for the current lookahead.
+
+      The most common example of a lookahead change is a shift.  An example
+      of both cases is syntax error recovery.  That is, a syntax error
+      occurs when the lookahead is syntactically erroneous for the
+      currently established initial context, so error recovery manipulates
+      the parser stacks to try to find a new initial context in which the
+      current lookahead is syntactically acceptable.  If it fails to find
+      such a context, it discards the lookahead.  */
+    if (yy_lac_established_)
+      {
+        YYCDEBUG << "LAC: initial context discarded due to "
+                 << evt << '\n';
+        yy_lac_established_ = false;
+      }
+  }
+
+  int
+  parser::yy_syntax_error_arguments_ (const context& yyctx,
+                                                 symbol_kind_type yyarg[], int yyargn) const
+  {
+    /* There are many possibilities here to consider:
+       - If this state is a consistent state with a default action, then
+         the only way this function was invoked is if the default action
+         is an error action.  In that case, don't check for expected
+         tokens because there are none.
+       - The only way there can be no lookahead present (in yyla) is
+         if this state is a consistent state with a default action.
+         Thus, detecting the absence of a lookahead is sufficient to
+         determine that there is no unexpected or expected token to
+         report.  In that case, just report a simple "syntax error".
+       - Don't assume there isn't a lookahead just because this state is
+         a consistent state with a default action.  There might have
+         been a previous inconsistent state, consistent state with a
+         non-default action, or user semantic action that manipulated
+         yyla.  (However, yyla is currently not documented for users.)
+         In the first two cases, it might appear that the current syntax
+         error should have been detected in the previous state when
+         yy_lac_check was invoked.  However, at that time, there might
+         have been a different syntax error that discarded a different
+         initial context during error recovery, leaving behind the
+         current lookahead.
+    */
+
+    if (!yyctx.lookahead ().empty ())
+      {
+        if (yyarg)
+          yyarg[0] = yyctx.token ();
+        int yyn = yyctx.expected_tokens (yyarg ? yyarg + 1 : yyarg, yyargn - 1);
+        return yyn + 1;
+      }
+    return 0;
+  }
+
+  // Generate an error message.
+  std::string
+  parser::yysyntax_error_ (const context& yyctx) const
+  {
+    // Its maximum.
+    enum { YYARGS_MAX = 5 };
+    // Arguments of yyformat.
+    symbol_kind_type yyarg[YYARGS_MAX];
+    int yycount = yy_syntax_error_arguments_ (yyctx, yyarg, YYARGS_MAX);
+
+    char const* yyformat = YY_NULLPTR;
+    switch (yycount)
+      {
+#define YYCASE_(N, S)                         \
+        case N:                               \
+          yyformat = S;                       \
+        break
+      default: // Avoid compiler warnings.
+        YYCASE_ (0, YY_("syntax error"));
+        YYCASE_ (1, YY_("syntax error, unexpected %s"));
+        YYCASE_ (2, YY_("syntax error, unexpected %s, expecting %s"));
+        YYCASE_ (3, YY_("syntax error, unexpected %s, expecting %s or %s"));
+        YYCASE_ (4, YY_("syntax error, unexpected %s, expecting %s or %s or %s"));
+        YYCASE_ (5, YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s"));
+#undef YYCASE_
+      }
+
+    std::string yyres;
+    // Argument number.
+    std::ptrdiff_t yyi = 0;
+    for (char const* yyp = yyformat; *yyp; ++yyp)
+      if (yyp[0] == '%' && yyp[1] == 's' && yyi < yycount)
+        {
+          yyres += symbol_name (yyarg[yyi++]);
+          ++yyp;
+        }
+      else
+        yyres += *yyp;
+    return yyres;
+  }
+
+
+  const short parser::yypact_ninf_ = -161;
+
+  const signed char parser::yytable_ninf_ = -95;
+
+  const short
+  parser::yypact_[] =
+  {
+      25,    23,  -161,    73,   -23,    79,    79,  -161,  -161,    81,
+    -161,    44,    44,  -161,    69,    62,    79,  -161,    14,    50,
+    -161,  -161,  -161,  -161,  -161,    79,   -23,    70,  -161,     9,
+    -161,  -161,  -161,   102,   -29,   -23,    79,  -161,   183,  -161,
+    -161,    79,  -161,  -161,  -161,   -23,   -23,    79,    79,  -161,
+     177,  -161,   213,    79,    70,  -161,  -161,  -161,  -161,  -161,
+    -161,  -161,  -161,  -161,  -161,  -161,    45,    45,  -161,  -161,
+      81,    44,    44,  -161,  -161,    44,    44,  -161,     1,  -161,
+      79,   175,    75,  -161,    55,   -23,  -161,  -161,  -161,  -161,
+    -161,  -161,    86,  -161,  -161,  -161,  -161,   -29,   183,  -161,
+    -161,    40,  -161,  -161,    56,    83,    79,   175,  -161,  -161,
+     177,    75,  -161,   135,  -161,  -161,   175,    29,   121,   200,
+     174,  -161,   175,   175,  -161,   175,  -161,  -161,   175,   145,
+    -161,    85,   188,  -161,   136,   -29,    -2,  -161,    79,   217,
+       9,  -161,    86,     9,  -161,  -161,   175,    50,   175,  -161,
+     177,  -161,  -161,  -161,  -161,  -161,  -161,  -161,  -161,  -161,
+     175,   175,  -161,  -161,  -161,  -161,   175,  -161,  -161,  -161,
+      67,  -161,     9,   125,   117,    67,  -161,  -161,   217,    56,
+    -161,   -29,  -161,  -161,    79,  -161,   175,   130,  -161,     9,
+     134,   174,   148,  -161,  -161,  -161,  -161,  -161,   217,  -161,
+     103,   125,    45,  -161,  -161,   217,  -161,  -161,  -161,   175,
+    -161,  -161,   177,  -161,   104,  -161,   217,   117,  -161,   137,
+    -161,  -161,  -161,    45,  -161,   177,  -161,  -161
+  };
+
+  const unsigned char
+  parser::yydefact_[] =
+  {
+       0,     3,     9,     0,     0,     0,     0,     1,    75,    14,
+     103,     6,     0,    15,     0,     0,     0,   101,     0,     0,
+       4,     2,    32,    66,    54,     0,     0,     0,   102,     0,
+       7,    12,     8,    69,     0,     0,    13,    18,     0,   106,
+       5,     0,    58,    59,    71,     0,     0,     0,     0,    10,
+      69,    67,     0,    31,     0,    27,    26,    25,    24,    46,
+      28,    29,    17,    23,    21,    22,     0,     0,    11,    53,
+      14,    60,    60,    88,    84,     0,     0,    78,     0,    74,
+       0,   113,     0,    77,    98,     0,    39,    45,    47,    48,
+      44,    34,     0,    36,    41,    42,    43,     0,     0,    19,
+      20,     0,    55,    56,     0,     0,     0,   113,    72,    70,
+      69,     0,   120,   121,   119,   114,   113,    94,     0,   108,
+     110,   112,   113,   113,    87,   113,    96,    93,   113,   113,
+      35,     0,     0,    16,    69,     0,     0,    63,     0,     0,
+       0,    92,    94,     0,   105,    73,   113,     0,   113,    89,
+      69,   130,   133,   134,   131,   129,   132,   122,   123,   124,
+     113,   113,   125,   126,   127,   128,   113,   117,   118,    76,
+       0,   100,     0,     0,     0,     0,    33,    68,     0,     0,
+      61,     0,    57,    82,     0,    83,   113,     0,   116,     0,
+      80,   109,   107,   111,    97,    95,    99,    40,     0,    52,
+       0,     0,     0,    65,    62,     0,    91,   104,    85,   113,
+     115,    90,    69,    38,     0,    50,     0,     0,    64,     0,
+      79,    51,    37,     0,    86,    69,    49,    81
+  };
+
+  const short
+  parser::yypgoto_[] =
+  {
+    -161,  -161,  -161,  -161,   164,  -161,    -6,    96,  -161,  -161,
+     115,   -16,  -161,   -62,   -49,  -161,  -161,    71,  -161,    39,
+    -161,     4,  -121,  -161,  -161,  -161,  -161,   -32,  -161,  -161,
+    -161,  -161,  -161,   132,  -161,    42,   -90,   -59,  -161,   -26,
+    -161,  -161,  -161,   -18,  -100,  -161,  -161,  -161,   108,  -161,
+    -161,  -161,  -161,   -48,  -161,   131,  -160,  -161,    22,   -13,
+      -5,   -99,     3,   -72,    91,    93,   -98,  -161,  -161,  -161,
+    -161,  -161
+  };
+
+  const short
+  parser::yydefgoto_[] =
+  {
+      -1,     3,    21,     4,     5,    14,   135,    15,    16,    26,
+      38,   114,    63,    64,    65,    66,    67,    24,    35,    91,
+      92,   198,    93,    94,    95,    96,   175,   200,    33,    45,
+      46,    47,    48,   103,   136,   137,    25,    52,   102,    77,
+      50,   109,    78,     9,    79,    80,   209,   225,   125,    81,
+     150,   212,   140,   115,   127,   128,   195,    83,   116,    30,
+     117,   143,    41,   144,   119,   120,   121,   122,   123,   160,
+     166,   161
+  };
+
+  const short
+  parser::yytable_[] =
+  {
+      11,    12,    82,    90,    99,   100,    32,    49,    36,   118,
+     145,    27,    29,    31,   138,   201,    40,    53,   182,    34,
+      31,   108,    62,    10,   167,   168,     1,    69,    70,   170,
+     172,    54,    39,    18,    19,    51,    68,     2,   132,     2,
+       8,    22,    71,    72,   147,    84,   139,    97,    31,   189,
+     190,    56,    57,   169,   221,    28,    23,   203,   141,   -30,
+     110,     8,    82,    22,     8,    10,    28,   130,   193,   174,
+      39,    28,    23,     7,   187,   111,   178,   213,    23,   -30,
+     -30,   -30,   133,    90,   218,    17,   173,   126,    10,   138,
+      90,    56,    57,   104,   104,   222,    13,   106,   107,    31,
+      17,   142,    82,   -30,   214,    84,   129,    28,   177,    56,
+      57,    17,   220,   126,   207,   -94,   171,    37,   179,    42,
+      43,    44,   205,   180,   -30,   227,   194,   183,    39,    90,
+     185,    20,   181,    31,   188,   124,   206,   219,   215,   148,
+     217,   -29,   -29,   184,   126,    84,   186,    51,   149,    90,
+      55,    56,    57,    58,    10,    44,    90,   197,   199,   196,
+     208,   226,   211,   194,    82,     6,   101,    90,   224,    98,
+      59,   176,   134,   186,    31,   186,   210,    82,   202,   142,
+      55,    56,    57,    58,    10,   223,    10,   112,    55,    56,
+      57,    58,   186,    55,    60,   113,    44,   157,   158,   159,
+      59,    17,    28,    73,   105,   216,    74,    84,    59,    86,
+      87,    88,    89,    59,    85,    75,    76,   112,    55,   146,
+      84,   204,    55,   131,    60,   113,   162,   163,   164,   165,
+       0,    17,    60,    61,    86,    87,    88,    89,    59,    87,
+      88,    89,    59,   151,   152,   153,   154,   155,   156,   157,
+     158,   159,   192,   191
+  };
+
+  const short
+  parser::yycheck_[] =
+  {
+       5,     6,    50,    52,    66,    67,    19,    33,    26,    81,
+     110,    16,    18,    18,   104,   175,    29,    35,   139,    25,
+      25,    20,    38,     9,   122,   123,     1,    45,    46,   128,
+     129,    36,    61,    11,    12,    64,    41,    14,    97,    14,
+      63,     1,    47,    48,   116,    50,   105,    53,    53,   148,
+     150,     6,     7,   125,   214,    57,    16,   178,   106,    19,
+      78,    63,   110,     1,    63,     9,    57,    85,   166,   131,
+      61,    57,    16,     0,   146,    80,   135,   198,    16,    17,
+      18,    19,    98,   132,   205,    56,     1,    58,     9,   179,
+     139,     6,     7,    71,    72,   216,    15,    75,    76,   104,
+      56,   106,   150,    63,     1,   110,    84,    57,   134,     6,
+       7,    56,   212,    58,   186,    60,   129,    47,   136,    17,
+      18,    19,   181,   136,    62,   225,    59,   140,    61,   178,
+     143,    62,   138,   138,   147,    60,   184,   209,   200,   117,
+     202,     6,     7,   140,    58,   150,   143,    64,    27,   198,
+       5,     6,     7,     8,     9,    19,   205,    32,    41,   172,
+      30,   223,    28,    59,   212,     1,    70,   216,    31,    54,
+      25,   132,   101,   170,   179,   172,   189,   225,   175,   184,
+       5,     6,     7,     8,     9,   217,     9,    42,     5,     6,
+       7,     8,   189,     5,    49,    50,    19,    49,    50,    51,
+      25,    56,    57,    26,    72,   201,    29,   212,    25,    21,
+      22,    23,    24,    25,     1,    38,    39,    42,     5,   111,
+     225,   179,     5,    92,    49,    50,    52,    53,    54,    55,
+      -1,    56,    49,    50,    21,    22,    23,    24,    25,    22,
+      23,    24,    25,    43,    44,    45,    46,    47,    48,    49,
+      50,    51,   161,   160
+  };
+
+  const unsigned char
+  parser::yystos_[] =
+  {
+       0,     1,    14,    66,    68,    69,    69,     0,    63,   108,
+       9,   125,   125,    15,    70,    72,    73,    56,   123,   123,
+      62,    67,     1,    16,    82,   101,    74,   125,    57,    71,
+     124,   125,   124,    93,    71,    83,   108,    47,    75,    61,
+     124,   127,    17,    18,    19,    94,    95,    96,    97,   104,
+     105,    64,   102,   108,   125,     5,     6,     7,     8,    25,
+      49,    50,    76,    77,    78,    79,    80,    81,   125,   108,
+     108,   125,   125,    26,    29,    38,    39,   104,   107,   109,
+     110,   114,   118,   122,   125,     1,    21,    22,    23,    24,
+      79,    84,    85,    87,    88,    89,    90,    71,    75,    78,
+      78,    72,   103,    98,   123,    98,   123,   123,    20,   106,
+     108,   125,    42,    50,    76,   118,   123,   125,   128,   129,
+     130,   131,   132,   133,    60,   113,    58,   119,   120,   123,
+     108,   120,   102,    76,    82,    71,    99,   100,   101,   102,
+     117,   118,   125,   126,   128,   109,   113,   128,   123,    27,
+     115,    43,    44,    45,    46,    47,    48,    49,    50,    51,
+     134,   136,    52,    53,    54,    55,   135,   131,   131,   128,
+     126,   124,   126,     1,    78,    91,    84,   104,   102,   108,
+     124,    71,    87,   124,   127,   124,   127,   128,   124,   126,
+     109,   130,   129,   131,    59,   121,   124,    32,    86,    41,
+      92,   121,   127,    87,   100,   102,   118,   128,    30,   111,
+     124,    28,   116,    87,     1,    78,    86,    78,    87,   128,
+     109,   121,    87,    92,    31,   112,    78,   109
+  };
+
+  const unsigned char
+  parser::yyr1_[] =
+  {
+       0,    65,    66,    66,    67,    68,    68,    68,    68,    69,
+      70,    71,    71,    72,    72,    73,    74,    74,    75,    76,
+      76,    76,    76,    76,    77,    78,    78,    79,    80,    81,
+      82,    82,    82,    83,    83,    83,    84,    84,    84,    85,
+      86,    87,    87,    87,    87,    88,    79,    89,    90,    91,
+      91,    91,    92,    93,    93,    94,    95,    95,    96,    97,
+      98,    98,    99,    99,   100,   100,   101,   102,   103,   104,
+     104,   105,   106,   107,   107,   108,   109,   109,   109,   109,
+     109,   109,   109,   109,   110,   111,   112,   113,   114,   115,
+     116,   117,   117,   118,   119,   119,   120,   121,   122,   122,
+     122,   123,   124,   125,   126,   126,   127,   128,   128,   129,
+     129,   130,   130,   131,   131,   131,   131,   131,   131,   131,
+     132,   133,   134,   134,   134,   135,   135,   135,   135,   136,
+     136,   136,   136,   136,   136
+  };
+
+  const signed char
+  parser::yyr2_[] =
+  {
+       0,     2,     4,     1,     1,     5,     2,     4,     5,     1,
+       4,     3,     1,     3,     0,     1,     5,     3,     1,     2,
+       2,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       0,     3,     1,     5,     3,     4,     1,     6,     5,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     5,
+       3,     4,     1,     3,     0,     3,     3,     5,     1,     1,
+       0,     3,     3,     1,     4,     3,     1,     1,     3,     0,
+       3,     1,     1,     3,     1,     1,     3,     1,     1,     6,
+       4,     8,     4,     4,     1,     1,     1,     1,     1,     1,
+       1,     3,     1,     2,     0,     3,     1,     1,     1,     4,
+       3,     1,     1,     1,     3,     1,     1,     3,     1,     3,
+       1,     3,     1,     0,     1,     4,     3,     2,     2,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1
+  };
+
+
 
 
 #if YYDEBUG
   const short
   parser::yyrline_[] =
   {
-       0,    84,    84,    93,    99,   102,   105,   111,   126,   131,
-     137,   142,   151,   154,   159,   165,   170,   177,   183,   184,
-     185,   186,   187,   190,   192,   195,   200,   205,   210,   215,
-     216,   219,   227,   233,   241,   252,   255,   262,   267,   273,
-     274,   275,   276,   279,   284,   289,   294,   300,   304,   308,
-     319,   324,   332,   337,   344,   347,   352,   358,   364,   365,
-     374,   379,   389,   392,   398,   404,   409,   414,   415,   423,
-     428,   434,   441,   451,   456,   457,   458,   459,   464,   469,
-     474,   479,   486,   491,   496,   501,   505,   510,   515,   521,
-     536,   555,   565,   566,   571,   575,   580,   584,   587,   595,
-     599,   603,   609,   614,   622,   627,   630,   634,   635,   638,
-     641,   643,   644,   647,   650,   653,   656,   659,   664,   669,
-     674,   678,   682,   688,   692,   696,   700,   705,   709,   713,
-     717,   721,   725
+       0,    88,    88,    93,   101,   107,   110,   113,   119,   135,
+     140,   146,   151,   160,   163,   168,   174,   179,   186,   192,
+     193,   194,   195,   196,   199,   201,   204,   209,   214,   219,
+     224,   225,   228,   245,   251,   258,   274,   277,   282,   291,
+     297,   304,   305,   306,   307,   310,   315,   320,   325,   331,
+     335,   339,   349,   354,   362,   367,   374,   377,   382,   388,
+     394,   395,   404,   409,   419,   422,   428,   434,   439,   444,
+     445,   453,   458,   464,   471,   481,   486,   487,   488,   489,
+     494,   499,   504,   509,   516,   521,   526,   531,   535,   540,
+     545,   551,   566,   585,   595,   596,   601,   605,   610,   614,
+     617,   625,   629,   633,   639,   644,   652,   657,   660,   664,
+     665,   668,   671,   673,   674,   677,   680,   683,   686,   689,
+     694,   699,   704,   708,   712,   718,   722,   726,   730,   735,
+     739,   743,   747,   751,   755
   };
 
   void
@@ -3130,7 +3462,7 @@ namespace yy {
   }
 
 } // yy
-#line 3131 "yacc_bison.h"
+#line 3461 "yacc_bison.h"
 
-#line 729 "parser.y"
+#line 778 "parser.y"
 
