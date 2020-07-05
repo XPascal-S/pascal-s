@@ -290,12 +290,14 @@ char *removeSkipRule(char *content, int yyleng) {
 
 int Lexer::addComment() {
     current_offset += yyleng - 1;
+
+    int code = addCommentAux();
     for (int i = 0; i < yyleng; i++) {
         if (yytext[i] == '\n') {
             line_offset = current_offset - yyleng + 1 + i;
         }
     }
-    return addCommentAux();
+    return code;
 }
 
 int Lexer::addInlineComment() {
