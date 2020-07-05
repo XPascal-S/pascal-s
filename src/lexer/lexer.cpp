@@ -242,7 +242,8 @@ int Lexer::addASCIIChar() {
     return static_cast<lexer_action_code_underlying_type>(LexerActionCode::LexEnd);
 }
 
-const static auto CharErrorHint = "not a valid char";
+const static auto CharErrorHint = "lexer error: not a valid char";
+const static auto CommentNotCloseErrorHint = "lexer error: not closed cross line comment";
 
 /*
  * addChar 在token流后追加一个ConstantChar
@@ -291,7 +292,27 @@ char *removeSkipRule(char *content, int yyleng) {
 int Lexer::addComment() {
     current_offset += yyleng - 1;
 
-    int code = addCommentAux();
+    int lineno_recover = yylineno;
+
+    for (int i = 0; i < yyleng; i++) {
+        if (yytext[i] == '\n') {
+            yylineno--;
+        }
+    }
+
+    int code = 0;
+    if (yytext[yyleng - 1] != '}') {
+        auto err = new ErrorToken(removeSkipRule(yytext, yyleng), CommentNotCloseErrorHint);
+        addError(err);
+        err->line = yylineno;
+        err->length = yyleng - 1;
+        err->column = current_offset - yyleng - line_offset;
+        err->offset = current_offset - yyleng;
+    }
+    code = addCommentAux();
+
+    yylineno = lineno_recover;
+
     for (int i = 0; i < yyleng; i++) {
         if (yytext[i] == '\n') {
             line_offset = current_offset - yyleng + 1 + i;
