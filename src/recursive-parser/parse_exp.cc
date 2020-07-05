@@ -231,7 +231,7 @@ RecursiveParser<Lexer>::parse_binary_exp(ast::Exp *lhs, const Marker *marker,
         if (predicate::token_equal(current_token, till)) {
             return new ast::BiExp(lhs, marker, rhs);
         }
-        if (current_token->type == TokenType::Marker) {
+        if (predicate::is_binary_sign(current_token)) {
             break;
         }
         skip_error_token_t(TokenType::Marker);

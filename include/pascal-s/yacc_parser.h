@@ -66,21 +66,23 @@ private:
         // ast::printAST(parsed_result);
     }
     Node* ast_reduce_nodes(int k, Type type) override {
-      // if (astTreeStack.size() < k) {
-      //   // Node* errNode = astTreeStack.back();
-      //   // throw RuntimeReinterpretASTException(*errNode);
-      // }
-      // Node *par_node = new Node(type);
-      // for (int i = 0; i < k; ++i) {
-      //   Node *n = astTreeStack.back();
-      //   astTreeStack.pop_back();
-      //   par_node->children.push_back(n);
-      // }
-      // reverse(par_node->children.begin(), par_node->children.end());
-      // astTreeStack.push_back(par_node);
-      // ast_root = par_node;
-      // // printAST(ast_root);
-      // return par_node;
+        // if (astTreeStack.size() < k) {
+        //   // Node* errNode = astTreeStack.back();
+        //   // throw RuntimeReinterpretASTException(*errNode);
+        // }
+        // Node *par_node = new Node(type);
+        // for (int i = 0; i < k; ++i) {
+        //   Node *n = astTreeStack.back();
+        //   astTreeStack.pop_back();
+        //   par_node->children.push_back(n);
+        // }
+        // reverse(par_node->children.begin(), par_node->children.end());
+        // astTreeStack.push_back(par_node);
+        // ast_root = par_node;
+        // // printAST(ast_root);
+        // return par_node;
+        assert(false);
+        return nullptr;
     }
 };
 
