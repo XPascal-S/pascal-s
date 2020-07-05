@@ -40,13 +40,16 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_if_else_statement(const ast::IfElseSta
     // create basic block then_block
     llvm::BasicBlock *then_block = llvm::BasicBlock::Create(ctx, "then", cur_function);
     // create basic block else_block
-    llvm::BasicBlock *else_block = llvm::BasicBlock::Create(ctx, "else");
+    llvm::BasicBlock *else_block = nullptr;
+    if (if_else_stmt->else_part) {
+        else_block = llvm::BasicBlock::Create(ctx, "else");
+    }
     // create basic block merge_block
     llvm::BasicBlock *merge_block = llvm::BasicBlock::Create(ctx, "follow_ie");
 
     // link before if to -> cond ? then_block : else_block
-    // out_code(cond_br cond ? then_block : else_block)
-    ir_builder.CreateCondBr(cond, then_block, else_block);
+    // out_code(cond_br cond ? then_block : (else_block ? else_block : merge_block))
+    ir_builder.CreateCondBr(cond, then_block, else_block ? else_block : merge_block);
 
     // already pushed then block
     // build then block
@@ -55,22 +58,25 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_if_else_statement(const ast::IfElseSta
     ir_builder.CreateBr(merge_block);
     then_block = ir_builder.GetInsertBlock();
 
-    // push else block
-    cur_function->getBasicBlockList().push_back(else_block);
-    // build else block
-    ir_builder.SetInsertPoint(else_block);
-    Value *else_value = code_gen_statement(if_else_stmt->else_part);
-    ir_builder.CreateBr(merge_block);
-    else_block = ir_builder.GetInsertBlock();
+    Value *else_value = nullptr;
+    if (if_else_stmt->else_part) {
+        // push else block
+        cur_function->getBasicBlockList().push_back(else_block);
+        // build else block
+        ir_builder.SetInsertPoint(else_block);
+        else_value = code_gen_statement(if_else_stmt->else_part);
+        ir_builder.CreateBr(merge_block);
+        else_block = ir_builder.GetInsertBlock();
+    }
 
     // push merge block
     cur_function->getBasicBlockList().push_back(merge_block);
     ir_builder.SetInsertPoint(merge_block);
 
-    if (!(then_value && else_value))
+    if (!(then_value && (!if_else_stmt->else_part || else_value)))
         return nullptr;
 
-    if (then_value->getType()->getTypeID() == else_value->getType()->getTypeID()) {
+    if (else_value && then_value->getType()->getTypeID() == else_value->getType()->getTypeID()) {
         //assuming equal
 
         llvm::PHINode *merged_value = ir_builder.CreatePHI(
@@ -81,5 +87,5 @@ LLVMBuilder::Value *LLVMBuilder::code_gen_if_else_statement(const ast::IfElseSta
         return merged_value;
     }
 
-    return llvm::UndefValue::get(llvm::Type::getVoidTy(ctx));
+    return else_value ? llvm::UndefValue::get(llvm::Type::getVoidTy(ctx)) : then_value;
 }
