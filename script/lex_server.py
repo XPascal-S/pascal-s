@@ -1,7 +1,10 @@
 # please move py_pascal_s.cpXX-win_YYY.pyd to your python/src/DLLs
 # cmake-build-debug/src/py-module/py_pascal_s.cp37-win_amd64.pyd
 #
+import html
 import json
+import os
+import sys
 from typing import List
 
 import py_pascal_s
@@ -29,54 +32,6 @@ def reinterpret_pascal_s_token(tok_ptr):
     elif tok_ptr.type == py_pascal_s.PascalSTokenType.Identifier:
         return py_pascal_s.reinterpret_as_identifier(tok_ptr)  # type: py_pascal_s.PascalSTokenIdentifier
     return tok_ptr
-
-
-rc = """program main(input,output);
-var
-    n,i:integer;
-    list:array[0..1000] of integer;
-    c:char;
-procedure qsort(low, high:integer);
-var
-    11l,h,22m:integer;
-    i,j:integer;
-    temp:integer;
-    flag:integer;
-begin
-    flag:=0;  #       ???????????
-    l:=low; h:=high;
-    m:=list[(l+h) div 2];
-    for i:=1 to 1000 do
-    begin
-    if flag=0 then begin
-        for j:=1 to 1000 do
-            if list[l]<m then l:=l+1;
-        for j:=1 to 1000 do
-            if list[h]>m then h:=h-1;
-        if l<=h then
-        begin
-            temp:=list[l]; list[l]:=list[h]; list[h]:=temp;
-            l:=l+1; h:=h-1;
-        end;
-        if (l>h) then flag:=1;
-    end;
-    end;
-    if l<high then qsort(l,high);
-    if h>low then qsort(low,h);
-end; {qsort end}
-
-begin
-    read(n);
-    for i:=0 to n-1 do
-        read(list[i]);
-    qsort(0,n-1);
-        for i:=0 to n-1 do
-        begin
-            write(list[i], '\\n', '\\x233');
-        end
-end. {main end}
-    """
-rx = rc
 
 
 class PascalSLexerRenderer(object):
@@ -269,58 +224,48 @@ class PascalSLexerRenderer(object):
             source_stream = source_stream[:end_first.offset + end_first.length]
 
         for i, tok in enumerate(reversed(tokens)):
-
+            str_slice.append(html.escape(source_stream[tok.offset + tok.length:]))
             if tok.type == py_pascal_s.PascalSTokenType.Keyword:
-                str_slice.append(source_stream[tok.offset + tok.length:])
                 str_slice.append(
                     f'<span id="token-ref-{tok_len - 1 - i}" class="token keyword">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
                 source_stream = source_stream[:tok.offset]
             elif tok.type == py_pascal_s.PascalSTokenType.Marker:
-                str_slice.append(source_stream[tok.offset + tok.length:])
                 str_slice.append(
                     f'<span id="token-ref-{tok_len - 1 - i}" class="token marker">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
                 source_stream = source_stream[:tok.offset]
             elif tok.type == py_pascal_s.PascalSTokenType.Identifier:
-                str_slice.append(source_stream[tok.offset + tok.length:])
                 str_slice.append(
                     f'<span id="token-ref-{tok_len - 1 - i}" class="token identifier">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
                 source_stream = source_stream[:tok.offset]
             elif tok.type == py_pascal_s.PascalSTokenType.ConstantString:
-                str_slice.append(source_stream[tok.offset + tok.length:])
                 str_slice.append(
                     f'<span id="token-ref-{tok_len - 1 - i}" class="token const-string">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
                 source_stream = source_stream[:tok.offset]
             elif tok.type == py_pascal_s.PascalSTokenType.Comment:
-                str_slice.append(source_stream[tok.offset + tok.length:])
                 str_slice.append(
                     f'<span id="token-ref-{tok_len - 1 - i}" class="token comment">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
                 source_stream = source_stream[:tok.offset]
             elif tok.type == py_pascal_s.PascalSTokenType.ErrorToken:
-                str_slice.append(source_stream[tok.offset + tok.length:])
                 str_slice.append(
                     f'<span id="token-ref-{tok_len - 1 - i}" class="token error-token">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
                 source_stream = source_stream[:tok.offset]
             elif tok.type == py_pascal_s.PascalSTokenType.ConstantBoolean:
-                str_slice.append(source_stream[tok.offset + tok.length:])
                 str_slice.append(
                     f'<span id="token-ref-{tok_len - 1 - i}" class="token const-boolean">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
                 source_stream = source_stream[:tok.offset]
             elif tok.type == py_pascal_s.PascalSTokenType.ConstantInteger:
-                str_slice.append(source_stream[tok.offset + tok.length:])
                 str_slice.append(
                     f'<span id="token-ref-{tok_len - 1 - i}" class="token const-integer">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
                 source_stream = source_stream[:tok.offset]
             elif tok.type == py_pascal_s.PascalSTokenType.ConstantReal:
-                str_slice.append(source_stream[tok.offset + tok.length:])
                 str_slice.append(
                     f'<span id="token-ref-{tok_len - 1 - i}" class="token const-real">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
                 source_stream = source_stream[:tok.offset]
             elif tok.type == py_pascal_s.PascalSTokenType.ConstantChar:
-                str_slice.append(source_stream[tok.offset + tok.length:])
                 str_slice.append(
                     f'<span id="token-ref-{tok_len - 1 - i}" class="token const-char">{source_stream[tok.offset:tok.offset + tok.length]}</span>')
                 source_stream = source_stream[:tok.offset]
-        str_slice.append(source_stream)
+        str_slice.append(html.escape(source_stream))
 
         return ''.join(reversed(str_slice))
 
@@ -336,14 +281,72 @@ class PascalSLexerRenderer(object):
     def renders(self, source, target_path):
         handler, toks = self.lex(source)
 
-        rendered_string = self.render_source(rc, toks)
+        rendered_string = self.render_source(source, toks)
         tok_dicts = self.half_serialize_tokens(toks)
 
         with open(target_path, 'w') as f:
-            f.write(PascalSLexerRenderer.html_template.replace("{{content}}", ''.join(rendered_string))
+            f.write(PascalSLexerRenderer.html_template.replace("{{content}}", rendered_string)
                     .replace("'token_definition_replacement'", json.dumps(tok_dicts)))
         del handler
 
 
 if __name__ == '__main__':
-    PascalSLexerRenderer().renders(rc, 'C:\\Users\\kamiyoru\\Desktop\\test.html')
+    source = None
+    target = None
+    if len(sys.argv) == 2:
+        source = sys.argv[1]
+
+    if len(sys.argv) == 3:
+        source = sys.argv[1]
+        target = sys.argv[2]
+
+    if len(sys.argv) <= 1:
+        exit(1)
+        # test
+        PascalSLexerRenderer().renders("""program main(input,output);
+var
+    n,i:integer;
+    list:array[0..1000] of integer;
+    c:char;
+procedure qsort(low, high:integer);
+var
+    11l,h,22m:integer;
+    i,j:integer;
+    temp:integer;
+    flag:integer;
+begin
+    flag:=0;  #       ???????????
+    l:=low; h:=high;
+    m:=list[(l+h) div 2];
+    for i:=1 to 1000 do
+    begin
+    if flag=0 then begin
+        for j:=1 to 1000 do
+            if list[l]<m then l:=l+1;
+        for j:=1 to 1000 do
+            if list[h]>m then h:=h-1;
+        if l<=h then
+        begin
+            temp:=list[l]; list[l]:=list[h]; list[h]:=temp;
+            l:=l+1; h:=h-1;
+        end;
+        if (l>h) then flag:=1;
+    end;
+    end;
+    if l<high then qsort(l,high);
+    if h>low then qsort(low,h);
+end; {qsort end}
+
+begin
+    read(n);
+    for i:=0 to n-1 do
+        read(list[i]);
+    qsort(0,n-1);
+        for i:=0 to n-1 do
+        begin
+            write(list[i], '\\n', '\\x233');
+        end
+end. {main end}
+    """, os.path.expanduser('~/Desktop/test.html'))
+    else:
+        PascalSLexerRenderer().render(source, target or os.path.expanduser('~/Desktop/test.html'))

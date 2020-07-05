@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 
 import argparse
-import os
 import json
+import os
 import platform
 import subprocess as sp
 
 version = '0.1.3'
+current_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def str2bool(str_boolean):
@@ -75,7 +76,7 @@ def parser_add_arguments(p):
     p.add_argument('--src', type=str, help='Source path')
     p.add_argument('--out', default="build", type=str, help='Output path')
     p.add_argument('--out-ir', type=str, help='Output IR Code, enum of {json, yml, fmt, binary, console}')
-    p.add_argument('--out-token', type=str, help='Output tokens, enum of {json, yml, fmt, binary, console}')
+    p.add_argument('--out-token', type=str, help='Output tokens, enum of {json, yml, fmt, binary, console, html}')
     p.add_argument('--out-ast', type=str, help='Output ast, enum of {json, yml, fmt, binary, console}')
     return p
 
@@ -159,8 +160,8 @@ def main():
 
     if not os.path.exists(args.out):
         os.mkdir(args.out)
-    object_file = os.path.abspath(
-        os.path.join(args.out, os.path.splitext(os.path.basename(args.src))[0] + '.o'))
+    target_file = os.path.abspath(os.path.join(args.out, os.path.splitext(os.path.basename(args.src))[0]))
+    object_file = target_file + '.o'
 
     asm_options = [
         args.assembler,
@@ -175,7 +176,20 @@ def main():
         asm_options.append('--out-ir=' + args.out_ir)
 
     if args.out_token is not None:
-        asm_options.append('--out-token=' + args.out_token)
+        if args.out_token == 'html':
+            print(os.path.join(current_path, 'lex_server.py'))
+            lex_code, lex_result, lex_err = process_open_with_code(
+                ' '.join(['py', '-3', os.path.join(current_path, 'lex_server.py'),
+                          os.path.abspath(args.src), target_file + '.html']))
+            if len(lex_result.strip('\n')):
+                print(lex_result.strip('\n'))
+            if len(lex_err.strip('\n')):
+                print(lex_err.strip('\n'))
+            if lex_code != 0:
+                print(f'out token html failed with code {lex_code}...')
+                exit(lex_code)
+        else:
+            asm_options.append('--out-token=' + args.out_token)
 
     if args.out_ast is not None:
         asm_options.append('--out-ast=' + args.out_ast)
@@ -196,11 +210,10 @@ def main():
         exit(1)
 
     print('generated', object_file)
-    op = os.path.abspath(os.path.join(args.out, os.path.splitext(os.path.basename(args.src))[0]))
 
     link_option = [
         args.c_linker,
-        '-o', op,
+        '-o', target_file,
         object_file,
     ]
 
