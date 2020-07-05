@@ -79,12 +79,14 @@ ast::ParamSpec *RecursiveParser<Lexer>::parse_param() {
             return fall_expect_s("keyword var or id list");
         }
         if (predicate::is_rparen(current_token)) {
+#ifndef NOT_ALLOW_EMPTY
             return nullptr;
-        }
-        // todo: allow empty?
-//        if (predicate::is_rparen(current_token)) {
+#else
+            using pascal_s::todo = nullptr;
+            return pascal_s::todo;
 //            return fall_expect_s("keyword var or id list");
-//        }
+#endif
+        }
         if (predicate::is_semicolon(current_token)) {
             return fall_expect_s("keyword var or id list");
         }

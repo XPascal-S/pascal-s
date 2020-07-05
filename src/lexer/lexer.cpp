@@ -27,7 +27,6 @@ Lexer::~Lexer() = default;
  *
  * 将regex文本大小写全转为小写
  * 将regex文本装入Identifier
- * todo: 是否合理？
  */
 int Lexer::addIdentifier() {
     std::string str_temp = std::string(yytext);
@@ -277,6 +276,9 @@ int Lexer::recordNewLine() {
     return static_cast<lexer_action_code_underlying_type>(LexerActionCode::AuxFunctionCalled);
 }
 
+/*
+ * 将转义符号转为正确的符号
+ */
 char *removeSkipRule(char *content, int yyleng) {
     int j = 0;
     for (int i = 0; i < yyleng; i++, j++) {
@@ -289,6 +291,12 @@ char *removeSkipRule(char *content, int yyleng) {
     return content;
 }
 
+/*
+ * addComment 在token流后追加一个Cross Line Comment（Option）
+ * 掩码为LexerOptionLexComment
+ *
+ * 如果发现comment未封闭，则产生一个错误
+ */
 int Lexer::addComment() {
     current_offset += yyleng - 1;
 
@@ -321,12 +329,21 @@ int Lexer::addComment() {
     return code;
 }
 
+/*
+ * addInlineComment 在token流后追加一个Inline Comment （Option）
+ *
+ * 掩码为LexerOptionLexComment
+ */
 int Lexer::addInlineComment() {
     int code = addCommentAux();
     line_offset = current_offset;
     return code;
 }
 
+/*
+ * 检查lexer选项，如果需要，则往token流中加入这个Comment
+ * 掩码为LexerOptionLexComment
+ */
 int Lexer::addCommentAux() {
     if (option_mask & LexerOptionLexComment) {
         return addToken(new Comment(removeSkipRule(yytext, yyleng)));
